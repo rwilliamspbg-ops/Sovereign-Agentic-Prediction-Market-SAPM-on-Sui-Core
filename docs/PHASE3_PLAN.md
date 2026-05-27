@@ -30,6 +30,7 @@ Sprint-sized implementation tasks
 2. DeepBook Predict market discovery (1-2 days)
    - Add a discovery layer for market metadata and event selection.
    - Map forecast confidence and implied probability into a deterministic buy / hold / redeem decision.
+   - Validate the selected market object with a dry-run preflight before any live submission.
 
 3. PTB execution path (2-3 days)
    - Build the minimal transaction flow for deposits and position management.
@@ -58,4 +59,5 @@ Next immediate action I will take if approved
 Kickoff status
 
 - Trading adapter scaffold created in `agents/trader/` with a deterministic forecast-to-trade plan generator.
-- Next execution slice is PTB wiring and a dry-run preflight before any live market action.
+- Market discovery preflight scaffold created in `agents/trader/market_discovery.js` and wired into dry-run planning.
+- Next execution slice is live DeepBook-specific market discovery and PTB wiring before any live market action.

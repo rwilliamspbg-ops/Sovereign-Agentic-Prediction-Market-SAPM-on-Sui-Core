@@ -1,6 +1,7 @@
 const { Transaction } = require('@mysten/sui/transactions')
 const { SuiClient } = require('@mysten/sui/client')
 const { buildTradePlan } = require('./forecast_to_trade')
+const { discoverMarket } = require('./market_discovery')
 
 function normalizeConfig(options = {}) {
   const packageId = options.packageId || process.env.PHASE3_PACKAGE_ID || null
@@ -53,9 +54,20 @@ async function dryRunTrade(meta, options = {}) {
   const rpc = options.rpc || process.env.SUI_RPC || null
   if (!rpc) throw new Error('missing rpc for dry-run')
   const client = options.client || new SuiClient({ url: rpc })
-  const { tx, plan, config } = buildTradeTransaction(meta, options)
+  const discoveredMarket = await discoverMarket({
+    rpc,
+    client,
+    marketObjectId: options.marketObjectId || process.env.PHASE3_MARKET_OBJECT_ID || null,
+    marketId: meta.marketId || meta.round || null,
+    impliedProbability: meta.impliedProbability,
+  })
+  const { tx, plan, config } = buildTradeTransaction({
+    ...meta,
+    marketId: discoveredMarket.marketId,
+    impliedProbability: discoveredMarket.impliedProbability,
+  }, options)
   const result = await client.dryRunTransactionBlock({ transactionBlock: tx })
-  return { plan, config, result }
+  return { plan, config, result, market: discoveredMarket }
 }
 
 module.exports = {

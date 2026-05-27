@@ -20,10 +20,10 @@ Dry-run a PTB against Sui RPC:
 
 ```bash
 node index.js --dry-run --rpc https://fullnode.testnet.sui.io:443 \
-	--package-id 0xYOUR_PACKAGE_ID \
-	--market-object-id 0xYOUR_MARKET_OBJECT_ID \
-	--quote-coin-object-id 0xYOUR_COIN_OBJECT_ID \
-	./example_forecast.json
+  --package-id 0xYOUR_PACKAGE_ID \
+  --market-object-id 0xYOUR_MARKET_OBJECT_ID \
+  --quote-coin-object-id 0xYOUR_COIN_OBJECT_ID \
+  ./example_forecast.json
 ```
 
 ## Output

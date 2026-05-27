@@ -132,7 +132,7 @@ Status: complete for the prototype and hardening baseline. See `docs/PHASE2_PLAN
 - Build autonomous PTBs for deposits + minting/redeeming positions
 - Add portfolio/risk management object model per agent/swarm
 
-Status: kickoff. The initial trading adapter scaffold now lives in `agents/trader/` and converts finalized forecast outputs into a deterministic trade plan.
+Status: kickoff. The initial trading adapter scaffold now lives in `agents/trader/`, and the market-discovery preflight helper validates a selected market object before dry-run PTB planning.
 
 ### Phase 4 (Days 22-28+): Verification, Observability, Demo Polish
 - Dashboard for swarm state, forecasts, tx traces, and P&L simulation

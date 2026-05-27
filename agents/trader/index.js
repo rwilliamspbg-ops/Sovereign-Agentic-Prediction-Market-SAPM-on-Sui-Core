@@ -29,8 +29,8 @@ function main() {
   const meta = readInput(inputPath)
   if (dryRun) {
     dryRunTrade(meta, options)
-      .then(({ plan, result, config }) => {
-        process.stdout.write(`${JSON.stringify({ plan, config, dryRun: result?.effects || result }, null, 2)}\n`)
+      .then(({ plan, result, config, market }) => {
+        process.stdout.write(`${JSON.stringify({ plan, config, market, dryRun: result?.effects || result }, null, 2)}\n`)
       })
       .catch((error) => {
         process.stderr.write(`${error.message || String(error)}\n`)
