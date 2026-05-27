@@ -52,9 +52,9 @@ Look for:
 
 ```bash
 curl -sS -X POST \
-	-H 'content-type: application/json' \
-	--data '{"jsonrpc":"2.0","id":1,"method":"sui_getLatestCheckpointSequenceNumber","params":[]}' \
-	http://127.0.0.1:9000
+  -H 'content-type: application/json' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"sui_getLatestCheckpointSequenceNumber","params":[]}' \
+  http://127.0.0.1:9000
 ```
 
 ## Documentation Index
@@ -124,11 +124,15 @@ SAPM combines:
 - Emit aggregated model/forecast hash commitments to Sui
 - Integrate proof-generation hooks for verifiable update validity
 
+Status: complete for the prototype and hardening baseline. See `docs/PHASE2_PLAN.md` and the consolidated simulation reports under `artifacts/phase2/`.
+
 ### Phase 3 (Days 15-21): On-Chain Trading Integration
 - Connect swarm forecasts to DeepBook Predict market odds
 - Execute strategy rules (confidence vs implied probability thresholding)
 - Build autonomous PTBs for deposits + minting/redeeming positions
 - Add portfolio/risk management object model per agent/swarm
+
+Status: kickoff. The initial trading adapter scaffold now lives in `agents/trader/` and converts finalized forecast outputs into a deterministic trade plan.
 
 ### Phase 4 (Days 22-28+): Verification, Observability, Demo Polish
 - Dashboard for swarm state, forecasts, tx traces, and P&L simulation
