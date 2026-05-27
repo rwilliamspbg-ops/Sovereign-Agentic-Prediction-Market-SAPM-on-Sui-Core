@@ -1,0 +1,18 @@
+# Node dependencies
+node_modules/
+agents/**/node_modules/
+
+# Runtime artifacts
+artifacts/
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# Local cert material
+agents/aggregator/certs/*.pem
+
+# OS/editor noise
+.DS_Store
+*.log

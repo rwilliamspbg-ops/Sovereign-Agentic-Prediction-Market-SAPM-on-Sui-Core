@@ -354,10 +354,26 @@ function verifySignature(pubkeyB64, sigB64, payloadStr) {
   }
 }
 
+function validateStartupConfig() {
+  const missing = []
+  if (REQUIRE_ONCHAIN_COMMIT) {
+    if (!SUI_RPC) missing.push('SUI_RPC')
+    if (!REGISTRY_PACKAGE_ID) missing.push('REGISTRY_PACKAGE_ID')
+    if (!REGISTRY_OBJ_ID) missing.push('REGISTRY_OBJ_ID')
+    if (!AGG_SUI_SECRET) missing.push('AGG_SUI_SECRET')
+  }
+  if (TTL_MS <= 0) throw new Error('UPDATE_TTL_MS must be greater than zero')
+  if (missing.length > 0) {
+    throw new Error(`REQUIRE_ONCHAIN_COMMIT=1 requires env vars: ${missing.join(', ')}`)
+  }
+}
+
 async function run() {
+  validateStartupConfig()
   await loadModel()
   await ensureAggKey()
   await loadRounds()
+  console.log(`Hardening: strictProofs=${STRICT_PROOF_ENFORCEMENT ? 'on' : 'off'} requireOnchainCommit=${REQUIRE_ONCHAIN_COMMIT ? 'on' : 'off'}`)
   const app = express()
   app.use(bodyParser.json({ limit: '1mb' }))
 
