@@ -1,0 +1,46 @@
+# Minimal scaffold for a local Sui test-validator + example agent service.
+# NOTE: Replace the `image:` values with official Sui images or build steps
+# appropriate for your environment. This file is intentionally conservative and
+# meant as a starting point for Phase 0 local cluster work.
+
+services:
+  sui-local:
+    build:
+      context: ./sui-local
+      dockerfile: Dockerfile
+    container_name: sui-local
+    restart: unless-stopped
+    ports:
+      - "9000:9000"   # RPC
+      - "9001:9001"   # Gateway / metrics (example)
+    volumes:
+      - sui-data:/var/sui
+    environment:
+      - RUST_LOG=info
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sS -X POST -H 'content-type: application/json' --data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"sui_getLatestCheckpointSequenceNumber\",\"params\":[]}' http://localhost:9000 | grep -q '\"result\"'",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 20s
+
+  agent-sample:
+    build:
+      context: ../agents/sample
+      dockerfile: Dockerfile
+    container_name: agent-sample
+    depends_on:
+      sui-local:
+        condition: service_healthy
+    environment:
+      - SUI_RPC=http://sui-local:9000
+      - SUI_FAUCET_URL=http://sui-local:9123/v2/gas
+    restart: on-failure
+
+volumes:
+  sui-data:
+    name: sui_local_data

@@ -2,6 +2,67 @@
 
 A decentralized swarm of autonomous AI agents that collaboratively generate, aggregate, and refine forecasts for real-world events, then autonomously execute on-chain prediction market trades on Sui.
 
+## Current Repository Baseline
+
+This repository currently includes a Phase 0 implementation baseline focused on environment setup and local execution reliability:
+
+- Local Sui validator stack with Docker Compose
+- Health-gated startup sequencing between validator and agent services
+- A sample agent that runs a real signed transaction against local Sui RPC
+- Bootstrap scripts for initial development environment setup
+
+### What Is Working Now
+
+- `sui-local` starts with a JSON-RPC healthcheck gate.
+- `agent-sample` starts only when `sui-local` is healthy.
+- `agent-sample` funds an ephemeral signer from local faucet and executes a transaction.
+
+## Quick Start (Local)
+
+### 1) Start The Stack
+
+From repository root:
+
+```bash
+docker compose -f docker/docker-compose.yml up -d --build
+```
+
+### 2) Confirm Service Health
+
+```bash
+docker compose -f docker/docker-compose.yml ps
+```
+
+Expected:
+- `sui-local` shows `healthy`
+- `agent-sample` starts after `sui-local` health is green
+
+### 3) Inspect Transaction Outcome
+
+```bash
+docker compose -f docker/docker-compose.yml logs --tail=150 agent-sample
+```
+
+Look for:
+- `Funded balance:`
+- `Transaction digest:`
+- `Execution status: success`
+
+### 4) Optional RPC Check
+
+```bash
+curl -sS -X POST \
+	-H 'content-type: application/json' \
+	--data '{"jsonrpc":"2.0","id":1,"method":"sui_getLatestCheckpointSequenceNumber","params":[]}' \
+	http://127.0.0.1:9000
+```
+
+## Documentation Index
+
+- `docs/OPERATIONS_RUNBOOK.md`: startup, validation, and recovery operations.
+- `docs/PRODUCTION_READINESS_CHECKLIST.md`: detailed go-live checklist and sign-off template.
+- `CHANGELOG.md`: milestone-based change history.
+
 ## Core Concept
 
 SAPM combines:
@@ -107,3 +168,13 @@ Example: **“Will SUI be above X by a target date?”**
 - Open-source under project org
 - Pursue Sui grants/ecosystem alignment
 - Expand to multi-oracle feeds, richer derivatives/market types, and DePIN data sources
+
+## Production Readiness Guidance
+
+Before any production launch, complete the full checklist in `docs/PRODUCTION_READINESS_CHECKLIST.md`.
+
+Key priorities:
+- Managed key custody and secret rotation
+- Transaction risk controls and replay protections
+- Full CI quality gates (tests, security scans, policy checks)
+- Observability, incident response, and rollback drills
