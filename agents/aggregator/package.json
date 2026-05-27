@@ -1,0 +1,16 @@
+{
+  "name": "sapm-aggregator",
+  "version": "0.0.1",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.18.2",
+    "tweetnacl": "^1.0.3",
+    "prom-client": "^14.0.1",
+    "@mysten/sui": "^1.28.0"
+  }
+}

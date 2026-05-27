@@ -36,11 +36,69 @@ services:
     depends_on:
       sui-local:
         condition: service_healthy
+      # Ensure aggregator is available (service start) so agent can POST updates
+      aggregator:
+        condition: service_started
     environment:
       - SUI_RPC=http://sui-local:9000
       - SUI_FAUCET_URL=http://sui-local:9123/v2/gas
+      - AGGREGATOR_URL=https://aggregator-proxy
+      - AGG_TOKEN=${AGG_TOKEN:-changeme}
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
     restart: on-failure
+
+  aggregator:
+    image: node:20-bullseye
+    container_name: sapm-aggregator
+    working_dir: /app
+    volumes:
+      - ../agents/aggregator:/app
+      - aggregator_data:/data
+      - ../agents/aggregator/certs:/certs:ro
+    command: sh -c "npm install --no-audit --no-fund && node server.js"
+    # aggregator listens only on internal network; external access via nginx proxy
+    environment:
+      - PORT=4000
+      - AGG_TOKEN=${AGG_TOKEN:-changeme}
+      - MODEL_DIR=/data
+      - TLS_CERT=/certs/server.crt.pem
+      - TLS_KEY=/certs/server.key.pem
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -k -fsS https://localhost:4000/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  aggregator-proxy:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: aggregator-proxy
+    depends_on:
+      - aggregator
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../agents/aggregator/certs:/certs:ro
+      - nginx_webroot:/var/www/certbot
+      - nginx_certs:/etc/letsencrypt
+    environment:
+      - HOST_DOMAIN=${PROXY_DOMAIN:-aggregator}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 6
 
 volumes:
   sui-data:
     name: sui_local_data
+  aggregator_data:
+    name: sapm_aggregator_data
+  nginx_webroot:
+    name: sapm_nginx_webroot
+  nginx_certs:
+    name: sapm_nginx_certs
