@@ -12,6 +12,14 @@ async function requestSimpleRpcVersion(client) {
   }
 }
 
+function deriveSignKeypairFromSuiKeypair(keypair) {
+  // Sui Ed25519 secret key material may include public bytes; seed is first 32 bytes.
+  const raw = Buffer.from(keypair.keypair.secretKey)
+  if (!raw || raw.length < 32) throw new Error('invalid Sui keypair secret material')
+  const seed = raw.subarray(0, 32)
+  return nacl.sign.keyPair.fromSeed(new Uint8Array(seed))
+}
+
 async function start({ rpc, faucetUrl, aggregatorUrl }) {
   console.log('Phase 1 agent runtime starting')
   const client = new SuiClient({ url: rpc })
@@ -30,13 +38,11 @@ async function start({ rpc, faucetUrl, aggregatorUrl }) {
   // Local in-memory aggregation buffer (Phase 1 simple aggregator)
   const updatesBuffer = []
 
-  const { randomUUID } = require('crypto')
   // Derive FL signing key from the agent's Sui Ed25519 keypair seed
   const nacl = require('tweetnacl')
   const util = require('tweetnacl-util')
   // Sui Ed25519Keypair exposes a 32-byte secretKey seed at `keypair.secretKey`
-  const seed = Buffer.from(keypair.keypair.secretKey)
-  const signKey = nacl.sign.keyPair.fromSeed(seed)
+  const signKey = deriveSignKeypairFromSuiKeypair(keypair)
   const pubkeyB64 = util.encodeBase64(Buffer.from(signKey.publicKey))
 
   // Attempt to register this agent pubkey with aggregator if token is provided
@@ -61,18 +67,23 @@ async function start({ rpc, faucetUrl, aggregatorUrl }) {
       const update = await fl.computeLocalUpdate(model)
       console.log('Computed local update sample:', update.slice(0, 3))
 
-      const ts = Date.now()
-      const nonce = (typeof randomUUID === 'function') ? randomUUID() : (Math.random().toString(36).slice(2) + Date.now().toString(36))
-      const payloadStr = JSON.stringify({ update, ts, nonce })
-      const msg = util.decodeUTF8(payloadStr)
-      const sig = nacl.sign.detached(msg, signKey.secretKey)
-      const sigB64 = util.encodeBase64(Buffer.from(sig))
-
       // If we have an external aggregator, send signed payload; otherwise buffer locally
       if (aggregatorUrl) {
-        const payload = { update, pubkey: pubkeyB64, sig: sigB64, ts, nonce }
-        const ok = await fl.sendUpdate(aggregatorUrl, payload)
-        console.log('Sent signed update to aggregator:', ok)
+        const payload = fl.buildSignedPayload(update, signKey, pubkeyB64)
+        const sendRes = await fl.sendUpdate(aggregatorUrl, payload)
+        console.log('Sent signed update to aggregator:', sendRes.ok, sendRes.status || sendRes.error || '')
+        // If upstream aggregator is unavailable, keep local fallback progress.
+        if (!sendRes.ok) {
+          updatesBuffer.push(update)
+          if (updatesBuffer.length >= 3) {
+            const agg = await fl.aggregateUpdates(updatesBuffer)
+            model = agg
+            await store.saveModel(model)
+            const meta = await store.commitModel(model)
+            console.log('Fallback local aggregate applied after send failures; meta:', meta)
+            updatesBuffer.length = 0
+          }
+        }
       } else {
         updatesBuffer.push(update)
         // once buffer grows, aggregate and apply

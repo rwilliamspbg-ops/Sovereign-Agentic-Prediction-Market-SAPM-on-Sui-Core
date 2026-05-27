@@ -1,0 +1,45 @@
+name: phase2-hardening-ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  phase2-sim-and-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            agents/aggregator/package-lock.json
+            agents/sample/package-lock.json
+
+      - name: Script lint gate
+        run: bash -n scripts/phase2_sim.sh
+
+      - name: Run Phase 2 simulations
+        run: ./scripts/phase2_sim.sh
+
+      - name: Enforce consolidated report policy
+        run: |
+          node -e "const fs=require('fs');const p='artifacts/phase2/phase2_profiles_report.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));if(!j.overallPass){console.error('overallPass=false in '+p);process.exit(1)};console.log('Policy gate passed for',p)"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase2-sim-artifacts
+          path: |
+            artifacts/phase2/phase2_profiles_report.json
+            /tmp/sapm-agg-sim/byzantine_report.json
+            /tmp/sapm-agg-security-sim/security_attack_report.json
+            /tmp/sapm-agg-identity-sim/identity_attack_report.json
+          if-no-files-found: error
