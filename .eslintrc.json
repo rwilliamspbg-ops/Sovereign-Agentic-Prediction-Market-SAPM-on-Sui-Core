@@ -1,0 +1,16 @@
+{
+  "env": {
+    "node": true,
+    "es2024": true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "script"
+  },
+  "rules": {
+    "no-unused-vars": ["warn", { "args": "none", "ignoreRestSiblings": true }],
+    "no-console": "off",
+    "semi": ["error", "always"]
+  }
+}

@@ -244,3 +244,64 @@ theorem tpm_attestation_verification : verified_pcr → trusted_platform := by s
 ## Contact
 
 For questions or contributions, contact the Sovereign Mohawk Proto LLC operations team.
+
+---
+
+Developer Quickstart (Run locally)
+---------------------------------
+
+1. Install Node and tools
+
+```bash
+# Recommended: use Node 24 (tested in this workspace)
+nvm install 24 && nvm use 24
+
+# Install root dev dependencies (lint, husky)
+npm install
+```
+
+2. Install per-agent deps and run tests
+
+```bash
+# Run all package tests from repo root
+npm run test:all
+
+# Or per-package
+cd agents/trader && npm ci && npm test
+cd ../aggregator && npm ci && npm test
+cd ../orchestrator && npm ci && npm test
+```
+
+3. Lint and auto-fix
+
+```bash
+npm run lint
+npm run lint:fix
+```
+
+4. Pre-commit hooks
+
+Husky + lint-staged run ESLint on staged JS files. To test locally:
+
+```bash
+# Make a small change to any JS file, stage and commit
+git add path/to/file.js
+git commit -m "chore: test pre-commit hook"
+```
+
+Troubleshooting
+---------------
+
+- If `jest: not found` errors occur in `agents/orchestrator`, run `npm ci` in that package or run `npm run test:orchestrator` from root which will install deps.
+- If ESLint prompts to install, run `npm install` at repo root to install the dev tooling.
+- If aggregator fails to write to `/data`, start it with a writable `MODEL_DIR`:
+
+```bash
+cd agents/aggregator
+MODEL_DIR=./tmp_model npm start
+```
+
+- If CI fails on Node version, ensure your local Node matches `.nvmrc` or the `engines` field in `package.json` (Node >=18; Node 24 recommended).
+
+For further development guidance see DEVELOPMENT.md.
+

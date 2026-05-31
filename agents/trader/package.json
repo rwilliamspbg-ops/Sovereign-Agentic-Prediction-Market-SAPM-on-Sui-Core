@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dry-run": "node index.js --dry-run",
-    "test": "jest",
+    "test": "node --test",
     "lint": "eslint . --ext .js"
   },
   "keywords": [
@@ -24,5 +24,9 @@
   },
   "engines": {
     "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^10.4.1",
+    "jest": "^30.4.2"
   }
 }
