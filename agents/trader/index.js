@@ -4,6 +4,7 @@
  */
 
 const { ForecastToTradeAdapter } = require('./forecast_to_trade');
+// test commit: trigger husky pre-commit hook (harmless comment)
 
 // Example forecast metadata structure (from aggregator)
 const exampleForecast = {
