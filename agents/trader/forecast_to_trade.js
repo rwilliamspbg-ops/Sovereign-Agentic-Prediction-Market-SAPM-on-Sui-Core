@@ -59,7 +59,7 @@ class ForecastToTradeAdapter {
         marketValidation = await this.marketDiscovery.validateMarket(marketObjectId, packageId);
       } else if (!this.marketDiscovery.client && !dryRun) {
         // If not initialized and not a dry-run, attempt to initialize a client
-        await this.marketDiscovery.initialize(this.config.rpcEndpoint || rpcEndpoint).catch(() => {})
+        await this.marketDiscovery.initialize(this.config.rpcEndpoint || rpcEndpoint).catch(() => {});
         if (this.marketDiscovery.client) {
           marketValidation = await this.marketDiscovery.validateMarket(marketObjectId, packageId);
         }
