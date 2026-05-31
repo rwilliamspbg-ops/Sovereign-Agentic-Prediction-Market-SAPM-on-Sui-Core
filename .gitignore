@@ -16,3 +16,12 @@ agents/aggregator/certs/*.pem
 # OS/editor noise
 .DS_Store
 *.log
+
+# local artifacts
+agents/aggregator/tmp_model/
+agents/sample/model.json
+agents/sample/model.meta.json
+
+# lint config (local)
+eslint.config.cjs
+.eslintrc.json
