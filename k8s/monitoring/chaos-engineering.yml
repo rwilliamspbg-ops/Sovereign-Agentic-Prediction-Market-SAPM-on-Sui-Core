@@ -1,0 +1,81 @@
+# Chaos Engineering Configuration for SAPM Platform
+# Tests resilience under various fault conditions
+
+experiment:
+  name: "sapm-resilience-testing"
+  
+scenarios:
+  - name: "agent-disconnection-stress"
+    description: "Simulate agent disconnections during aggregation rounds"
+    steps:
+      - action: "pod-kill"
+        target: "aggregator"
+        count: 1
+        duration: "2m"
+      
+      - action: "network-latency"
+        target: "all-pods"
+        latencyMs: 500
+        duration: "3m"
+      
+      - action: "verify-recovery"
+        check: "aggregation-success-rate > 0.95"
+
+  - name: "market-discovery-failure"
+    description: "Test system behavior when market discovery fails"
+    steps:
+      - action: "service-mock"
+        target: "registry-service"
+        response: "error-503"
+        duration: "2m"
+      
+      - action: "verify-degraded-mode"
+        check: "fallback-market-available == true"
+
+  - name: "memory-pressure-test"
+    description: "Test memory management under pressure"
+    steps:
+      - action: "resource-limiter"
+        target: "aggregator"
+        limitMemoryPercent: 70
+        duration: "5m"
+      
+      - action: "verify-gc-behavior"
+        check: "gc-pause < 200ms"
+
+  - name: "reputation-manipulation-defense"
+    description: "Test defense against reputation score manipulation"
+    steps:
+      - action: "api-flood"
+        target: "/api/v1/predictions"
+        rate: "100/min"
+        duration: "3m"
+      
+      - action: "verify-reputation-stability"
+        check: "reputation-drift < 0.05"
+
+  - name: "byzantine-agent-injection"
+    description: "Test Byzantine fault tolerance with malicious agents"
+    steps:
+      - action: "infect-pod"
+        target: "random-agent"
+        infectionType: "return-invalid-forecasts"
+        count: 2
+        duration: "5m"
+      
+      - action: "verify-aggregation-integrity"
+        check: "outlier-detected == true"
+
+alerting:
+  rules:
+    - name: "high-latency-alert"
+      condition: "aggregation_latency_p99 > 800ms for 5m"
+      severity: "warning"
+      
+    - name: "agent-reputation-decline"
+      condition: "avg(agent_reputation) < 0.7 for 10m"
+      severity: "critical"
+
+    - name: "market-discovery-failure"
+      condition: "market_discovery_errors > 5 for 3m"
+      severity: "warning"

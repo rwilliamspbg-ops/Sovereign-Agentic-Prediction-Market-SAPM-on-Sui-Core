@@ -1,0 +1,40 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'sapm-aggregator'
+    static_configs:
+      - targets: ['sapm-aggregator:9090']
+    metrics_path: /metrics
+    scrape_timeout: 10s
+
+  - job_name: 'sapm-trader'
+    static_configs:
+      - targets: ['sapm-trader:4001']
+    metrics_path: /metrics
+    scrape_timeout: 10s
+
+service_discovery_configs:
+  - job_name: 'kubernetes-pods'
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          - name: sapm-system
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: replace
+        regex: true
+        replacement: '1'
+        source_label: __meta_kubernetes_pod_annotation_prometheus_io_path
+        action: replace
+        target_label: __metrics_path__
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ('(.+:.*(?<!/))');('(\d+)')
+        replacement: '$1:/$2'
+        target_label: __address__
+
+rule_files:
+  - "/*.yml"
+  - "/*.yaml"

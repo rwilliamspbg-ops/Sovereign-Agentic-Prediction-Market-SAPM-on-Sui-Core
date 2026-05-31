@@ -1,13 +1,28 @@
 {
-  "name": "sapm-trader",
-  "version": "0.0.1",
-  "private": true,
+  "name": "@sapm/trading-adapter",
+  "version": "1.0.0",
+  "description": "SAPM Trading Adapter - Phase 3 On-chain trading integration for DeepBook Predict markets",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "node --test"
+    "dry-run": "node index.js --dry-run",
+    "test": "jest",
+    "lint": "eslint . --ext .js"
   },
+  "keywords": [
+    "sapm",
+    "trading",
+    "deepbook-predict",
+    "sui",
+    "prediction-market",
+    "ptb"
+  ],
+  "author": "Sovereign Mohawk Proto LLC",
+  "license": "MIT",
   "dependencies": {
-    "@mysten/sui": "^1.28.0"
+    "@mysten/sui": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

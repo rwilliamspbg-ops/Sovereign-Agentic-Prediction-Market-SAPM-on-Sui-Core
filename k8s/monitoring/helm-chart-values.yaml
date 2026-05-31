@@ -1,0 +1,80 @@
+# SAPM Helm Chart Values for Kubernetes Deployment
+# Sovereign Mohawk Proto LLC - Phase 2/3 Foundation
+
+replicaCount: 1
+
+image:
+  repository: sovereign-mohawk/sapm-aggregator
+  tag: "phase2-phase3-0.1.0"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: sapm-aggregator-sa
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9090"
+  prometheus.io/path: "/metrics"
+
+ports:
+  - name: aggregator
+    containerPort: 4000
+    protocol: TCP
+  - name: metrics
+    containerPort: 9090
+    protocol: TCP
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "250m"
+  limits:
+    memory: "2Gi"
+    cpu: "2000m"
+
+# FL Aggregation Configuration
+flConfig:
+  aggregationIntervalMs: 30000
+  predictionWindowSize: 10
+  minParticipationThreshold: 0.15
+  
+# Agent Management
+agentManagement:
+  maxConcurrentConnections: 50
+  agentReputationDecay: 0.95
+  slashingThreshold: 0.7
+
+# Market Discovery
+marketDiscovery:
+  registryPackageId: "0xplaceholder_registry_package_id"
+  autoDiscoverMarkets: true
+  marketTTLMinutes: 30
+
+# Performance Tuning (Phase 3)
+performance:
+  hugepagesEnabled: false  # Set to true on production nodes
+  cpuPinning: false        # Set to true on dedicated hardware
+  eventLoopLimit: 256     # Node.js worker threads
+
+# Observability
+observability:
+  metricsEnabled: true
+  metricsPort: 9090
+  healthCheckPath: "/health"
+  
+  logging:
+    level: "info"
+    format: "json"
+
+# Sui RPC Configuration (Phase 3 Trading)
+suiConfig:
+  rpcEndpoint: ""
+  packageId: ""
+  dryRunMode: false
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

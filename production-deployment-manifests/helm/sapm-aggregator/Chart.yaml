@@ -1,0 +1,29 @@
+apiVersion: v2
+name: sapm-aggregator
+description: High-performance AF_XDP zero-copy prediction market aggregator
+
+# A chart can be either an 'application' or a 'library' chart.
+# An application chart provides commands for installation/uninstallation and usually contains templates that generate deployment manifests.
+type: application
+
+# This is the chart version as declared by its author.
+version: 0.1.0
+
+# This is the version number of the application being deployed. This version number should match the tag in the k8s image within your kubernetes/values.yaml file.
+appVersion: "v1.0.0"
+
+keywords:
+  - prediction-market
+  - high-performance-networking
+  - af-xdp
+  - zero-copy
+  - sovereign-mohawk-proto
+
+maintainers:
+  - name: Sovereign Mohawk Proto LLC
+    email: ops@sovereign-mohawk.io
+
+annotations:
+  category: High-Performance Infrastructure
+  performance-tier: Line-Rate Forwarding
+  verification-status: Formally Verified

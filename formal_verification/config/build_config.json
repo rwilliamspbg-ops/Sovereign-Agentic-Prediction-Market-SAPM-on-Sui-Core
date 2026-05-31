@@ -1,0 +1,65 @@
+{
+  "project": {
+    "name": "SAPM Formals",
+    "version": "1.0.0",
+    "description": "Sovereign Agentic Prediction Market - Formal Verification Framework"
+  },
+  "lean4": {
+    "version": "4.0.0",
+    "imports": [
+      "Mathlib.Tactic",
+      "Data.Finset",
+      "Data.Real.Basic"
+    ]
+  },
+  "targets": {
+    "verify_all": {
+      "description": "Run full formal verification suite",
+      "commands": [
+        "lean --elab-elims lean4/aggregation/*.lean",
+        "lean --elab-elims lean4/byzantine_tolerance/*.lean", 
+        "lean --elab-elims lean4/crypto/*.lean",
+        "lean --elab-elims lean4/oracle/*.lean"
+      ]
+    },
+    "verify_aggregation": {
+      "description": "Verify aggregation logic only",
+      "commands": ["lean --elab-elims lean4/aggregation/*.lean"]
+    },
+    "verify_byzantine": {
+      "description": "Verify BFT protocols only",
+      "commands": ["lean --elab-elims lean4/byzantine_tolerance/*.lean"]
+    },
+    "verify_crypto": {
+      "description": "Verify crypto protocols only", 
+      "commands": ["lean --elab-elims lean4/crypto/*.lean"]
+    },
+    "verify_oracle": {
+      "description": "Verify oracle contracts only",
+      "commands": ["lean --elab-elims lean4/oracle/*.lean"]
+    }
+  },
+  "artifacts": {
+    "theorems_registry": "artifacts/theorems.json",
+    "traceability_matrix": "artifacts/traceability_matrix.json",
+    "verification_summary": "artifacts/verification_summary.json",
+    "specification_index": "artifacts/specification_index.json"
+  },
+  "performance": {
+    "cache_enabled": true,
+    "parallel_jobs": 4,
+    "timeout_seconds": 300
+  },
+  "integration": {
+    "go_aggregator_integration": {
+      "phase": 2,
+      "spec_file": "artifacts/aggregation_spec.json",
+      "validation_endpoint": "/api/v1/formals/validate"
+    },
+    "nodejs_adapter_integration": {
+      "phase": 3,
+      "spec_file": "artifacts/crypto_spec.json",
+      "crypto_validation_endpoint": "/api/v1/crypto/verify"
+    }
+  }
+}

@@ -1,0 +1,134 @@
+# SAPM Aggregator Helm Chart Values
+# High-performance AF_XDP zero-copy configuration
+
+global:
+  imageRegistry: "registry.sovereign-mohawk.io"
+  imageTag: "v1.0.0"
+
+replicaCount: 3          # Minimum for BFT agreement (f < n/3)
+
+aggregator:
+  image:
+    repository: sovereign-mohawk/proto-aggregator
+    tag: v1.0.0
+    pullPolicy: Always
+    
+  # AF_XDP Zero-Copy Tuning
+  xdp:
+    enabled: true
+    networkInterface: "eth0,eth1,eth2"
+    ringBufferSize: 262144      # 256KB per interface
+    packetMaxSize: 9516         # Maximum Ethernet frame size
+    
+  # Hugepages for line-rate forwarding
+  hugepages:
+    enabled: true
+    count: 32768                # 64GB of 2MB hugepages
+    mountPath: /dev/hugepages
+  
+  # CPU affinity for zero-context-switch design
+  cpuAffinity: "0-7,16-23,32-39"  # Pin to specific cores
+  
+  # Resource limits (optimized for high-throughput)
+  resources:
+    limits:
+      cpu: "8"                  # 8 cores pinned
+      memory: "16Gi"
+    requests:
+      cpu: "4"
+      memory: "8Gi"
+
+network:
+  protocol: "af_xdp"           # AF_XDP for zero-copy
+  xdpProgramPath: "/etc/sapm/xdp/xdp_prog.ko"
+  forwardingMode: "line-rate"  # Optimize for maximum throughput
+
+securityContext:
+  privileged: true             # Required for AF_XDP kernel modules
+  capabilities:
+    add: ["NET_ADMIN", "SYS_ADMIN"]
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: true
+
+# Liveness/readiness probes tuned for XDP operations
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  execCommand: "/usr/local/bin/xdp-status-checker"
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  execCommand: "/usr/local/bin/aggregator-healthcheck"
+
+# Service configuration for BFT consensus and control plane
+service:
+  type: "ClusterIP"
+  port: 8080
+  targetPort: 8080
+  
+# Health check endpoint
+healthCheck:
+  enabled: true
+  path: "/health"
+  port: 8080
+
+# Prometheus metrics
+metrics:
+  enabled: true
+  port: 9090
+  paths:
+    - "/metrics/xdp_stats"
+    - "/metrics/bpf_programs"
+    - "/metrics/aggregator_latency"
+
+# Horizontal Pod Autoscaler for redundancy
+autoscaling:
+  enabled: true
+  minReplicas: 3           # Minimum for BFT agreement (n > 3f)
+  maxReplicas: 9           # Maximum across NUMA nodes
+  targetCPUUtilizationPercentage: 70
+
+# Resource quotas
+resourceQuota:
+  requestsCpu: "32"
+  requestsMemory: "64Gi"
+  limitsCpu: "64"
+  limitsMemory: "128Gi"
+
+# Network isolation policy
+networkPolicy:
+  enabled: true
+  ingressRules:
+    - fromAppLabel: "sapm-aggregator"
+      port: 8080
+      protocol: TCP
+  
+  egressRules:
+    - toNamespace: "go-control-plane"
+      port: 443
+      protocol: TCP
+
+# Sysctl optimizations (automatically applied via ConfigMap)
+sysctlOptimizations:
+  vmNrHugepages: 32768
+  vmMaxMapCount: 262144
+  netCoreRmemMax: 67108864
+  netCoreWmemMax: 67108864
+  netIpv4TcpRmem: "4096 87380 67108864"
+  netIpv4TcpWmem: "4096 65536 67108864"
+  netCoreBpfJitEnable: 1
+
+# Deployment configuration
+deployment:
+  nameOverride: "sapm-aggregator"
+  namespaceOverride: ""
+  labels: {}
+  
+  topologySpreadConstraints:
+    maxSkew: 1
+    topologyKey: "topology.kubernetes.io/zone"
+    whenUnsatisfiable: ScheduleAnyway

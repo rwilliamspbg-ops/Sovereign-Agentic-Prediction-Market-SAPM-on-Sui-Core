@@ -1,0 +1,105 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "sapm-overview",
+    "title": "SAPM Platform Overview - Federated Learning & Trading",
+    "tags": ["SAPM", "FederatedLearning", "Sui"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "10s",
+    "liveNow": true,
+    "panels": [
+      {
+        "id": 1,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "type": "graph",
+        "title": "Aggregation Latency (ms)",
+        "targets": [
+          {
+            "expr": "rate(sapm_aggregation_latency_ms_sum[5m])",
+            "legendFormat": "{{quantile}}"
+          }
+        ],
+        "yaxes": [
+          {"format": "ms", "label": "Latency"}
+        ],
+        "lines": true,
+        "fill": 1
+      },
+      {
+        "id": 2,
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0},
+        "type": "stat",
+        "title": "Active Agents",
+        "targets": [
+          {
+            "expr": "sapm_agent_count{status=\"active\"}",
+            "format": "time_series"
+          }
+        ],
+        "yaxes": [
+          {"format": "short"}
+        ],
+        "sparkline": {
+          "show": true
+        }
+      },
+      {
+        "id": 3,
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0},
+        "type": "stat",
+        "title": "Avg Reputation Score",
+        "targets": [
+          {
+            "expr": "sapm_agent_reputation_avg",
+            "format": "time_series"
+          }
+        ],
+        "yaxes": [
+          {"format": "percentunit", "label": "Reputation"}
+        ]
+      },
+      {
+        "id": 4,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "type": "graph",
+        "title": "Market Coverage & Participation",
+        "targets": [
+          {
+            "expr": "sapm_market_coverage_count",
+            "legendFormat": "Markets with forecasts"
+          },
+          {
+            "expr": "sapm_market_participation_rate * 100",
+            "legendFormat": "Participation Rate (%)"
+          }
+        ],
+        "yaxes": [
+          {"format": "short"},
+          {"format": "percent"}
+        ]
+      },
+      {
+        "id": 5,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "type": "graph",
+        "title": "Aggregation Throughput (preds/min)",
+        "targets": [
+          {
+            "expr": "rate(sapm_aggregated_predictions[5m]) * 60",
+            "legendFormat": "Predictions/minute"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Throughput"}
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "10s"
+  }
+}

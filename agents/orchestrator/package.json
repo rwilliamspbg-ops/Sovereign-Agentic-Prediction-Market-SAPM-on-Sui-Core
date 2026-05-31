@@ -1,0 +1,26 @@
+{
+  "name": "@sapm/orchestrator",
+  "version": "1.0.0",
+  "description": "SAPM Orchestrator Core - Phase 1 Foundation for agent runtime orchestration",
+  "main": "core/orchestrator.js",
+  "scripts": {
+    "start": "node core/orchestrator.js",
+    "test": "jest",
+    "lint": "eslint . --ext .js"
+  },
+  "keywords": [
+    "sapm",
+    "orchestrator",
+    "federated-learning",
+    "sui",
+    "prediction-market"
+  ],
+  "author": "Sovereign Mohawk Proto LLC",
+  "license": "MIT",
+  "dependencies": {
+    "@mysten/sui": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

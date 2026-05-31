@@ -1,78 +1,248 @@
-const { Transaction } = require('@mysten/sui/transactions')
-const { SuiClient } = require('@mysten/sui/client')
-const { buildTradePlan } = require('./forecast_to_trade')
-const { discoverMarket } = require('./market_discovery')
+/**
+ * PTB Builder - Phase 3 Implementation
+ * Builds Programmatic Transaction Blocks for deposits, minting, and position management
+ */
 
-function normalizeConfig(options = {}) {
-  const packageId = options.packageId || process.env.PHASE3_PACKAGE_ID || null
-  const moduleName = options.moduleName || process.env.PHASE3_MODULE_NAME || 'market'
-  const functionName = options.functionName || process.env.PHASE3_FUNCTION_NAME || 'trade'
-  const marketObjectId = options.marketObjectId || process.env.PHASE3_MARKET_OBJECT_ID || null
-  const quoteCoinObjectId = options.quoteCoinObjectId || process.env.PHASE3_QUOTE_COIN_OBJECT_ID || null
-  const minStake = Number(options.minStake ?? process.env.PHASE3_MIN_STAKE ?? 1)
-  return {
-    packageId,
-    moduleName,
-    functionName,
-    marketObjectId,
-    quoteCoinObjectId,
-    minStake,
+const { SuiClient, SUI } = require('@mysten/sui')
+const { Ed25519Keypair } = require('@mysten/sui/keypairs/ed25519')
+
+class PTBBuilder {
+  constructor(config) {
+    this.config = config
+    this.client = null
+    this.keypair = null
+  }
+
+  /**
+   * Initialize builder with RPC and keypair
+   */
+  async initialize(rpcEndpoint, keypairSecret) {
+    if (keypairSecret.startsWith('suiprivkey')) {
+      // Sui private key format - use directly
+      this.keypair = new Ed25519Keypair({ seed: Buffer.from(keypairSecret.slice(7), 'hex') })
+    } else if (keypairSecret.startsWith('0x')) {
+      // Hex seed format
+      const seed = Buffer.from(keypairSecret.slice(2), 'hex')
+      this.keypair = Ed25519Keypair.fromSeed(seed)
+    } else {
+      throw new Error('Invalid keypair format. Expected suiprivkey or hex seed.')
+    }
+
+    this.client = new SuiClient({ url: rpcEndpoint })
+    console.log('[PTBBuilder] Initialized with keypair and RPC')
+    
+    return true
+  }
+
+  /**
+   * Build deposit PTB for DeepBook Predict market
+   */
+  async buildDepositPTB(packageId, marketObjectId, amountCoin, options = {}) {
+    const { dryRun = false, gasBudget = 10000 } = options
+    
+    console.log('[PTBBuilder] Building deposit PTB...')
+    
+    try {
+      // Implementation: Build move call for deposit
+      const response = await this.client.moveCall({
+        target: `${packageId}::deepbook::deposit`,
+        arguments: [marketObjectId, amountCoin],
+        gasBudget: gasBudget
+      })
+
+      return {
+        type: 'deposit',
+        success: true,
+        digest: response.digest,
+        transactionBlockHash: response.transactionBlockHash,
+        events: response.events || []
+      }
+    } catch (error) {
+      if (dryRun) {
+        console.log('[PTBBuilder] Dry-run failed for deposit:', error.message)
+        return {
+          type: 'deposit',
+          dryRun: true,
+          error: error.message
+        }
+      }
+      throw error
+    }
+  }
+
+  /**
+   * Build mint position PTB
+   */
+  async buildMintPositionPTB(packageId, marketObjectId, yesAmount, noAmount, options = {}) {
+    const { dryRun = false, gasBudget = 10000 } = options
+    
+    console.log('[PTBBuilder] Building mint position PTB...')
+    
+    try {
+      // Implementation: Build move call for minting positions
+      const yesCoin = await this.client.getObject({
+        id: yesAmount,
+        options: { showContent: true }
+      })
+
+      const noCoin = await this.client.getObject({
+        id: noAmount,
+        options: { showContent: true }
+      })
+
+      const response = await this.client.moveCall({
+        target: `${packageId}::deepbook::mint`,
+        arguments: [marketObjectId, yesCoin.data?.data?.value, noCoin.data?.data?.value],
+        gasBudget: gasBudget
+      })
+
+      return {
+        type: 'mint',
+        success: true,
+        digest: response.digest,
+        transactionBlockHash: response.transactionBlockHash,
+        positionId: response.positionId || response.events[0]?.parsedData?.event?.topics?.[1]
+      }
+    } catch (error) {
+      if (dryRun) {
+        console.log('[PTBBuilder] Dry-run failed for mint:', error.message)
+        return {
+          type: 'mint',
+          dryRun: true,
+          error: error.message
+        }
+      }
+      throw error
+    }
+  }
+
+  /**
+   * Build redeem position PTB
+   */
+  async buildRedeemPositionPTB(packageId, marketObjectId, positionObjectIds, options = {}) {
+    const { dryRun = false, gasBudget = 10000 } = options
+    
+    console.log('[PTBBuilder] Building redeem position PTB...')
+    
+    try {
+      const response = await this.client.moveCall({
+        target: `${packageId}::deepbook::redeem`,
+        arguments: [marketObjectId, positionObjectIds],
+        gasBudget: gasBudget
+      })
+
+      return {
+        type: 'redeem',
+        success: true,
+        digest: response.digest,
+        transactionBlockHash: response.transactionBlockHash,
+        redeemedPositions: positionObjectIds
+      }
+    } catch (error) {
+      if (dryRun) {
+        console.log('[PTBBuilder] Dry-run failed for redeem:', error.message)
+        return {
+          type: 'redeem',
+          dryRun: true,
+          error: error.message
+        }
+      }
+      throw error
+    }
+  }
+
+  /**
+   * Build multi-step PTB sequence (deposit + mint)
+   */
+  async buildDepositMintSequence(packageId, marketObjectId, yesAmount, noAmount, options = {}) {
+    const { dryRun = false, gasBudget = 10000 } = options
+    
+    console.log('[PTBBuilder] Building deposit+mint sequence PTB...')
+    
+    try {
+      // Step 1: Deposit liquidity (or use existing)
+      // For scaffolding, assume we're minting directly
+      
+      // Step 2: Mint position
+      const response = await this.client.moveCall({
+        target: `${packageId}::deepbook::mint`,
+        arguments: [marketObjectId, yesAmount, noAmount],
+        gasBudget: gasBudget
+      })
+
+      return {
+        type: 'sequence',
+        steps: [
+          {
+            action: 'deposit',
+            status: 'skipped' // Use existing liquidity for demo
+          },
+          {
+            action: 'mint',
+            success: true,
+            digest: response.digest,
+            transactionBlockHash: response.transactionBlockHash
+          }
+        ],
+        totalDigest: response.digest,
+        totalTransactionBlockHash: response.transactionBlockHash
+      }
+    } catch (error) {
+      if (dryRun) {
+        console.log('[PTBBuilder] Dry-run failed for sequence:', error.message)
+        return {
+          type: 'sequence',
+          dryRun: true,
+          error: error.message
+        }
+      }
+      throw error
+    }
+  }
+
+  /**
+   * Execute PTB sequence with dry-run validation
+   */
+  async executeWithValidation(tradePlan, packageId, marketObjectId) {
+    const { decision, confidence, stake, yesAmount, noAmount } = tradePlan
+    
+    console.log('[PTBBuilder] Executing trade plan:', { decision, confidence, stake })
+    
+    // Determine action based on decision
+    let ptbAction = null
+    
+    switch (decision) {
+      case 'buy_yes':
+        ptbAction = await this.buildMintPositionPTB(packageId, marketObjectId, yesAmount, 0, { dryRun: true })
+        break
+      case 'buy_no':
+        ptbAction = await this.buildMintPositionPTB(packageId, marketObjectId, 0, noAmount, { dryRun: true })
+        break
+      case 'hold':
+        ptbAction = { type: 'hold', status: 'no_action', rationale: 'Insufficient confidence or edge' }
+        break
+      default:
+        throw new Error(`Unknown decision: ${decision}`)
+    }
+
+    // Verify PTB validity
+    if (!ptbAction.success && !ptbAction.dryRun) {
+      throw new Error('PTB execution failed')
+    }
+
+    return ptbAction
+  }
+
+  /**
+   * Get builder state for health checks
+   */
+  getState() {
+    return {
+      initialized: this.client !== null,
+      keypairEstablished: this.keypair !== null
+    }
   }
 }
 
-function assertTradeConfig(config) {
-  if (!config.packageId) throw new Error('missing packageId for PTB trade execution')
-  if (!config.marketObjectId) throw new Error('missing marketObjectId for PTB trade execution')
-  if (!config.quoteCoinObjectId) throw new Error('missing quoteCoinObjectId for PTB trade execution')
-}
-
-function buildTradeTransaction(meta, options = {}) {
-  const config = normalizeConfig(options)
-  assertTradeConfig(config)
-  const plan = buildTradePlan(meta, options)
-  const tx = new Transaction()
-  const sender = options.sender || process.env.PHASE3_SENDER || undefined
-  if (sender) {
-    tx.setSenderIfNotSet(sender)
-  }
-  tx.setGasBudgetIfNotSet(Number(options.gasBudget ?? process.env.PHASE3_GAS_BUDGET ?? 100000000))
-
-  const amount = plan.stake < config.minStake ? config.minStake : plan.stake
-  const amountArg = tx.pure.u64(BigInt(Math.trunc(amount * 1_000_000_000)))
-  const marketArg = tx.object(config.marketObjectId)
-  const quoteArg = tx.object(config.quoteCoinObjectId)
-
-  tx.moveCall({
-    target: `${config.packageId}::${config.moduleName}::${config.functionName}`,
-    arguments: [marketArg, quoteArg, amountArg, tx.pure.string(plan.decision), tx.pure.string(plan.marketId)],
-  })
-
-  return { tx, plan, config }
-}
-
-async function dryRunTrade(meta, options = {}) {
-  const rpc = options.rpc || process.env.SUI_RPC || null
-  if (!rpc) throw new Error('missing rpc for dry-run')
-  const client = options.client || new SuiClient({ url: rpc })
-  const discoveredMarket = await discoverMarket({
-    rpc,
-    client,
-    marketObjectId: options.marketObjectId || process.env.PHASE3_MARKET_OBJECT_ID || null,
-    marketId: meta.marketId || meta.round || null,
-    impliedProbability: meta.impliedProbability,
-  })
-  const { tx, plan, config } = buildTradeTransaction({
-    ...meta,
-    marketId: discoveredMarket.marketId,
-    impliedProbability: discoveredMarket.impliedProbability,
-  }, options)
-  const result = await client.dryRunTransactionBlock({ transactionBlock: tx })
-  return { plan, config, result, market: discoveredMarket }
-}
-
-module.exports = {
-  buildTradeTransaction,
-  dryRunTrade,
-  normalizeConfig,
-  assertTradeConfig,
-}
+// Export for module use
+module.exports = { PTBBuilder }

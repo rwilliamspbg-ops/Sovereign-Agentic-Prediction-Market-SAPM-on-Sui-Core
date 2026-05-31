@@ -1,0 +1,28 @@
+[package]
+name = "SAPM.FormalVerification"
+version = "1.0.0"
+license = "MIT"
+description = "Sovereign Agentic Prediction Market - Lean 4 Formal Verification Suite"
+
+[leanpkg]
+required_lean_version = "4.0.0"
+import_from = ["https://github.com/leanprover-community/mathlib"]
+
+# Dependencies for formal verification
+[imports]
+aggregation = "aggregation/multi_krum_correctness"
+byzantine_tolerance = "byzantine_tolerance/bft_agreement"
+crypto_security = "crypto/hybrid_kex_spec"
+oracle_contracts = "oracle/prediction_contract"
+
+# Build targets
+[build_config]
+default_target = "verify_all"
+release_build = false
+verbose_output = true
+
+# Performance settings
+[performance]
+enable_cache = true
+cache_dir = "./.lean-cache"
+max_parallel_jobs = 4

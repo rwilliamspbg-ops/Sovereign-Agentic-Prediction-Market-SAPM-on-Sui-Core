@@ -1,0 +1,28 @@
+{
+  "profiling": {
+    "enabled": true,
+    "endpoints": {
+      "cpuProfile": "/debug/pprof/profile?seconds=30",
+      "goroutineProfile": "/debug/pprof/heap",
+      "blockProfile": "/debug/pprof/block",
+      "mutexProfile": "/debug/pprof/mutex"
+    },
+    "samplingRate": 1,
+    "durationSeconds": 30
+  },
+  "performanceMetrics": {
+    "aggregationLatencyP99Ms": 500,
+    "memoryUsageWarningPercent": 80,
+    "gcPauseWarningMs": 200
+  },
+  "alerts": {
+    "highAggregationLatency": {
+      "duration": "1m",
+      "thresholdMs": 1000
+    },
+    "lowAgentReputation": {
+      "duration": "5m",
+      "thresholdAvg": 0.6
+    }
+  }
+}

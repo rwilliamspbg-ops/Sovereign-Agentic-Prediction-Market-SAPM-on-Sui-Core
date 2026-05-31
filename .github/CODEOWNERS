@@ -1,0 +1,27 @@
+# SAPM CODEOWNERS
+
+# Root level
+*                    @sovereign-mohawk-ops/maintainers
+
+# Agents directory
+agents/              @sovereign-mohawk-ops/architects
+agents/orchestrator/ @sovereign-mohawk-ops/platform-engineers
+agents/sample/      @sovereign-mohawk-ops/engineers
+agents/aggregator/  @sovereign-mohawk-ops/fl-team
+agents/trader/      @sovereign-mohawk-ops/trading-team
+agents/onchain-registry/ @sovereign-mohawk-ops/blockchain-engineers
+
+# Docker and deployment
+docker/             @sovereign-mohawk-ops/devops
+k8s/                @sovereign-mohawk-ops/platform-engineers
+
+# Documentation
+docs/               @sovereign-mohawk-ops/documentation
+
+# Formal verification
+formal_verification/@sovereign-mohawk-ops/formal-team
+Sovereign-Mohawk-Proto/@sovereign-mohawk-ops/formal-team
+
+# Security and secrets
+*.pem               @sovereign-mohawk-ops/security
+.env*               @sovereign-mohawk-ops/security
