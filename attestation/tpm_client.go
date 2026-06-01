@@ -4,11 +4,14 @@
 package attestation
 
 import (
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 
 	"github.com/google/go-tpm/tpm2"
+	"github.com/google/go-tpm/tpm2/transport"
 )
 
 // CertChain is a minimal placeholder for an attestation certificate chain.
@@ -42,20 +45,32 @@ func (c *TPMClient) ReadPCRs() (map[int][]byte, error) {
 	if c == nil || c.rw == nil {
 		return nil, errors.New("TPM client not initialized")
 	}
-	// Read PCRs 0..7 for PCR bank SHA256 as an example
-	res := make(map[int][]byte)
-	for i := 0; i <= 7; i++ {
-		val, err := tpm2.ReadPCR(c.rw, i, tpm2.AlgSHA256)
-		if err != nil {
-			return nil, err
-		}
-		res[i] = val
+	selection := tpm2.TPMLPCRSelection{
+		PCRSelections: []tpm2.TPMSPCRSelection{{
+			Hash:      tpm2.TPMAlgSHA256,
+			PCRSelect: tpm2.PCClientCompatible.PCRs(0, 1, 2, 3, 4, 5, 6, 7),
+		}},
+	}
+	rsp, err := (tpm2.PCRRead{PCRSelectionIn: selection}).Execute(transport.FromReadWriteCloser(c.rw))
+	if err != nil {
+		return nil, err
+	}
+	res := make(map[int][]byte, len(rsp.PCRValues.Digests))
+	for i, digest := range rsp.PCRValues.Digests {
+		res[i] = append([]byte(nil), digest.Buffer...)
 	}
 	return res, nil
 }
 
-// GenerateAttestationReport produces a simple report; full attestation is
-// out-of-scope here and requires TPM keys and certificates.
+// GenerateAttestationReport produces a minimal PCR summary report.
 func (c *TPMClient) GenerateAttestationReport() (*CertChain, error) {
-	return nil, errors.New("attestation report generation not implemented")
+	pcrs, err := c.ReadPCRs()
+	if err != nil {
+		return nil, err
+	}
+	report := "TPM attestation report\n"
+	for i := 0; i <= 7; i++ {
+		report += fmt.Sprintf("PCR[%d]=%s\n", i, hex.EncodeToString(pcrs[i]))
+	}
+	return &CertChain{PEM: []byte(report)}, nil
 }
