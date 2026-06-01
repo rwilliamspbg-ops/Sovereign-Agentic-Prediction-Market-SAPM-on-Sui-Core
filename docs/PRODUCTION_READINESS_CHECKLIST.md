@@ -53,7 +53,7 @@ Use this checklist as a release gate before any production deployment.
 - [ ] Horizontal scaling and capacity plan validated with load tests.
 - [ ] Backup and restore tested for stateful components.
 - [ ] Disaster recovery tested with target RTO and RPO.
-- [ ] Health checks include deep dependency checks, not only process liveness.
+- [x] Health checks include deep dependency checks, not only process liveness.
 
 ## 7. Observability And Operations
 
