@@ -1,3 +1,36 @@
+# AF_XDP Optimization Guide - Production Completion Edition
+
+## Current State Assessment
+
+### Baseline Configuration
+- Ring buffer size: 262144 bytes (RX), 262144 bytes (TX)
+- NAPI polling frequency: [MEASURE]
+- Hugepages allocated: vm.nr_hugepages=32768
+
+## Optimization Checklist
+
+### Week 1 Tasks
+- [ ] Optimize XDP hooks for minimal kernel overhead
+- [ ] Tune ring buffer sizes based on measured packet rate
+- [ ] Implement NAPI polling frequency tuning
+
+## Target Metrics (EPYC-class hardware)
+- Throughput: ≥95 GiB/s
+- Latency p99: <5 μs overhead vs. baseline
+- CPU utilization reduction: ≥66%
+
+## Benchmark Commands
+
+```bash
+# Run AF_XDP benchmark
+make bench_xdp
+
+# Capture pprof artifacts
+pprof -http=:8080 <your-process>
+
+# Validate line-rate forwarding
+./scripts/bench_line_rate.sh
+```
 # AF_XDP Optimization Guide for SAPM Aggregator
 
 ## Executive Summary

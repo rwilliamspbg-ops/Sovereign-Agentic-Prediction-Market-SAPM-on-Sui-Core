@@ -1,0 +1,45 @@
+name: Lean Verification
+
+on:
+  pull_request:
+    paths:
+      - 'formal_verification/**'
+      - '.github/workflows/lean-verification.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'formal_verification/**'
+      - '.github/workflows/lean-verification.yml'
+
+jobs:
+  build-lean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Lean build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            formal_verification/.lake
+            formal_verification/lake-packages
+          key: ${{ runner.os }}-lean-${{ hashFiles('formal_verification/lean-toolchain', 'formal_verification/lakefile.lean') }}
+          restore-keys: |
+            ${{ runner.os }}-lean-
+      - name: Build Lean project
+        env:
+          LEAN_RUST_IMAGE: ghcr.io/${{ github.repository_owner }}/sapm-lean-rust-bootstrap:latest
+        run: |
+          set -euo pipefail
+          if docker pull "$LEAN_RUST_IMAGE"; then
+            echo "Using prebuilt Lean/Rust runner image: $LEAN_RUST_IMAGE"
+            docker run --rm \
+              -v "$GITHUB_WORKSPACE:/workspace" \
+              -w /workspace/formal_verification \
+              "$LEAN_RUST_IMAGE" \
+              lake build
+          else
+            echo "Prebuilt image unavailable; falling back to local bootstrap"
+            bash ./scripts/bootstrap_toolchains.sh
+            cd formal_verification
+            lake build
+          fi
