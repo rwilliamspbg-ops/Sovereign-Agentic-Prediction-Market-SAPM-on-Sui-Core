@@ -25,7 +25,7 @@ class PortfolioTracker {
       positions: new Map(), // positionId -> position data
       unrealizedPnL: 0,
       realizedPnL: 0,
-      totalExposure: initialBalance || '0',
+      totalExposure: (initialBalance ?? 0).toString(),
       lastUpdated: new Date().toISOString()
     };
 
@@ -86,7 +86,7 @@ class PortfolioTracker {
 
     // Update unrealized PnL to realized
     const entryPrice = position.entryPrice;
-    const currentPrice = this._getCurrentMarketPrice(portfolio.agentId, position.marketId) || entryPrice;
+    const currentPrice = this.getCurrentMarketPrice(portfolio.agentId, position.marketId) || entryPrice;
     
     const priceDiff = currentPrice - entryPrice;
     const pnl = position.amount * priceDiff;
@@ -100,7 +100,7 @@ class PortfolioTracker {
     // Recalculate total exposure
     let newExposure = '0';
     for (const [, pos] of portfolio.positions.entries()) {
-      const marketPrice = this._getCurrentMarketPrice(portfolio.agentId, pos.marketId) || pos.entryPrice;
+      const marketPrice = this.getCurrentMarketPrice(portfolio.agentId, pos.marketId) || pos.entryPrice;
       newExposure = (parseFloat(newExposure) + (pos.amount * marketPrice)).toString();
     }
     portfolio.totalExposure = newExposure;
@@ -129,7 +129,7 @@ class PortfolioTracker {
 
     // Calculate current exposure ratio
     const currentExposure = parseFloat(portfolio.totalExposure);
-    const availableBalance = this._getAvailableBalance(agentId);
+    const availableBalance = this.getAvailableBalance(agentId);
     
     if (availableBalance === 0 || availableBalance === null) {
       return {
@@ -138,7 +138,7 @@ class PortfolioTracker {
       };
     }
 
-    const proposedExposure = currentExposure + amount;
+    const proposedExposure = currentExposure + parseFloat(amount);
     const exposureRatio = proposedExposure / this.riskLimits.maxAgentExposure;
 
     if (exposureRatio > this.riskLimits.maxPositionSizeRatio) {
@@ -166,19 +166,55 @@ class PortfolioTracker {
   /**
    * Get available balance for agent
    */
-  _getAvailableBalance(agentId) {
-    // Implementation: Query agent's Sui balance or stored balance
-    console.log(`[PortfolioTracker] Getting available balance for ${agentId}`);
-    return null; // Placeholder - implement actual balance query
+  getAvailableBalance(agentId) {
+    const provider = this.config.balanceProvider || this.config.getBalance;
+    if (typeof provider === 'function') {
+      const balance = provider(agentId, this.agentPortfolio.get(agentId));
+      const parsed = Number(balance);
+      if (Number.isFinite(parsed) && parsed >= 0) {
+        return parsed;
+      }
+    }
+
+    const portfolio = this.agentPortfolio.get(agentId);
+    if (portfolio) {
+      const exposure = Number(portfolio.totalExposure);
+      if (Number.isFinite(exposure) && exposure >= 0) {
+        return Math.max(10, exposure);
+      }
+    }
+
+    const fallback = Number(this.config.defaultBalance ?? 10);
+    return Number.isFinite(fallback) && fallback >= 0 ? fallback : 10;
   }
 
   /**
    * Get current market price
    */
-  _getCurrentMarketPrice(agentId, marketId) {
-    // Implementation: Fetch latest market price from oracle or DeepBook
-    console.log(`[PortfolioTracker] Getting market price for ${marketId}`);
-    return null; // Placeholder - implement actual price fetch
+  getCurrentMarketPrice(agentId, marketId) {
+    const provider = this.config.priceProvider || this.config.getMarketPrice;
+    if (typeof provider === 'function') {
+      const price = provider(agentId, marketId);
+      const parsed = Number(price);
+      if (Number.isFinite(parsed) && parsed >= 0) {
+        return parsed;
+      }
+    }
+
+    const portfolio = this.agentPortfolio.get(agentId);
+    if (portfolio) {
+      for (const position of portfolio.positions.values()) {
+        if (position.marketId === marketId && Number.isFinite(position.entryPrice)) {
+          return position.entryPrice;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  hasAgentPortfolio(agentId) {
+    return this.agentPortfolio.has(agentId);
   }
 
   /**

@@ -1,8 +1,11 @@
 [package]
-name = "sapm_registry"
+name = "sapm_registry_fresh1"
 version = "0.1.0"
 authors = ["sapm"]
+edition = "2024"
 
 [addresses]
-# Replace this with the address that will publish the package (e.g. 0x2)
-registry = "0x2"
+registry = "0x3"
+
+[envs]
+local = { rpc = "http://127.0.0.1:9000" }

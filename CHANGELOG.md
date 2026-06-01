@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is inspired by Keep a Changelog and this project uses date-based milestone entries.
 
+## 2026-06-01 - Documentation Refresh, Checklist Alignment, And Badge Header
+
+### Added
+
+- Workflow badges in the README header for CI, validation, Lean verification, Phase 2 hardening, and the Lean/Rust runner image.
+- A concise finish plan in `PROJECT_COMPLETION_CHECKLIST.md` to sequence the remaining launch work.
+
+### Changed
+
+- Updated the primary completion checklist to mark verified Phase 0, Phase 2, and Phase 3 items complete.
+- Aligned the release docs with the current implementation status and shipped behavior.
+
+### Verified
+
+- README header now surfaces the active workflow state at a glance.
+- The repository checklist now reflects the work that has already been validated locally and in CI.
+
 ## 2026-05-27 - Phase 2 Hardening, Simulation Coverage, And Release Hygiene
 
 ### Added

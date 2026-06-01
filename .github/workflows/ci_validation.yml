@@ -17,11 +17,13 @@ jobs:
         uses: docker/setup-buildx-action@v3
       
       - name: Build and start local stack
+        working-directory: docker
         run: |
-          docker compose -f docker/docker-compose.yml up -d --build
+          docker compose up -d --build
           echo "Local stack built successfully"
       
       - name: Check service health
+        working-directory: docker
         run: |
           docker compose ps
           echo "All services running:"
@@ -29,9 +31,19 @@ jobs:
       
       - name: Validate aggregator endpoints
         run: |
-          sleep 10 # Wait for services to stabilize
-          curl -k -fsS https://localhost:4000/health || exit 1
-          echo "Aggregator health check passed"
+          for attempt in $(seq 1 30); do
+            if curl -k -fsS https://localhost/health; then
+              echo "Aggregator health check passed"
+              exit 0
+            fi
+
+            echo "Waiting for aggregator proxy to become healthy (attempt ${attempt}/30)..."
+            sleep 2
+          done
+
+          echo "Aggregator health check failed"
+          docker compose -f docker/docker-compose.yml ps
+          exit 1
 
   run-phase2-tests:
     name: Run Phase 2 Tests

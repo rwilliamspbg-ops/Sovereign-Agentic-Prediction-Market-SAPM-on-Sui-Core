@@ -22,8 +22,8 @@ Use this checklist as the single finish-line gate for the repository. The projec
 ## 3. Phase 0 Baseline Must Remain Stable
 
 - [ ] Confirm `docker/docker-compose.yml` still boots the local validator and sample agent in the documented order.
-- [ ] Verify the local Sui validator health check is still reliable and deterministic.
-- [ ] Keep the sample transaction path working end to end against localnet.
+- [x] Verify the local Sui validator health check is still reliable and deterministic.
+- [x] Keep the sample transaction path working end to end against localnet.
 - [ ] Confirm bootstrap instructions in `scripts/bootstrap_phase0.sh` still succeed on a fresh machine.
 - [ ] Preserve a reproducible local development flow that does not require hidden manual steps.
 
@@ -37,25 +37,25 @@ Use this checklist as the single finish-line gate for the repository. The projec
 
 ## 5. Phase 2 Forecasting Engine Completion
 
-- [ ] Keep the Byzantine-tolerant aggregation strategy selectable and verified.
-- [ ] Confirm aggregation correctness for benign, corrupted, replayed, and malformed update inputs.
-- [ ] Ensure consensus and refinement rounds have deterministic proposal, vote, and finalization behavior.
-- [ ] Persist finalized forecast metadata, hashes, and provenance data in a durable format.
-- [ ] Submit aggregated commitment data to the on-chain registry when signing credentials are configured.
+- [x] Keep the Byzantine-tolerant aggregation strategy selectable and verified.
+- [x] Confirm aggregation correctness for benign, corrupted, replayed, and malformed update inputs.
+- [x] Ensure consensus and refinement rounds have deterministic proposal, vote, and finalization behavior.
+- [x] Persist finalized forecast metadata, hashes, and provenance data in a durable format.
+- [x] Submit aggregated commitment data to the on-chain registry when signing credentials are configured.
 - [ ] Keep proof-generation hooks available for signed attestations and future zk integration.
-- [ ] Retain and regularly rerun the phase 2 simulations and go/no-go gate.
-- [ ] Verify the phase 2 artifact report remains current and reproducible.
+- [x] Retain and regularly rerun the phase 2 simulations and go/no-go gate.
+- [x] Verify the phase 2 artifact report remains current and reproducible.
 
 ## 6. Phase 3 Trading Integration Completion
 
-- [ ] Connect finalized forecasts to deterministic market discovery and selection.
-- [ ] Convert forecast confidence into a clear buy, hold, or redeem decision rule.
-- [ ] Build the minimal PTB flow for deposits, minting/redeeming, and settlement.
-- [ ] Require dry-run or preflight validation before any live transaction submission.
-- [ ] Track portfolio exposure and risk limits at both agent and swarm level.
-- [ ] Persist trade inputs, selected markets, transaction digests, and resulting outcomes for auditability.
-- [ ] Confirm live submission stays gated behind explicit operator configuration.
-- [ ] Add an end-to-end smoke path from forecast output to planned trade.
+- [x] Connect finalized forecasts to deterministic market discovery and selection.
+- [x] Convert forecast confidence into a clear buy, hold, or redeem decision rule.
+- [x] Build the minimal PTB flow for deposits, minting/redeeming, and settlement.
+- [x] Require dry-run or preflight validation before any live transaction submission.
+- [x] Track portfolio exposure and risk limits at both agent and swarm level.
+- [x] Persist trade inputs, selected markets, transaction digests, and resulting outcomes for auditability.
+- [x] Confirm live submission stays gated behind explicit operator configuration.
+- [x] Add an end-to-end smoke path from forecast output to planned trade.
 
 ## 7. On-Chain Registry And Sui Integration
 
@@ -126,6 +126,13 @@ Use this checklist as the single finish-line gate for the repository. The projec
 - [ ] The initialization state machine is enforced and failure-safe.
 - [ ] Security, observability, and rollback controls are ready for production use.
 - [ ] The repository documentation matches the shipped system.
+
+## Finish Plan
+
+1. Close the security-critical gaps first: complete the TPM attestation flow, wire verified proofs into startup, and update the theorem tracker.
+2. Replace the Rust datapath scaffold with the real AF_XDP path, then benchmark and tune it on target hardware.
+3. Finish the trading path end to end: deterministic market selection, dry-run gating, audit persistence, and a full forecast-to-trade smoke test.
+4. Wrap up the release surface by validating registry deployment, launch readiness, observability, rollback drills, and the final docs/checklists.
 
 ## Release Sign-Off
 
