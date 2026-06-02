@@ -10,6 +10,7 @@ const { PortfolioTracker } = require('./portfolio_tracker');
 class ForecastToTradeAdapter {
   constructor(config) {
     this.config = config || {};
+    this.agentId = this.config.agentId || 'agent-0';
     this.marketDiscovery = new MarketDiscovery({
       gossipTTL: config.gossipTTL,
       heartbeatInterval: config.heartbeatInterval
@@ -97,7 +98,7 @@ class ForecastToTradeAdapter {
       });
 
       // Step 4: Calculate stake based on confidence and Kelly criterion (simplified)
-      const stake = this._calculateStake(confidence, edge, marketObjectId, packageId, dryRun);
+      const stake = await this._calculateStake(confidence, edge, marketObjectId, packageId, dryRun);
 
       // Step 5: Build trade plan
       const tradePlan = {
@@ -110,6 +111,7 @@ class ForecastToTradeAdapter {
         rationale: this._generateRationale(confidence, edge, decision),
         marketObjectId,
         packageId,
+        agentId: this.agentId,
         timestamp: new Date().toISOString(),
         eventQuery
       };
@@ -135,8 +137,14 @@ class ForecastToTradeAdapter {
     console.log('[ForecastToTrade] Executing trade plan...');
     
     // Validate risk limits before execution
+    const agentId = tradePlan.agentId || this.agentId;
+
+    if (!this.portfolioTracker.hasAgentPortfolio(agentId)) {
+      this.portfolioTracker.initAgentPortfolio(agentId, 0);
+    }
+
     const riskCheck = this.portfolioTracker.checkRiskLimits(
-      'agent-0', // Placeholder agent ID - replace with actual
+      agentId,
       marketObjectId,
       tradePlan.decision === 'buy_yes' ? 'yes' : 'no',
       tradePlan.stake,
@@ -193,11 +201,17 @@ class ForecastToTradeAdapter {
   /**
    * Calculate stake using simplified Kelly criterion
    */
-  _calculateStake(confidence, edge, marketObjectId, packageId, dryRun) {
+  async _calculateStake(confidence, edge, marketObjectId, packageId, dryRun) {
     // Simplified Kelly: f* = (bp - q) / b
     // Where b = odds - 1, p = our probability, q = 1 - p
     
-    const impliedProb = this.marketDiscovery.getMarketOdds(marketObjectId, packageId).impliedYesProb || 0.5;
+    let impliedProb = 0.5;
+    try {
+      const oddsData = await this.marketDiscovery.getMarketOdds(marketObjectId, packageId);
+      impliedProb = oddsData.impliedYesProb || oddsData.yesProb || 0.5;
+    } catch (error) {
+      void error;
+    }
     const b = impliedProb > 0 ? (1 / impliedProb) - 1 : 1; // Simplified odds
     
     const fKelly = ((confidence * 0.01 * b) - (1 - confidence * 0.01)) / b;
@@ -206,7 +220,7 @@ class ForecastToTradeAdapter {
     const fFractional = Math.min(0.5, Math.max(0.05, fKelly / 2));
     
     // Convert to stake amount based on available balance (placeholder)
-    const availableBalance = '10'; // Default 10 SUI
+    const availableBalance = this.portfolioTracker.getAvailableBalance(this.agentId);
     const stake = (availableBalance * fFractional).toString();
 
     console.log('[ForecastToTrade] Calculated stake:', {

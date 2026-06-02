@@ -13,15 +13,20 @@ fi
 # Otherwise copy dev self-signed certs from /certs into that path so nginx can start.
 LE_DIR=/etc/letsencrypt/live/$HOST_DOMAIN
 
+mkdir -p "$LE_DIR"
+
 if [ ! -f "$LE_DIR/fullchain.pem" ] || [ ! -f "$LE_DIR/privkey.pem" ]; then
   echo "Let's Encrypt certs not found for $HOST_DOMAIN; checking for dev certs at /certs"
   if [ -f /certs/server.crt.pem ] && [ -f /certs/server.key.pem ]; then
     echo "Copying dev certs into $LE_DIR"
-    mkdir -p /etc/letsencrypt/live/$HOST_DOMAIN
     cp /certs/server.crt.pem /etc/letsencrypt/live/$HOST_DOMAIN/fullchain.pem
     cp /certs/server.key.pem /etc/letsencrypt/live/$HOST_DOMAIN/privkey.pem
   else
-    echo "No certs available; nginx will likely fail to start unless certs are provided."
+    echo "No certs available; generating a fallback self-signed cert for $HOST_DOMAIN"
+    openssl req -x509 -nodes -newkey rsa:2048 -days 3650 \
+      -keyout "$LE_DIR/privkey.pem" \
+      -out "$LE_DIR/fullchain.pem" \
+      -subj "/CN=$HOST_DOMAIN"
   fi
 else
   echo "Found Let's Encrypt certs for $HOST_DOMAIN"

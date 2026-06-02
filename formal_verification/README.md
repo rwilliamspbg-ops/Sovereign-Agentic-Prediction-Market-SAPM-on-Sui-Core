@@ -1,3 +1,32 @@
+# Formal Verification Workspace
+
+This directory contains the Lean 4 formalization used for SAPM proof work.
+
+## Layout
+
+- `lakefile.lean` - Lean project configuration.
+- `lean-toolchain` - pinned Lean version.
+- `lean4/SAPM/` - self-contained Lean modules built by CI.
+
+Current modules
+- `lean4/SAPM/Crypto/KEMAxioms.lean` - abstract KEM types and correctness axiom.
+- `lean4/SAPM/Crypto/HybridKEX.lean` - hybrid composition theorem and KEM-based correctness lemma.
+- `lean4/SAPM/TPM/Primitives.lean` - TPM PCR/attestation primitives and binding theorem.
+- `lean4/SAPM/TPM/Attestation.lean` - attestation wrappers built from the primitives.
+- `lean4/SAPM.lean` - root module imported by `lake build`.
+
+## Build
+
+Run from this directory:
+
+```bash
+lake build
+```
+
+The Lean verification CI workflow also runs `lake build` after bootstrapping the toolchain.
+
+CI now prefers the prebuilt Lean/Rust runner image published by `.github/workflows/lean-rust-runner-image.yml`; if the image is unavailable, the workflow falls back to `scripts/bootstrap_toolchains.sh`.
+
 # SAPM Formal Verification Framework
 
 **Sovereign Agentic Prediction Market - Lean 4 Formal Verification Suite**
