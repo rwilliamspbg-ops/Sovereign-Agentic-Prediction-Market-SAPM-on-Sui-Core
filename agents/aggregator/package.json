@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test test/aggregation.test.js"
+    "test": "node --test test/aggregation.test.js test/reputation-tracker.test.js"
   },
   "dependencies": {
     "body-parser": "^1.20.2",

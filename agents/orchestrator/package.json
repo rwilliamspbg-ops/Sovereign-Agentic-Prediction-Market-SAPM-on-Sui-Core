@@ -5,8 +5,25 @@
   "main": "core/orchestrator.js",
   "scripts": {
     "start": "node core/orchestrator.js",
-    "test": "jest",
+    "test": "jest test/",
+    "test:watch": "jest --watch test/",
+    "test:coverage": "jest --coverage test/",
     "lint": "eslint . --ext .js"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "core/**/*.js",
+      "discovery/**/*.js",
+      "reputation/**/*.js",
+      "tasks/**/*.js"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ],
+    "testMatch": [
+      "**/test/**/*.test.js"
+    ]
   },
   "keywords": [
     "sapm",
