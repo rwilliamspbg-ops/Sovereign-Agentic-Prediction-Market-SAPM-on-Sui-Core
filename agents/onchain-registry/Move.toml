@@ -2,7 +2,9 @@
 name = "sapm_registry"
 version = "0.1.0"
 authors = ["sapm"]
+edition = "2024"
 
 [addresses]
-# Replace this with the address that will publish the package (e.g. 0x2)
-registry = "0x2"
+
+[environments]
+testnet = { rpc = "https://fullnode.testnet.sui.io:443" }
