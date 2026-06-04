@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Incentives Integration Module
  * Integrates reputation tracking into the aggregator

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Portfolio & Risk Tracker - Phase 3 Implementation
  * Tracks per-agent and swarm-level exposure, limits, and risk metrics

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Agent Reputation Tracking System
  * Monitors agent forecast accuracy and updates reputation scores

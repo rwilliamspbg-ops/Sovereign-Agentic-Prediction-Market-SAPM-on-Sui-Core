@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Discovery Service Tests
  * Tests for agent discovery and matchmaking

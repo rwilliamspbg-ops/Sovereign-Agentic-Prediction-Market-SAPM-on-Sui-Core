@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Reputation System Tests
  * Tests for agent reputation and Byzantine detection

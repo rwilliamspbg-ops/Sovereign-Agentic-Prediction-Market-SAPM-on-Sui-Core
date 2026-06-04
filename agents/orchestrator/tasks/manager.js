@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Task Manager - Phase 1 Foundation
  * Handles task assignment, progress tracking, and lifecycle management

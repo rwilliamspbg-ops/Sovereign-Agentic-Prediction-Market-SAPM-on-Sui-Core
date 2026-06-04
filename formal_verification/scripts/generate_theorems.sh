@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
 
 # SAPM Formal Verification Theorem Generator
 # Generates Lean 4 theorem stubs from specification documents
