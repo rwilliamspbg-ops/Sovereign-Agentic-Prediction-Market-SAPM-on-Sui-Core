@@ -25,3 +25,53 @@ agents/sample/model.meta.json
 # lint config (local)
 eslint.config.cjs
 .eslintrc.json
+
+# Build artifacts and cache
+**/.cache/
+**/.turbo/
+.npm/
+.yarn/
+package-lock.json
+pnpm-lock.yaml
+
+# On-chain registry build artifacts
+agents/onchain-registry/build/
+agents/onchain-registry/Move.lock
+agents/onchain-registry/Published.toml
+
+# Lean verification cache
+formal_verification/.lake/packages/
+formal_verification/.lake/artifacts/
+**/.lean-cache/
+
+# Docker volumes (persistent data)
+docker-compose/*.tar
+*.tar.gz
+sui-local_data/
+aggregator_data/
+
+# Kubernetes deployment artifacts
+k8s/logs/
+production-deployment-manifests/staging/
+
+# Performance benchmarks results
+performance_optimization/benchmarks.json
+
+# Test coverage reports
+coverage/
+.nyc_output/
+
+# IDE/editor files
+.idea/
+.vscode/**
+*.swp
+*.swo
+*~
+
+# Generated documentation (if using docgen)
+docs/build/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
