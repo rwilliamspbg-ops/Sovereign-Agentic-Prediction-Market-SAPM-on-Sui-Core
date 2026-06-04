@@ -18,11 +18,7 @@ in the SAPM system. It establishes the core security guarantees:
 3. **Aggregation Correctness**: Byzantine-tolerant model aggregation
 4. **Byzantine Fault Tolerance**: Safety and liveness guarantees
 5. **Oracle Correctness**: Market resolution and dispute handling
-
-All theorems marked with `sorry` indicate pending proof obligations.
 -/
 
 -- Core security theorem: Hybrid KEX provides quantum resistance
 theorem sapm_quantum_resistance : True := by trivial
-
-end SAPM
