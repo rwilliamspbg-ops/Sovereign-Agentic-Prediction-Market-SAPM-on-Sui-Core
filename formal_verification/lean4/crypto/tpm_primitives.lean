@@ -12,13 +12,14 @@ structure AttestationReport where
 
 /-- Abstract primitive: verify PCR digests against expected values -/
 def verifyPCRDigests (pcrs : Finset PCR) (expected : Finset PCR) : Bool :=
-  -- placeholder: assume implementation or oracle
-  true
+  -- Implementation: check all expected PCRs are present and match
+  ∀ pc ∈ expected, pc ∈ pcrs
 
 /-- seal/unseal primitives (abstract) -/
 def sealData (data : String) (handle : Nat) : String := "sealed"
 def unsealData (sealed : String) (handle : Nat) : Option String := some "data"
 
 /-- Attestation verification primitive (abstract/axiomatic) -/
-def verifyAttestation : AttestationReport :=
-  AttestationReport.mk "2.0" ∅
+def verifyAttestation (pcrs_to_verify : Finset PCR) : AttestationReport := by sorry
+
+end TPM.Primitives

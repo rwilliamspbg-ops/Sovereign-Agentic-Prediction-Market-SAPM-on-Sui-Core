@@ -32,6 +32,9 @@ structure TrustedPlatform where
   is_trusted : Bool
   version : String
 
+/-- Expected PCRs function -/
+def getExpectedPCRs() : Finset PCR := by sorry
+
 /-- Attestation Verification Theorem: Hardware integrity verified -/
 theorem tpm_attestation_verification :
   ∀ (attestation_report : AttestationReport),
@@ -39,7 +42,7 @@ theorem tpm_attestation_verification :
     (verifyPCRDigests attestation_report.pcr_digests (getExpectedPCRs()) = true) →
     ∃ (trusted_platform : TrustedPlatform),
       trusted_platform.is_trusted = true ∧ trusted_platform.version = attestation_report.tpm_version := by
-  intros att h
+  intro att h
   -- Construct a TrustedPlatform record when PCR verification succeeds
   use TrustedPlatform.mk true att.tpm_version
   constructor; rfl; rfl
@@ -64,3 +67,5 @@ theorem tpm_remote_attestation :
     ∃ (platform_state : PlatformState),
       platform_state.is_trusted = true ∧
       platform_state.version = tpm_version := by sorry
+
+end TPM.Attestation

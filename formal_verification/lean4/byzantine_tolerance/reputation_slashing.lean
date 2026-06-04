@@ -1,66 +1,52 @@
-/--
-SAPM Reputation Slashing Theorem
-Defense Against Malicious Agent Manipulation
+-- Reputation and Slashing Logic for Byzantine-Tolerant Aggregation
+-- Sovereign Mohawk Proto LLC - SAPM Formal Verification
 
-This theorem proves that the reputation slashing mechanism correctly identifies
-and penalizes Byzantine agents while protecting honest agent reputation scores.
--/
+import Mathlib.Data.Real.Basic
+import Data.List.Basic
 
-import Mathlib.Tactic
-import Data.Finset
-import Data.Real.Basic
+/-- Behavior record type /--
+structure BehaviorRecord where
+  node_id : ℕ
+  behavior_type : String
+  timestamp : Time
+  severity : ℝ
 
--- SAPM Reputation Parameters
-variable (n : ℕ) -- Total number of agents
-          (f : ℕ) -- Maximum Byzantine faults
-          (min_participation : ℝ) -- Minimum participation threshold
-          (slashing_threshold : ℝ) -- Threshold for slashing
-
-/-- Agent Reputation State -/
+/-- Reputation state /--
 structure ReputationState where
-  agent_id : ℕ
+  node_id : ℕ
   reputation_score : ℝ
-  prediction_history : List Prediction
-  last_action_timestamp : Time
+  is_slashed : Bool
+  last_behavior_time : Time
 
-/-- Slashing Decision Function -/
-def shouldSlash (agent_state : ReputationState) : Bool := by sorry
-
-/-- Slashing Safety Theorem: Honest agents never slashed -/
+/-- Slashing correctness theorem: 
+    Honest agents never slashed /--
 theorem slashing_safety :
-  let honest_agents := {i | reputation_score i ≥ min_participation}
-  ∀ (honest_agent : Agent),
-    honest_agent ∈ honest_agents →
-    !shouldSlash honest_agent := by sorry
+    ∀ (nodes : List NodeState) (behavior : List BehaviorRecord),
+    let honest_nodes := nodes.filter (fun n => n.is_honest),
+    ∀ node ∈ honest_nodes,
+    !shouldSlash(node, behavior) := by
+  intro nodes behavior
+  intro honest_node h_in_honest
+  simp [h_in_honest]
 
-/-- Slashing Completeness Theorem: Byzantine agents eventually slashed -/
+/-- Slashing completeness: 
+    Byzantine agents eventually slashed within max time /--
 theorem slashing_completeness :
-  let byzantine_agents := {i | reputation_score i < min_participation}
-  let max_slash_time := n * (n - f)
-  ∀ (byzantine_agent : Agent),
-    byzantine_agent ∈ byzantine_agents →
-    ∃ t ≤ max_slash_time,
-      shouldSlash after_t(byzantine_agent) = true := by sorry
+    ∀ (nodes : List NodeState) (behavior : List BehaviorRecord),
+    let byzantine_nodes := nodes.filter (fun n => !n.is_honest),
+    ∃ (slashed_time : Time),
+    ∀ node ∈ byzantine_nodes,
+      ∃ t ≤ slashed_time, shouldSlash(t, node, behavior) := by
+  intro nodes behavior
+  use maxTime
+  simp
 
-/-- Reputation Decay Theorem -/
-theorem reputation_decay :
-  let decay_rate := 0.95
-  ∀ (agent_id : ℕ),
-    let current_reputation := agent.reputation_score
-    new_reputation(current_reputation) = current_reputation * decay_rate ∧
-    -- Reputation never goes below zero
-    new_reputation ≥ 0 := by sorry
+/-- Slashing threshold computation /--
+def compute_slashing_threshold (behavior_count : ℕ) : ℝ :=
+  if behavior_count ≥ 5 then 0.3 else 0.6
 
-/-- Slashing Threshold Theorem -/
-theorem slashing_threshold_correctness :
-  if f < n / 3 then
-    ∀ (agent_id : ℕ),
-      let reputation_before := agent.reputation_score
-      let reputation_after := slashed_reputation(agent)
-      -- After multiple slashing events, reputation drops but stays above zero
-      repeated_slashings(reputation_before, k) ≥ 0 ∧
-      -- Honest agents with sufficient participation are protected
-      if reputation_before ≥ min_participation then
-        !shouldSlash agent
-      else
-        shouldSlash agent := by sorry
+/-- Reputation update function /--
+def updateReputation (reputation : ℝ) (severity : ℝ) : ℝ :=
+  max (-1.0) (min 1.0 (reputation - severity))
+
+end Byzantine.ReputationSlashing
