@@ -47,4 +47,4 @@ theorem sealed_data_requires_trust (data : List Nat) (handle : Nat) :
   unsealData (sealData data handle) handle = some data := by
   simp [sealData, unsealData]
 
-end SAPM.TPM.Primitives
+end SAPM.TPM

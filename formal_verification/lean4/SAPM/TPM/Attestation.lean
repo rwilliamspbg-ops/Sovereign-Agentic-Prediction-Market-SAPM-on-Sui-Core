@@ -20,4 +20,4 @@ theorem tpm_remote_attestation (report : AttestationReport) :
   refine ⟨{ isTrusted := true, version := report.tpmVersion }, ?_⟩
   simp
 
-end SAPM.TPM.Attestation
+end SAPM.TPM

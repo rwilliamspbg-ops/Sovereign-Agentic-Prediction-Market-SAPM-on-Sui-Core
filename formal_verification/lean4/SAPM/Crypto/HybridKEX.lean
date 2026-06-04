@@ -16,4 +16,4 @@ theorem hybrid_kex_correctness_from_kem (pk : PublicKey) (sk : PrivateKey) :
   decapsulate sk ct = ss := by
   simpa using kem_correctness pk sk
 
-end SAPM.Crypto.HybridKEX
+end SAPM.Crypto
