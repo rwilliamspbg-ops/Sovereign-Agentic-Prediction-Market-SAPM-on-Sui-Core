@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: Apache-2.0
 /**
  * SAPM Agent Trading Test - Live Market Position Testing
  * Tests agent trading on running testnet with live market scenarios

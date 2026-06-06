@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
 
 # SAPM Formal Specification Exporter
 # Exports Lean 4 formal specifications to JSON for integration testing

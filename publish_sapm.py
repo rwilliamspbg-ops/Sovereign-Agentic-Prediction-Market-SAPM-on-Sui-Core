@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
 """
 SAPM Package Publisher - Creates and publishes the contract to Sui Testnet
 """

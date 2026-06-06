@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * DeepBook Predict Market Discovery - Phase 3 Implementation
  * Handles market metadata fetching, event selection, and dry-run validation

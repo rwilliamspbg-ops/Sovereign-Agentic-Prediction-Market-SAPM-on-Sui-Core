@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Phase 1 agent runtime bootstrap
 // Starts a minimal agent runtime with basic federated-learning hooks
 

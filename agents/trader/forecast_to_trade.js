@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Forecast to Trade Adapter - Phase 3 Implementation
  * Converts finalized forecast metadata into deterministic trade plans

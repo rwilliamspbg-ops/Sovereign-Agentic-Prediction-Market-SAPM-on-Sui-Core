@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
 # SAPM DeepSurge Hackathon Submission Build Script
 # Package ID: 0x746797ce439d0e06bdb31d1b0dacc24e7906445292a97fb6a5734de777b8
 

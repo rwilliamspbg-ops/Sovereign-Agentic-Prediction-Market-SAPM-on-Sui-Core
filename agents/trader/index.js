@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * SAPM Trading Adapter - Phase 3 Entry Point
  * Main entry point for forecast-to-trade conversion and execution

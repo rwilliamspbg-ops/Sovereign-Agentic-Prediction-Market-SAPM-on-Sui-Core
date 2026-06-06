@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Reputation Engine - Phase 1 Foundation
  * Byzantine-tolerant reputation scoring with Multi-Krum family aggregation
