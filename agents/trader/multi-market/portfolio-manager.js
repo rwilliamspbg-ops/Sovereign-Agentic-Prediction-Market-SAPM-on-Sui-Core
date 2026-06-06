@@ -490,7 +490,6 @@ async function updatePortfolioState(executionResults) {
  const meta = JSON.parse(metaTxt);
 
  // Save updated allocations
- const MODEL_DIR = process.env.MODEL_DIR || '/data';
  const allocationsFile = path.resolve(MODEL_DIR, 'portfolio.allocations.json');
  
  await fs.writeFile(
