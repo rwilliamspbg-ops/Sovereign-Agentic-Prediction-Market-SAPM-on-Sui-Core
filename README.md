@@ -1,54 +1,165 @@
-# SAPM - Sovereign Agentic Prediction Market
+# SAPM - Sovereign Agentic Prediction Market on Sui
 
-[![CI](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci.yml?branch=main&label=ci)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci.yml)
-[![CI Validation](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci_validation.yml?branch=main&label=ci%20validation)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci_validation.yml)
-[![Lean Verification](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/lean-verification.yml?branch=main&label=lean%20verification)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/lean-verification.yml)
-[![Phase 2 Hardening](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/phase2-hardening-ci.yml?branch=main&label=phase%202%20hardening)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/phase2-hardening-ci.yml)
-[![Lean/Rust Runner](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/lean-rust-runner-image.yml?branch=main&label=lean-rust%20runner)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/lean-rust-runner-image.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=CI)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci.yml)
+[![CI Validation](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci_validation.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=CI%20Validation)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci_validation.yml)
+[![Lean Verification](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/lean-verification.yml?branch=main&style=for-the-badge&logo=leanpub&logoColor=white&label=Lean%20Verification)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/lean-verification.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-D22128?style=for-the-badge&logo=apache&logoColor=white)](LICENSE.md)
+[![Last Commit](https://img.shields.io/github/last-commit/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=git&logoColor=white)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/commits/main)
+[![Stars](https://img.shields.io/github/stars/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github&logoColor=white)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/stargazers)
+[![Forks](https://img.shields.io/github/forks/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github&logoColor=white)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/network/members)
+[![Open Issues](https://img.shields.io/github/issues/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github&logoColor=white)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/issues)
+[![Node >=18](https://img.shields.io/badge/Node-%3E%3D18-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](package.json)
+[![Sui](https://img.shields.io/badge/Sui-Testnet-6fbcf0?style=for-the-badge&logo=sui&logoColor=0b1f3a)](https://docs.sui.io)
+[![Move](https://img.shields.io/badge/Move-Smart%20Contracts-1f8ceb?style=for-the-badge&logo=bookstack&logoColor=white)](agents/onchain-registry)
 
-**Sovereign Mohawk Proto LLC**  
-*High-Performance Kernel-Bypass Networking + Formal Verification*
+[![Sponsor SAPM](https://img.shields.io/badge/Sponsor-SAPM-ea4aaa?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/rwilliamspbg-ops)
 
-## Project Overview
+SAPM turns swarm forecasts into on-chain prediction market actions on Sui. The core loop is:
 
-This repository implements a sovereign, high-performance prediction market aggregator with:
+1. Create or discover a binary market.
+2. Let autonomous agents price outcomes.
+3. Execute policy-bounded trades through Sui programmable transactions.
+4. Resolve market outcomes and update stake/reputation.
 
-1. **AF_XDP Zero-Copy Networking** (up to 128.4 GiB/s line-rate forwarding)
-2. **Lean 4 Formal Verification** (safety, liveness, security proofs)
-3. **Byzantine Fault Tolerance** (Multi-Krum aggregation with reputation slashing)
-4. **Hybrid PQC Cryptography** (x25519-mlkem768 + XMSS for quantum resistance)
-5. **Go Control Plane** (market discovery, routing, bridge contracts)
-6. **Rust Datapath** (zero-copy packet processing kernels)
+This repository includes:
 
-## Architecture
+- Sui Move modules for on-chain registry and staking/reputation incentives.
+- Off-chain agent system for orchestration, aggregation, and trading.
+- PTB scaffolding to submit market actions (deposit, mint, redeem).
+- Formal verification and performance hardening for production-oriented operation.
 
+## 2-Minute Demo Path
+
+If you are evaluating this for a hackathon, start here:
+
+1. Open the visual walkthrough UI:
+   - `demo/visual_dashboard.html`
+2. Run the market/trading demo script:
+   - `cd demo && npm install @mysten/sui && node demo_trading.js`
+3. Run trader adapter in dry-run mode with a sample forecast payload:
+   - `cd agents/trader`
+   - `echo '{"confidence":78.5,"prediction":78.5,"eventQuery":"SUI > $2 by 2026-07-01"}' | node index.js --dry-run --rpc https://fullnode.testnet.sui.io:443 --package-id 0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8 --market-object-id 0xplaceholder_market_object_id`
+4. Inspect output trade plan (`buy_yes` or `hold`), stake sizing, and rationale.
+
+Demo assets:
+
+- Visual dashboard: `demo/visual_dashboard.html`
+- Demo script: `demo/demo_trading.js`
+- Trader CLI: `agents/trader/index.js`
+
+## Market-First Architecture
+
+```mermaid
+flowchart LR
+    U[User / Creator] --> C[Create or Select Market on Sui]
+    C --> M[(Market Object)]
+
+    A1[Trader Agents] --> G[Aggregator]
+    A2[Forecast Sources] --> G
+    G --> O[Orchestrator]
+
+    O --> D[Decision Engine\nedge + confidence + risk]
+    D --> P[PTB Builder]
+    P --> T[Sui Transaction\n deposit/mint/redeem]
+    T --> M
+
+    OR[Oracle / Resolution Feed] --> R[Resolve Outcome]
+    R --> X[Payout + Stake/Reward/Slash Updates]
+    X --> S[(AgentStake / ReputationRegistry)]
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    AF_XDP Fast Path                          │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │                   XDP Program (Zero-Copy)                │ │
-│  │  ┌───────────────────────────────────────────────────┐  │ │
-│  │  │              Rust Kernel Module                    │  │ │
-│  │  │  ┌───────────────┐    ┌──────────────────────┐    │  │ │
-│  │  │  │  Packet Ring  │───▶│  Zero-Copy Buffer   │    │  │ │
-│  │  │  │   (256KB)     │    │   Pool Allocation   │    │  │ │
-│  │  │  └───────────────┘    └──────────────────────┘    │  │ │
-│  │  └───────────────────────────────────────────────────┘  │ │
-│  └─────────────────────────────────────────────────────────┘ │
-│                              │                                │
-│                              ▼                                │
-│                    AF_PACKET Middleware                        │
-│              (TCP/UDP Encapsulation)                           │
-│                              │                                │
-│                              ▼                                │
-│                   Go Control Plane                            │
-│              (Market Discovery & Routing)                       │
-│                              │                                │
-│                              ▼                                │
-│                Byzantine Tolerance Layer                       │
-│          (Multi-Krum Aggregation + Reputation Slashing)         │
-└─────────────────────────────────────────────────────────────┘
-```
+
+The networking and systems stack (AF_XDP, Rust datapath, Go control plane) supports fast ingestion and resilient coordination, but the product surface is the prediction market lifecycle above.
+
+## Sui + Move Design
+
+### On-chain packages and IDs
+
+Current package ID used by demo/trader integration:
+
+- `0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8` (DeepBook-style market target used by trader/demo calls)
+
+Registry/incentives package in this repo:
+
+- Move package path: `agents/onchain-registry`
+- Publish script: `scripts/deploy_onchain_registry.sh`
+- After publish, capture:
+  - `REGISTRY_PACKAGE_ID`
+  - shared object IDs (for `PubkeyRegistry` and/or `ReputationRegistry`)
+
+### Object-centric model (Sui)
+
+Implemented in this repo:
+
+- `registry::PubkeyRegistry` (shared object)
+  - stores registered pubkeys for identity/commitment pathways.
+- `incentives::AgentStake` (shared key object per agent)
+  - stake, reputation, report/correct/slash counters.
+- `incentives::ReputationRegistry` (shared object)
+  - global totals for agents/rewards/slashes.
+
+Integrated target market objects (called by trader scaffolding):
+
+- `Market` object (external DeepBook-style module target)
+  - queried via `get_market` / `get_market_state`.
+- `Position` objects (mint/redeem flows)
+  - actioned via `deposit`, `mint`, `redeem` PTB calls.
+- Outcome state
+  - consumed by agent outcome processing and incentives updates.
+
+## Agentic System: What Runs Autonomously
+
+### `agents/orchestrator`
+
+Purpose:
+
+- Keeps system liveness and sequencing (attest -> key establishment -> operational).
+- Coordinates agent rounds and on-chain commitment paths.
+- Enforces fail-closed behavior for unsafe transitions.
+
+Utility function:
+
+- Maximize reliable round completion under policy constraints.
+
+### `agents/aggregator`
+
+Purpose:
+
+- Aggregates agent outputs with Byzantine-aware logic and reputation weighting.
+- Records round metadata and can submit on-chain commitments.
+- Applies reward/slash economics via incentives logic.
+
+Utility function:
+
+- Maximize forecast quality and robustness while minimizing manipulation risk.
+
+### `agents/trader`
+
+Purpose:
+
+- Converts forecast metadata into deterministic market decisions.
+- Computes edge vs implied probability and policy-bounded stake size.
+- Builds and validates PTB plans before live submission.
+
+Utility function:
+
+- Maximize risk-adjusted expected value subject to confidence, edge, and exposure limits.
+
+## Prediction Market Lifecycle
+
+1. Market creation/discovery
+- Current code targets DeepBook-style market APIs (`get_markets`, `get_market`, `get_market_state`) through Sui RPC.
+
+2. Agent prediction
+- Traders ingest forecast confidence/prediction and compute edge against market-implied odds.
+
+3. Position entry
+- Trader issues PTB plan for `deposit`/`mint` actions.
+
+4. Resolution
+- Market outcome is consumed by incentives/reputation logic.
+
+5. Payout and accountability
+- Honest performance can be rewarded; malicious/poor behavior can be slashed.
 
 ## Frontend - Market Discovery Interface
 
@@ -65,265 +176,67 @@ A professional, production-grade prediction market UI built with Next.js 14 and 
 - ⚡ Sui blockchain integration
 
 See [FRONTEND.md](./FRONTEND.md) for complete documentation.
-## Quick Start
 
+## Quick Start (Developer)
 ### Prerequisites
 
-```bash
-# Install Lean 4 (for formal verification)
-curl -fsSL https://raw.githubusercontent.com/leanprover/quickinstall/master/install.sh | bash
+- Node.js >= 18 (Node 24 recommended)
+- npm
+- Optional: Sui CLI for Move publish/local operations
 
-# Install Rust toolchain
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# Install Docker (for builds)
-docker --version
-```
-
-### Build and Deploy
+### Install and run tests
 
 ```bash
-cd SAPM-on-Sui-Core
-
-# 1. Generate formal verification artifacts
-make verify build artifacts docs
-
-# 2. Build aggregator image
-docker build -t sovereign-mohawk/proto-aggregator:v1.0.0 \
-  -f Dockerfile.aggregator .
-
-# 3. Deploy with Helm
-helm install sapm-aggregator production-deployment-manifests/helm/sapm-aggregator \
-  --create-namespace \
-  --namespace default \
-  --set aggregator.xdp.enabled=true \
-  --set aggregator.hugepages.enabled=true
-
-# 4. Verify deployment
-kubectl get pods -n default -l app=sapm-aggregator
-```
-
-## Performance Benchmarks
-
-| Metric | Baseline (AF_PACKET) | AF_XDP Optimized | Improvement |
-|--------|---------------------|------------------|-------------|
-| Throughput (3x100GbE) | 72.3 GiB/s | **128.4 GiB/s** | **+77%** |
-| Latency (p99) | 45 μs | **8 μs** | **-82%** |
-| CPU Utilization | 68% | **23%** | **-66%** |
-
-### Rust Datapath Benchmarks
-
-| Thread Count | Throughput | Efficiency | Memory RSS |
-|--------------|------------|------------|------------|
-| 1 | 89.2 GiB/s | 100% | 1.2 GB |
-| 4 | 356.8 GiB/s | 100% | 4.8 GB |
-| 16 | **1072.4 GiB/s** | 100% | 19.2 GB |
-
-## Components
-
-### 1. Formal Verification (`formal_verification/`)
-
-Complete Lean 4 formal verification suite for:
-
-- **Aggregation Logic**: Multi-Krum correctness proofs
-- **Byzantine Fault Tolerance**: BFT consensus and reputation slashing proofs
-- **Cryptographic Protocols**: Hybrid KEX security, XMSS unforgeability, TPM attestation
-- **Oracle Contracts**: Market resolution fairness, dispute resolution logic
-
-**Key Theorems:**
-```lean4
-/-- Safety: Honest nodes always agree on decisions /--
-theorem bft_safety : f < n/3 ∧ honest_majority → decisions_identical := by sorry
-
-/-- Liveness: Protocol terminates with valid state /--
-theorem bft_liveness : honest_majority → ∃ final_state, state.terminated := by sorry
-
-/-- Security: Hybrid KEX provides quantum resistance /--
-theorem hybrid_kex_composition : security ≥ max(classical, quantum) := by sorry
-```
-
-**Usage:**
-```bash
-# Verify all theorems
-make verify
-
-# Build verification artifacts
-make build artifacts docs
-
-# View traceability matrix
-cat formal_verification/artifacts/traceability_matrix.json
-```
-
-### 2. Performance Optimization (`performance_optimization/`)
-
-High-performance tuning guides for:
-
-- **AF_XDP Zero-Copy Configuration**: Ring buffers, hugepages, CPU affinity
-- **Rust Datapath Specification**: Lock-free packet processing, in-place crypto
-- **Production Benchmarking**: Line-rate forwarding patterns, memory optimization
-
-**Quick Reference:**
-```bash
-# AF_XDP tuning parameters
-ethtool -G eth0 rx 262144 tx 262144
-vm.nr_hugepages=32768
-cpu-affinity=0-7,16-23,32-39
-
-# See detailed guide
-cat performance_optimization/AF_XDP_Optimizations.md
-```
-
-### 3. Production Deployment (`production-deployment-manifests/`)
-
-Production-ready Kubernetes manifests:
-
-- **Kubernetes DaemonSet**: AF_XDP zero-copy aggregator with hugepages
-- **Helm Chart**: Parameterized deployment with autoscaling
-- **Network Policy**: Isolated forwarding with BFT consensus
-
-**Deployment:**
-```bash
-# Deploy from Helm chart
-helm install sapm-aggregator production-deployment-manifests/helm/sapm-aggregator \
-  --set aggregator.xdp.enabled=true \
-  --set autoscaling.minReplicas=3 \
-  --set autoscaling.maxReplicas=9
-```
-
-### 4. Go Control Plane (`go-control-plane/`)
-
-Market discovery and routing logic:
-
-- **Multi-Krum Aggregation**: Byzantine-tolerant aggregation with outlier detection
-- **Bridge Contracts**: Go-Rust cross-language memory safety contracts
-- **Reputation System**: Slashing logic for malicious agents
-
-### 5. Rust Datapath (`rust-datapath/`)
-
-Zero-copy packet processing kernel module:
-
-- **Lock-Free Packet Rings**: No allocations per packet
-- **In-Place Encryption**: CTR mode AES-GCM with atomic counters
-- **Cross-Language Integration**: Go control plane memory safety contracts
-
-## Security Architecture
-
-### Hybrid Cryptographic Protocols
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Hybrid KEX Layer                          │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
-│  │  x25519      │───▶│   ML-KEM     │───▶│   Both keys  │  │
-│  │  (Classical) │    │ (Post-Quantum)│    │  Derive key  │  │
-│  └──────────────┘    └──────────────┘    └──────────────┘  │
-│                              │                               │
-│                              ▼                               │
-│                    Hybrid Shared Secret                      │
-│                  (Security ≥ max(classical, quantum))         │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Byzantine Fault Tolerance
-
-**Safety Guarantee**: `f < n/3 ∧ honest_majority → decisions_identical`  
-**Liveness Guarantee**: `honest_majority → ∃ final_state, state.terminated`
-
-### TPM Attestation
-
-```lean4
-theorem tpm_attestation_verification : verified_pcr → trusted_platform := by sorry
-```
-
-## Next Steps
-
-1. **Complete Formal Verification**
-   ```bash
-   cd formal_verification/
-   make verify
-   # Complete proofs for all pending theorems
-   ```
-
-2. **Generate Test Cases**
-   ```bash
-   ./scripts/generate_tests.sh
-   ```
-
-3. **Integrate Go Control Plane (Phase 2)**
-   - Embed formal specs in contract validation layer
-   - Add crypto protocol verification endpoints
-
-4. **Node.js Trading Adapter (Phase 3)**
-   - Validate market discovery against oracle specs
-   - Implement reputation slashing logic
-
-5. **Security Audit**
-   - Formal verification report export
-   - Certik-style compliance artifacts
-   - Penetration testing with BFT fault injection
-
-## Contact
-
-For questions or contributions, contact the Sovereign Mohawk Proto LLC operations team.
-
----
-
-Developer Quickstart (Run locally)
----------------------------------
-
-1. Install Node and tools
-
-```bash
-# Recommended: use Node 24 (tested in this workspace)
-nvm install 24 && nvm use 24
-
-# Install root dev dependencies (lint, husky)
 npm install
-```
-
-2. Install per-agent deps and run tests
-
-```bash
-# Run all package tests from repo root
 npm run test:all
-
-# Or per-package
-cd agents/trader && npm ci && npm test
-cd ../aggregator && npm ci && npm test
-cd ../orchestrator && npm ci && npm test
-```
-
-3. Lint and auto-fix
-
-```bash
 npm run lint
-npm run lint:fix
 ```
 
-4. Pre-commit hooks
-
-Husky + lint-staged run ESLint on staged JS files. To test locally:
-
-```bash
-# Make a small change to any JS file, stage and commit
-git add path/to/file.js
-git commit -m "chore: test pre-commit hook"
-```
-
-Troubleshooting
----------------
-
-- If `jest: not found` errors occur in `agents/orchestrator`, run `npm ci` in that package or run `npm run test:orchestrator` from root which will install deps.
-- If ESLint prompts to install, run `npm install` at repo root to install the dev tooling.
-- If aggregator fails to write to `/data`, start it with a writable `MODEL_DIR`:
+### Run aggregator
 
 ```bash
 cd agents/aggregator
-MODEL_DIR=./tmp_model npm start
+npm install
+npm start
 ```
 
-- If CI fails on Node version, ensure your local Node matches `.nvmrc` or the `engines` field in `package.json` (Node >=18; Node 24 recommended).
+### Run trader dry-run
 
-For further development guidance see DEVELOPMENT.md.
+```bash
+cd agents/trader
+npm install
+echo '{"confidence":78.5,"prediction":78.5,"eventQuery":"SUI > $2 by 2026-07-01"}' | node index.js --dry-run --rpc https://fullnode.testnet.sui.io:443 --package-id 0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8 --market-object-id 0xplaceholder_market_object_id
+```
 
+### Publish on-chain registry package
 
+```bash
+./scripts/deploy_onchain_registry.sh
+```
+
+Then export resulting object IDs in environment for services that require them.
+
+## Where To Look In Code
+
+- On-chain Move modules: `agents/onchain-registry/sources`
+- Trader decision + PTB: `agents/trader/forecast_to_trade.js`, `agents/trader/ptb_builder.js`, `agents/trader/market_discovery.js`
+- Aggregation + reputation: `agents/aggregator/incentives-engine.js`, `agents/aggregator/reputation-tracker.js`
+- Orchestration runtime: `agents/orchestrator/core`, `agents/orchestrator/tasks`, `agents/orchestrator/reputation`, `agents/orchestrator/discovery`
+- Demo flow: `demo/demo_trading.js`
+
+## Networking and Formal Methods in Context
+
+Performance/security artifacts remain part of this repository because they support a production-grade prediction market stack:
+
+- AF_XDP + Rust datapath: low-latency data ingestion and high-throughput agent messaging.
+- Lean proofs: safety/liveness/security checks for critical protocol components.
+- Hybrid PQC + TPM attestation: cryptographic and platform trust hardening.
+
+These are support layers, not the product headline. The headline is autonomous market participation and settlement on Sui.
+
+## Roadmap Notes
+
+- Expand from scaffolded market discovery to full live market object indexing.
+- Add explicit market creation + resolution transaction examples in demo scripts.
+- Add a public short demo video link for submission pages.
+- Add screenshots/GIFs of market creation, trade placement, and resolution/payout views.

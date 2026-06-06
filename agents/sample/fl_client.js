@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 const crypto = require('crypto');
 const nacl = require('tweetnacl');
 const util = require('tweetnacl-util');

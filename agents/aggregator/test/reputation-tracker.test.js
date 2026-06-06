@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Reputation Tracker Unit Tests - Node.js Native Test Runner
  * Tests all reputation mechanics: staking, slashing, rewards, Byzantine detection

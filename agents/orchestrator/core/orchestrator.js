@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * SAPM Orchestrator Core - Phase 1 Foundation
  * State Machine: UNINITIALIZED → ATTESTED → KEY_ESTABLISHED → OPERATIONAL

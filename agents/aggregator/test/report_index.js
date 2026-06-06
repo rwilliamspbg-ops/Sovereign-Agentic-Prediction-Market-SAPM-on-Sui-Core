@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 const fs = require('node:fs/promises');
 const path = require('node:path');
 

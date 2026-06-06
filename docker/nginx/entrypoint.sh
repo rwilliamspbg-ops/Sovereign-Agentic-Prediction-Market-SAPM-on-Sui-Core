@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
 set -e
 
 # Host domain to use for cert paths; default to 'aggregator'

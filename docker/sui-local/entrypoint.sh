@@ -1,5 +1,6 @@
 #!/bin/sh
-set -e
+# SPDX-License-Identifier: Apache-2.0
+set -eu
 
 SUI_BIN="/opt/sui/sui"
 RPC_ADDR="0.0.0.0:9000"
