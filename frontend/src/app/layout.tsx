@@ -1,6 +1,8 @@
 'use client';
 
 import React, { ReactNode } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import "./globals.css";
 
 export default function RootLayout({
@@ -8,6 +10,7 @@ export default function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const pathname = usePathname();
   const [walletConnected, setWalletConnected] = React.useState(false);
   const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
   const [showWalletMenu, setShowWalletMenu] = React.useState(false);
@@ -46,6 +49,11 @@ export default function RootLayout({
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
+  // Check if link is active
+  const isActive = (path: string) => {
+    return pathname === path ? '#0ea5e9' : '#cbd5e1';
+  };
+
   // Load wallet on mount if previously connected
   React.useEffect(() => {
     const savedAddress = localStorage.getItem('walletAddress');
@@ -79,10 +87,8 @@ export default function RootLayout({
             height: '4rem',
           }}>
             {/* Logo with SUI Brand */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              {/* SUI Logo SVG */}
+            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
               <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* SUI Blue Geometric Logo */}
                 <path d="M16 2L2 9.33L2 22.67L16 30L30 22.67L30 9.33L16 2Z" fill="url(#gradient)" stroke="#06b6d4" strokeWidth="1"/>
                 <path d="M16 2L16 30M2 9.33L30 22.67M30 9.33L2 22.67" stroke="#06b6d4" strokeWidth="0.5" opacity="0.3"/>
                 <defs>
@@ -113,46 +119,50 @@ export default function RootLayout({
                   on Sui
                 </span>
               </div>
-            </div>
+            </Link>
 
             {/* Navigation Links */}
             <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-              <a href="#markets" style={{
-                color: '#cbd5e1',
+              <Link href="/markets" style={{
+                color: isActive('/markets'),
                 textDecoration: 'none',
                 fontWeight: '500',
                 fontSize: '0.9rem',
                 cursor: 'pointer',
+                transition: 'color 0.2s',
               }}>
                 Markets
-              </a>
-              <a href="#portfolio" style={{
-                color: '#cbd5e1',
+              </Link>
+              <Link href="/portfolio" style={{
+                color: isActive('/portfolio'),
                 textDecoration: 'none',
                 fontWeight: '500',
                 fontSize: '0.9rem',
                 cursor: 'pointer',
+                transition: 'color 0.2s',
               }}>
                 Portfolio
-              </a>
-              <a href="#leaderboard" style={{
-                color: '#cbd5e1',
+              </Link>
+              <Link href="/leaderboard" style={{
+                color: isActive('/leaderboard'),
                 textDecoration: 'none',
                 fontWeight: '500',
                 fontSize: '0.9rem',
                 cursor: 'pointer',
+                transition: 'color 0.2s',
               }}>
                 Leaderboard
-              </a>
-              <a href="#help" style={{
-                color: '#cbd5e1',
+              </Link>
+              <Link href="/help" style={{
+                color: isActive('/help'),
                 textDecoration: 'none',
                 fontWeight: '500',
                 fontSize: '0.9rem',
                 cursor: 'pointer',
+                transition: 'color 0.2s',
               }}>
                 Help
-              </a>
+              </Link>
 
               {/* Notifications */}
               <button style={{
@@ -362,9 +372,9 @@ export default function RootLayout({
             <div>
               <h3 style={{ color: '#e2e8f0', fontWeight: '700', marginBottom: '1rem', fontSize: '0.95rem' }}>Resources</h3>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                <li style={{ marginBottom: '0.5rem' }}><a href="#docs" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>📚 Documentation</a></li>
-                <li style={{ marginBottom: '0.5rem' }}><a href="#api" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>🔌 API Reference</a></li>
-                <li><a href="#governance" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>⚖️ Governance</a></li>
+                <li style={{ marginBottom: '0.5rem' }}><Link href="/docs" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>📚 Documentation</Link></li>
+                <li style={{ marginBottom: '0.5rem' }}><Link href="/api" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>🔌 API Reference</Link></li>
+                <li><Link href="/governance" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>⚖️ Governance</Link></li>
               </ul>
             </div>
 
@@ -372,9 +382,9 @@ export default function RootLayout({
             <div>
               <h3 style={{ color: '#e2e8f0', fontWeight: '700', marginBottom: '1rem', fontSize: '0.95rem' }}>Community</h3>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                <li style={{ marginBottom: '0.5rem' }}><a href="#discord" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>💬 Discord</a></li>
-                <li style={{ marginBottom: '0.5rem' }}><a href="#github" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>🐙 GitHub</a></li>
-                <li><a href="#twitter" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>𝕏 Twitter</a></li>
+                <li style={{ marginBottom: '0.5rem' }}><a href="https://discord.gg" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>💬 Discord</a></li>
+                <li style={{ marginBottom: '0.5rem' }}><a href="https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>🐙 GitHub</a></li>
+                <li><a href="https://twitter.com" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>𝕏 Twitter</a></li>
               </ul>
             </div>
 
@@ -382,9 +392,9 @@ export default function RootLayout({
             <div>
               <h3 style={{ color: '#e2e8f0', fontWeight: '700', marginBottom: '1rem', fontSize: '0.95rem' }}>Legal</h3>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                <li style={{ marginBottom: '0.5rem' }}><a href="#privacy" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>🔒 Privacy Policy</a></li>
-                <li style={{ marginBottom: '0.5rem' }}><a href="#terms" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>📄 Terms of Service</a></li>
-                <li><a href="#risk" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>⚠️ Risk Disclosure</a></li>
+                <li style={{ marginBottom: '0.5rem' }}><Link href="/privacy" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>🔒 Privacy Policy</Link></li>
+                <li style={{ marginBottom: '0.5rem' }}><Link href="/terms" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>📄 Terms of Service</Link></li>
+                <li><Link href="/risk" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>⚠️ Risk Disclosure</Link></li>
               </ul>
             </div>
           </div>
