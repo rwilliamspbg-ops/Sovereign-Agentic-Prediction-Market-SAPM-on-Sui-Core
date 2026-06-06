@@ -1,19 +1,72 @@
 'use client';
 
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import React, { ReactNode } from "react";
 import "./globals.css";
 
-const inter = Inter({ 
-  subsets: ["latin"],
-  display: "swap",
-});
+const inter = { style: { fontFamily: 'Inter, sans-serif' } };
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
+  const [walletConnected, setWalletConnected] = React.useState(false);
+  const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
+  const [showWalletMenu, setShowWalletMenu] = React.useState(false);
+  const [isConnecting, setIsConnecting] = React.useState(false);
+
+  // Handle wallet connection
+  const handleConnectWallet = async () => {
+    setIsConnecting(true);
+    try {
+      // Check if wallet is available
+      const { getSignerProvider } = await import('@mysten/sui');
+      const provider = await getSignerProvider?.();
+      
+      if (provider) {
+        const accounts = await provider.getAccounts?.();
+        if (accounts && accounts.length > 0) {
+          const address = accounts[0];
+          setWalletAddress(address);
+          setWalletConnected(true);
+          // Store in localStorage
+          localStorage.setItem('walletAddress', address);
+        }
+      } else {
+        // Wallet not found - direct user
+        window.open('https://docs.sui.io/guides/user/getting-started/sui-install', '_blank');
+      }
+    } catch (error) {
+      console.error('Error connecting wallet:', error);
+      // Fallback: show wallet installation prompt
+      alert('Please install a Sui wallet (Sui Wallet, Nightly Wallet, or similar)');
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  // Disconnect wallet
+  const handleDisconnectWallet = () => {
+    setWalletConnected(false);
+    setWalletAddress(null);
+    setShowWalletMenu(false);
+    localStorage.removeItem('walletAddress');
+  };
+
+  // Format address for display (show first 6 and last 4 chars)
+  const formatAddress = (addr: string) => {
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  // Load wallet on mount if previously connected
+  React.useEffect(() => {
+    const savedAddress = localStorage.getItem('walletAddress');
+    if (savedAddress) {
+      setWalletAddress(savedAddress);
+      setWalletConnected(true);
+    }
+  }, []);
+
   return (
     <html lang="en">
       <body style={{ fontFamily: inter.style.fontFamily, margin: 0, padding: 0, backgroundColor: '#0f172a' }}>
@@ -82,7 +135,6 @@ export default function RootLayout({
                 fontWeight: '500',
                 fontSize: '0.9rem',
                 cursor: 'pointer',
-                transition: 'color 0.2s',
               }}>
                 Markets
               </a>
@@ -143,30 +195,151 @@ export default function RootLayout({
                 </span>
               </button>
 
-              {/* Connect Wallet Button */}
-              <button style={{
-                padding: '0.6rem 1.5rem',
-                background: 'linear-gradient(135deg, #0ea5e9, #06b6d4)',
-                color: 'white',
-                borderRadius: '0.375rem',
-                border: 'none',
-                fontWeight: '600',
-                cursor: 'pointer',
-                fontSize: '0.9rem',
-                transition: 'all 0.2s',
-                boxShadow: '0 4px 15px rgba(6, 182, 212, 0.2)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(6, 182, 212, 0.4)';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 4px 15px rgba(6, 182, 212, 0.2)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-              >
-                💼 Connect Wallet
-              </button>
+              {/* Wallet Button or Connected State */}
+              {!walletConnected ? (
+                <button
+                  onClick={handleConnectWallet}
+                  disabled={isConnecting}
+                  style={{
+                    padding: '0.6rem 1.5rem',
+                    background: 'linear-gradient(135deg, #0ea5e9, #06b6d4)',
+                    color: 'white',
+                    borderRadius: '0.375rem',
+                    border: 'none',
+                    fontWeight: '600',
+                    cursor: isConnecting ? 'not-allowed' : 'pointer',
+                    fontSize: '0.9rem',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 15px rgba(6, 182, 212, 0.2)',
+                    opacity: isConnecting ? 0.7 : 1,
+                  }}
+                >
+                  {isConnecting ? '🔗 Connecting...' : '💼 Connect Wallet'}
+                </button>
+              ) : (
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => setShowWalletMenu(!showWalletMenu)}
+                    style={{
+                      padding: '0.6rem 1.5rem',
+                      background: 'linear-gradient(135deg, #34d399, #10b981)',
+                      color: 'white',
+                      borderRadius: '0.375rem',
+                      border: 'none',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      transition: 'all 0.2s',
+                      boxShadow: '0 4px 15px rgba(52, 211, 153, 0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    ✓ {formatAddress(walletAddress!)}
+                    <span style={{ fontSize: '1.1rem' }}>▼</span>
+                  </button>
+
+                  {/* Wallet Menu */}
+                  {showWalletMenu && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      right: 0,
+                      marginTop: '0.5rem',
+                      backgroundColor: '#1e293b',
+                      border: '1px solid #334155',
+                      borderRadius: '0.5rem',
+                      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
+                      minWidth: '200px',
+                      zIndex: 1000,
+                    }}>
+                      <div style={{
+                        padding: '1rem',
+                        borderBottom: '1px solid #334155',
+                      }}>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>
+                          Connected Wallet
+                        </div>
+                        <div style={{ 
+                          fontSize: '0.9rem', 
+                          color: '#e2e8f0',
+                          fontFamily: 'monospace',
+                          wordBreak: 'break-all',
+                        }}>
+                          {walletAddress}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          // Copy to clipboard
+                          navigator.clipboard.writeText(walletAddress!);
+                          alert('Address copied to clipboard!');
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem 1rem',
+                          backgroundColor: 'transparent',
+                          color: '#cbd5e1',
+                          border: 'none',
+                          borderBottom: '1px solid #334155',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem',
+                          textAlign: 'left',
+                          transition: 'background-color 0.2s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#334155'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        📋 Copy Address
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          window.open(`https://suiscan.xyz/account/${walletAddress}`, '_blank');
+                          setShowWalletMenu(false);
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem 1rem',
+                          backgroundColor: 'transparent',
+                          color: '#cbd5e1',
+                          border: 'none',
+                          borderBottom: '1px solid #334155',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem',
+                          textAlign: 'left',
+                          transition: 'background-color 0.2s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#334155'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        🔗 View on SuiScan
+                      </button>
+
+                      <button
+                        onClick={handleDisconnectWallet}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem 1rem',
+                          backgroundColor: 'transparent',
+                          color: '#f87171',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem',
+                          textAlign: 'left',
+                          transition: 'background-color 0.2s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7f1d1d'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        🚪 Disconnect
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </nav>
         </header>
@@ -238,6 +411,16 @@ export default function RootLayout({
             <p style={{ margin: 0, color: '#64748b' }}>© 2025 SAPM on Sui. All rights reserved. | Built with ⚡ on Sui Blockchain</p>
           </div>
         </footer>
+
+        {/* Wallet Context Script - passes to page component */}
+        <script>
+          {`
+            window.__SAPM_WALLET__ = {
+              connected: ${walletConnected},
+              address: ${walletAddress ? `"${walletAddress}"` : 'null'}
+            };
+          `}
+        </script>
       </body>
     </html>
   );
