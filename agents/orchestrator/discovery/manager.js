@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Discovery Manager - Phase 1 Foundation
  * Handles swarm peer discovery, session management, and gossip coordination

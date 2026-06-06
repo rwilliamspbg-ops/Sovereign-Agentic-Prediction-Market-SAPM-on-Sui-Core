@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * PTB Builder - Phase 3 Implementation
  * Builds Programmatic Transaction Blocks for deposits, minting, and position management

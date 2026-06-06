@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 module 0x0::incentives {
     use sui::object;
     use sui::transfer;

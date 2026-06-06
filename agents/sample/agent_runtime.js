@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 const { SuiClient } = require('@mysten/sui/client');
 const { Ed25519Keypair } = require('@mysten/sui/keypairs/ed25519');
 const fl = require('./fl_client');

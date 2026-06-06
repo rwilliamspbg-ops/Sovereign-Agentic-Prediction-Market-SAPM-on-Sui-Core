@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * SAPM Aggregator Metrics Exporter
  * Prometheus-compatible metrics for FL aggregator service

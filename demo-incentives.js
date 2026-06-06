@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: Apache-2.0
 /**
  * SAPM Incentives System - Live Demonstration
  * Shows the incentive mechanisms in action

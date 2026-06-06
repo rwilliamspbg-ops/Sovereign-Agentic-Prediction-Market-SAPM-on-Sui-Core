@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
 # SAPM Quick Demo for DeepSurge Hackathon
 # Shows performance + security features in <3 minutes
 

@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
 
 # SAPM Formal Verification Runner
 # Executes all Lean 4 formal verification checks
