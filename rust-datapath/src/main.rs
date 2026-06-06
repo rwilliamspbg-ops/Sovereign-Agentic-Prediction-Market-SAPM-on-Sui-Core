@@ -5,7 +5,6 @@ use std::time::Instant;
 use sapm_datapath::{benchmark, Datapath, DatapathConfig};
 
 const BENCH_RING_MIN: usize = 1_048_576;
-
 fn parse_iterations(args: &[String]) -> usize {
     let mut idx = 0usize;
     while idx < args.len() {
@@ -32,18 +31,9 @@ fn main() {
             let rest = args.collect::<Vec<_>>();
             let iterations = parse_iterations(&rest);
 
-            let mut config = DatapathConfig::default();
-            if let Ok(size) = env::var("SAPM_RING_BUFFER_SIZE") {
-                if let Ok(value) = size.parse::<usize>() {
-                    config.ring_buffer_size = value;
-                }
-            } else {
+            let mut config = DatapathConfig::from_env();
+            if env::var("SAPM_RING_BUFFER_SIZE").is_err() {
                 config.ring_buffer_size = config.ring_buffer_size.max(BENCH_RING_MIN);
-            }
-            if let Ok(size) = env::var("SAPM_PACKET_MAX_SIZE") {
-                if let Ok(value) = size.parse::<usize>() {
-                    config.packet_max_size = value;
-                }
             }
 
             let mut datapath = Datapath::new(config.clone());
@@ -51,7 +41,13 @@ fn main() {
             let processed = benchmark(&mut datapath, iterations);
             let elapsed = started.elapsed();
 
-            println!("config interfaces={:?} ring_buffer_size={} packet_max_size={}", config.interfaces, config.ring_buffer_size, config.packet_max_size);
+            println!(
+                "config mode={:?} interfaces={:?} ring_buffer_size={} packet_max_size={}",
+                config.mode,
+                config.interfaces,
+                config.ring_buffer_size,
+                config.packet_max_size
+            );
             println!("processed={processed} iterations={iterations} elapsed_ms={}", elapsed.as_millis());
             println!(
                 "stats enqueued={} processed={} dropped={}",
@@ -61,8 +57,14 @@ fn main() {
             );
         }
         Some("validate") | None => {
-            let config = DatapathConfig::default();
-            println!("interfaces={:?} ring_buffer_size={} packet_max_size={}", config.interfaces, config.ring_buffer_size, config.packet_max_size);
+            let config = DatapathConfig::from_env();
+            println!(
+                "mode={:?} interfaces={:?} ring_buffer_size={} packet_max_size={}",
+                config.mode,
+                config.interfaces,
+                config.ring_buffer_size,
+                config.packet_max_size
+            );
         }
         Some(other) => {
             eprintln!("unknown command: {other}");

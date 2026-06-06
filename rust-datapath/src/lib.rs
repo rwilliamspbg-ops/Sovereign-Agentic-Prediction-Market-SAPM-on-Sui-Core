@@ -4,8 +4,24 @@ use std::env;
 
 const DEFAULT_BENCH_FLUSH_INTERVAL: usize = 16_384;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DatapathMode {
+    Simulated,
+    AfXdp,
+}
+
+impl DatapathMode {
+    pub fn from_env() -> Self {
+        match env::var("SAPM_DATAPATH_MODE") {
+            Ok(value) if value.eq_ignore_ascii_case("af_xdp") => Self::AfXdp,
+            _ => Self::Simulated,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DatapathConfig {
+    pub mode: DatapathMode,
     pub interfaces: Vec<String>,
     pub ring_buffer_size: usize,
     pub packet_max_size: usize,
@@ -14,6 +30,7 @@ pub struct DatapathConfig {
 impl Default for DatapathConfig {
     fn default() -> Self {
         Self {
+            mode: DatapathMode::from_env(),
             interfaces: vec!["eth0".to_string(), "eth1".to_string(), "eth2".to_string()],
             ring_buffer_size: 262_144,
             packet_max_size: 9_516,
@@ -22,6 +39,36 @@ impl Default for DatapathConfig {
 }
 
 impl DatapathConfig {
+    pub fn from_env() -> Self {
+        let mut config = Self::default();
+
+        if let Ok(list) = env::var("SAPM_AF_XDP_IFACES") {
+            let ifaces = list
+                .split(',')
+                .map(str::trim)
+                .filter(|item| !item.is_empty())
+                .map(ToOwned::to_owned)
+                .collect::<Vec<_>>();
+            if !ifaces.is_empty() {
+                config.interfaces = ifaces;
+            }
+        }
+
+        if let Ok(size) = env::var("SAPM_RING_BUFFER_SIZE") {
+            if let Ok(value) = size.parse::<usize>() {
+                config.ring_buffer_size = value;
+            }
+        }
+
+        if let Ok(size) = env::var("SAPM_PACKET_MAX_SIZE") {
+            if let Ok(value) = size.parse::<usize>() {
+                config.packet_max_size = value;
+            }
+        }
+
+        config
+    }
+
     pub fn from_interface_list(value: &str) -> Self {
         let interfaces = value
             .split(',')
@@ -31,6 +78,7 @@ impl DatapathConfig {
             .collect();
 
         Self {
+            mode: DatapathMode::from_env(),
             interfaces,
             ..Self::default()
         }
