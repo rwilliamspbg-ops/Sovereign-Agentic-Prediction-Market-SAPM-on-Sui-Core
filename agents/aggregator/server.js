@@ -11,6 +11,7 @@ const client = require('prom-client');
 const { SuiClient } = require('@mysten/sui/client');
 const { Transaction } = require('@mysten/sui/transactions');
 const { Ed25519Keypair } = require('@mysten/sui/keypairs/ed25519');
+const ReputationTracker = require('./reputation-tracker');
 
 const PORT = Number(process.env.PORT || 4000);
 const MODEL_DIR = process.env.MODEL_DIR || '/data';
@@ -45,6 +46,7 @@ let seen = new Set();
 let aggKey = null;
 let aggPubkeyB64 = null;
 let aggSuiSigner = null;
+const reputationTracker = new ReputationTracker();
 
 // Prometheus metrics
 const register = new client.Registry();
@@ -173,15 +175,47 @@ function loadAggSuiSigner() {
 function aggregateUpdates(updatesArr) {
   if (!updatesArr || updatesArr.length === 0) return null;
   const strategy = (process.env.AGG_STRATEGY || 'avg').toLowerCase();
-  if (strategy === 'trimmed') return trimmedMean(updatesArr);
-  if (strategy === 'multikrum') return simpleMultiKrum(updatesArr);
+  const normalized = normalizeUpdates(updatesArr);
+  if (!normalized.vectors.length) return null;
+  if (strategy === 'trimmed') return trimmedMean(normalized.vectors);
+  if (strategy === 'multikrum') return simpleMultiKrum(normalized.vectors);
+  if (strategy === 'multikrum_reputation' || strategy === 'multikrum-reputation') {
+    const details = reputationWeightedMultiKrum(normalized);
+    applySelectionFeedback(normalized.pubkeys, details.selectedIndices);
+    return details.aggregate;
+  }
   // default: average
-  const len = updatesArr[0].length;
+  const len = normalized.vectors[0].length;
   const out = new Array(len).fill(0);
-  for (const u of updatesArr) {
+  for (const u of normalized.vectors) {
     for (let i = 0; i < len; i++) out[i] += u[i];
   }
-  return out.map((v) => v / updatesArr.length);
+  return out.map((v) => v / normalized.vectors.length);
+}
+
+function normalizeUpdates(updatesArr) {
+  if (updatesArr && Array.isArray(updatesArr.vectors)) {
+    return {
+      vectors: updatesArr.vectors,
+      pubkeys: Array.isArray(updatesArr.pubkeys)
+        ? updatesArr.pubkeys
+        : new Array(updatesArr.vectors.length).fill(null),
+    };
+  }
+  const vectors = [];
+  const pubkeys = [];
+  for (const item of updatesArr) {
+    if (Array.isArray(item)) {
+      vectors.push(item);
+      pubkeys.push(null);
+      continue;
+    }
+    if (item && Array.isArray(item.update)) {
+      vectors.push(item.update);
+      pubkeys.push(item.pubkey || null);
+    }
+  }
+  return { vectors, pubkeys };
 }
 
 function trimmedMean(updatesArr, trimFraction = 0.2) {
@@ -190,18 +224,69 @@ function trimmedMean(updatesArr, trimFraction = 0.2) {
   const toTrim = Math.floor(n * trimFraction);
   const out = new Array(len).fill(0);
   for (let i = 0; i < len; i++) {
-    const col = updatesArr.map((u) => u[i]).sort((a, b) => a - b);
-    const keep = col.slice(toTrim, n - toTrim);
-    const sum = keep.reduce((s, v) => s + v, 0);
-    out[i] = keep.length ? sum / keep.length : 0;
+    const col = updatesArr.map((u) => u[i]);
+    if (toTrim > 0 && (toTrim * 2) < n) {
+      const lo = toTrim;
+      const hi = n - toTrim - 1;
+      quickSelect(col, lo);
+      quickSelect(col, hi, lo, n - 1);
+      let sum = 0;
+      for (let j = lo; j <= hi; j++) sum += col[j];
+      out[i] = sum / (hi - lo + 1);
+    } else {
+      let sum = 0;
+      for (let j = 0; j < n; j++) sum += col[j];
+      out[i] = n ? (sum / n) : 0;
+    }
   }
   return out;
 }
 
 function euclideanDistance(a, b) {
+  return Math.sqrt(squaredEuclideanDistance(a, b));
+}
+
+function squaredEuclideanDistance(a, b) {
   let s = 0;
   for (let i = 0; i < a.length; i++) s += (a[i] - b[i]) ** 2;
-  return Math.sqrt(s);
+  return s;
+}
+
+function partition(arr, left, right, pivotIndex) {
+  const pivotValue = arr[pivotIndex];
+  [arr[pivotIndex], arr[right]] = [arr[right], arr[pivotIndex]];
+  let storeIndex = left;
+  for (let i = left; i < right; i++) {
+    if (arr[i] < pivotValue) {
+      [arr[storeIndex], arr[i]] = [arr[i], arr[storeIndex]];
+      storeIndex++;
+    }
+  }
+  [arr[right], arr[storeIndex]] = [arr[storeIndex], arr[right]];
+  return storeIndex;
+}
+
+function quickSelect(arr, k, left = 0, right = arr.length - 1) {
+  while (left <= right) {
+    const pivotIndex = left + Math.floor((right - left) / 2);
+    const pivotFinal = partition(arr, left, right, pivotIndex);
+    if (pivotFinal === k) return;
+    if (k < pivotFinal) right = pivotFinal - 1;
+    else left = pivotFinal + 1;
+  }
+}
+
+function buildPairwiseDistanceMatrix(updatesArr) {
+  const n = updatesArr.length;
+  const dists = Array.from({ length: n }, () => new Array(n).fill(0));
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const dist = squaredEuclideanDistance(updatesArr[i], updatesArr[j]);
+      dists[i][j] = dist;
+      dists[j][i] = dist;
+    }
+  }
+  return dists;
 }
 
 // Simple Multi-Krum-ish selector: score each update by summed distances
@@ -211,10 +296,11 @@ function simpleMultiKrum(updatesArr, f = 1) {
   if (n === 0) return null;
   if (n === 1) return updatesArr[0];
   const scores = new Array(n).fill(0);
+  const dists = buildPairwiseDistanceMatrix(updatesArr);
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < n; j++) {
       if (i === j) continue;
-      scores[i] += euclideanDistance(updatesArr[i], updatesArr[j]);
+      scores[i] += dists[i][j];
     }
   }
   // sort by score ascending and pick top (n - f - 2) as in Multi-Krum heuristics
@@ -228,6 +314,64 @@ function simpleMultiKrum(updatesArr, f = 1) {
     for (let k = 0; k < len; k++) out[k] += updatesArr[i][k];
   }
   return out.map((v) => v / chosen.length);
+}
+
+function reputationWeightedMultiKrum(normalized, fOverride = null) {
+  const updatesArr = normalized.vectors;
+  const n = updatesArr.length;
+  if (n === 0) return { aggregate: null, selectedIndices: [], scores: [] };
+  if (n === 1) return { aggregate: updatesArr[0], selectedIndices: [0], scores: [0] };
+
+  const maxF = Math.max(0, Math.floor((n - 2) / 3));
+  const f = fOverride === null ? Math.min(1, maxF) : Math.max(0, Math.min(fOverride, maxF));
+  const repWeights = new Array(n).fill(1);
+  for (let i = 0; i < n; i++) {
+    const pubkey = normalized.pubkeys[i];
+    if (!pubkey) continue;
+    if (!reputationTracker.agentScores.has(pubkey)) {
+      reputationTracker.registerAgent(pubkey, 50);
+    }
+    repWeights[i] = Math.max(0.2, reputationTracker.getReputation(pubkey) / 100);
+  }
+
+  const scores = new Array(n).fill(0);
+  const dists = buildPairwiseDistanceMatrix(updatesArr);
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      if (i === j) continue;
+      const weight = repWeights[i] * repWeights[j];
+      scores[i] += dists[i][j] / weight;
+    }
+  }
+
+  const idxs = scores.map((score, idx) => ({ score, idx })).sort((a, b) => a.score - b.score).map((x) => x.idx);
+  const pick = Math.max(1, n - f - 2);
+  const selectedIndices = idxs.slice(0, pick);
+
+  const len = updatesArr[0].length;
+  const out = new Array(len).fill(0);
+  let denom = 0;
+  for (const i of selectedIndices) {
+    const w = repWeights[i];
+    denom += w;
+    for (let k = 0; k < len; k++) out[k] += updatesArr[i][k] * w;
+  }
+
+  const aggregate = out.map((v) => v / (denom || 1));
+  return { aggregate, selectedIndices, scores };
+}
+
+function applySelectionFeedback(pubkeys, selectedIndices) {
+  if (!pubkeys || pubkeys.length === 0) return;
+  const selected = new Set(selectedIndices);
+  pubkeys.forEach((pubkey, index) => {
+    if (!pubkey) return;
+    if (!reputationTracker.agentScores.has(pubkey)) {
+      reputationTracker.registerAgent(pubkey, 50);
+    }
+    const delta = selected.has(index) ? 2 : -1;
+    reputationTracker.adjustReputation(pubkey, delta);
+  });
 }
 
 // Rounds / consensus state management
@@ -407,7 +551,7 @@ async function run() {
 
     markSeen(seenId);
 
-    updates.push(update);
+    updates.push({ update, pubkey });
     // perform aggregation when buffer full
     if (updates.length >= AGG_COUNT) {
       const agg = aggregateUpdates(updates);
@@ -577,6 +721,8 @@ module.exports = {
   aggregateUpdates,
   trimmedMean,
   simpleMultiKrum,
+  reputationWeightedMultiKrum,
   euclideanDistance,
+  squaredEuclideanDistance,
   verifySignature,
 };
