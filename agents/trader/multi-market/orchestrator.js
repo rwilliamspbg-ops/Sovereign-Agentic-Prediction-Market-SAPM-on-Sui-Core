@@ -7,7 +7,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs').promises;
 const path = require('path');
-const { ethers } = require('ethers'); // For SUI SDK integration
 
 const router = express.Router();
 
@@ -15,17 +14,6 @@ const router = express.Router();
 const SUI_RPC_URL = process.env.SUI_RPC_URL || 'http://localhost:9000';
 const TRADER_WALLET_PRIVATE_KEY = process.env.TRADER_WALLET_PRIVATE_KEY || null;
 const ORDER_BOOK_CONTRACT_ID = process.env.ORDER_BOOK_CONTRACT_ID || null;
-const PORTFOLIO_MANAGER_CONTRACT_ID = process.env.PORTFOLIO_MANAGER_CONTRACT_ID || null;
-
-let portfolioState = {
-  totalAssets: 0,
-  positions: new Map(),
-  riskMetrics: {
-    exposure: 0,
-    volatility: 0.02,
-    sharpeRatio: 0
-  }
-};
 
 /**
  * Execute multi-market order across Sui markets
@@ -212,8 +200,7 @@ async function updatePortfolioState(executionResults) {
  const modelFile = path.resolve(MODEL_DIR, 'model.json');
  const metaFile = path.resolve(MODEL_DIR, 'model.meta.json');
  
- const txt = await fs.readFile(modelFile, 'utf8');
- const model = JSON.parse(txt);
+ await fs.readFile(modelFile, 'utf8');
  
  const metaTxt = await fs.readFile(metaFile, 'utf8');
  const meta = JSON.parse(metaTxt);

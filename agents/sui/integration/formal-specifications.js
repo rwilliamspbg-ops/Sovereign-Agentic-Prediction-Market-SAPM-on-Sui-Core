@@ -119,25 +119,25 @@ const theoremTracker = `
 ### Theorem 1.1: Allocation Sum Invariant
 **Statement**: ∀ signals, riskBudget · Σ(weights) ≤ riskBudget  
 **Status**: ✓ PROVED (Mean-variance optimization guarantees bounded exposure)  
-**Proof Location**: \`MultiMarketAllocation.lean::allocation_sum_invariant\`  
+**Proof Location**: 'MultiMarketAllocation.lean::allocation_sum_invariant'
 **Verification Tool**: Lean 4 + Mathlib4
 
 ### Theorem 1.2: Correlation Matrix Properties
 **Statement**: R is symmetric, PSD, diagonal = 1  
 **Status**: ✓ VERIFIED (Empirical correlation matrices are PSD)  
-**Proof Location**: \`MultiMarketAllocation.lean::correlation_matrix_properties\`  
+**Proof Location**: 'MultiMarketAllocation.lean::correlation_matrix_properties'
 **Verification Tool**: Lean 4 + Cholesky decomposition check
 
 ### Theorem 1.3: Risk Budget Constraint
 **Statement**: Portfolio allocation respects risk budget  
 **Status**: ✓ GUARANTEED (Optimization formulation includes constraint)  
-**Proof Location**: \`MultiMarketAllocation.lean::risk_budget_constraint\`  
+**Proof Location**: 'MultiMarketAllocation.lean::risk_budget_constraint'
 **Verification Tool**: Lean 4 + Constraint solver verification
 
 ### Theorem 1.4: Volatility Targeting Invariant
 **Statement**: |portfolio_vol - target_vol| ≤ 0.02 after rebalance  
 **Status**: ✓ PROVED (Rebalancing frequency ensures convergence)  
-**Proof Location**: \`MultiMarketAllocation.lean::volatility_targeting_invariant\`  
+**Proof Location**: 'MultiMarketAllocation.lean::volatility_targeting_invariant'
 **Verification Tool**: Lean 4 + Lyapunov stability analysis
 
 ## Byzantine Fault Tolerance Proofs
@@ -145,29 +145,29 @@ const theoremTracker = `
 ### Theorem 2.1: Multi-Krum Consistency
 **Statement**: Aggregated model is consistent with ≥ (n - k) honest agents  
 **Status**: ✓ PROVED (k-robustness guarantees consistency)  
-**Proof Location**: \`ByzantineAggregation.lean::krum_consistency\`  
+**Proof Location**: 'ByzantineAggregation.lean::krum_consistency'
 
 ### Theorem 2.2: Multi-Krum Integrity
 **Statement**: Aggregated model is accurate if ≥ n - k/2 agents are honest  
 **Status**: ✓ PROVED (k-robustness guarantees accuracy)  
-**Proof Location**: \`ByzantineAggregation.lean::krum_integrity\`  
+**Proof Location**: 'ByzantineAggregation.lean::krum_integrity'
 
 ### Theorem 2.3: Rebalance Safety
 **Statement**: Portfolio rebalance maintains risk constraints under Byzantine faults  
 **Status**: ✓ VERIFIED (Dry-run mode + constraint checking)  
-**Proof Location**: \`RebalanceSafety.lean::byzantine_rebalance_safety\`  
+**Proof Location**: 'RebalanceSafety.lean::byzantine_rebalance_safety'
 
 ## Bridge Contract Verification
 
 ### Theorem 3.1: Order Execution Atomicity
 **Statement**: Market order execution is atomic on Sui blockchain  
 **Status**: ✓ VERIFIED (Move language guarantees ACID properties)  
-**Proof Location**: \`BridgeContracts.lean::order_execution_atomicity\`  
+**Proof Location**: 'BridgeContracts.lean::order_execution_atomicity'
 
 ### Theorem 3.2: Balance Preservation
 **Statement**: Total system balance is preserved across all transactions  
 **Status**: ✓ GUARANTEED (SUI blockchain invariant)  
-**Proof Location**: \`BridgeContracts.lean::balance_preservation\`  
+**Proof Location**: 'BridgeContracts.lean::balance_preservation'
 
 ## Verification Results
 
@@ -198,25 +198,6 @@ fs.writeFileSync(
 );
 
 console.log('✓ Created theorem remediation tracker');
-
-// Create Lean project structure
-const leanProjectStructure = `lean/
-├── src/
-│   ├── MultiMarketAllocation.lean       ✓ PROVED
-│   ├── ByzantineAggregation.lean        ✓ VERIFIED
-│   ├── RebalanceSafety.lean             ✓ IN PROGRESS
-│   └── BridgeContracts.lean             ✓ GUARANTEED
-├── formal-specifications/
-│   ├── MultiMarketAllocation.lean       ✓ CREATED
-│   ├── TheoremRemediationTracker.md     ✓ CREATED
-│   └── verification-results.json         (will be generated)
-├── tests/
-│   ├── allocation_sum_test.lean         ✓ READY
-│   ├── correlation_matrix_test.lean     ✓ READY
-│   └── rebalance_safety_test.lean       ✓ IN PROGRESS
-└── build/
-    └── optimized/                        (Lean compiler output)
-`;
 
 console.log('');
 console.log('='.repeat(80));

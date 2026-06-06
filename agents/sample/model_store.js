@@ -13,7 +13,7 @@ async function loadModel() {
   try {
     const txt = await fs.promises.readFile(STORE_FILE, 'utf8');
     return JSON.parse(txt);
-  } catch (e) {
+  } catch {
     return defaultModel();
   }
 }
