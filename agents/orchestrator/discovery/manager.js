@@ -166,6 +166,11 @@ class DiscoveryManager {
   async _performHybridKeyExchange(attestationData, peerPubkey) {
     console.log('[DiscoveryManager] Performing hybrid key exchange...');
     
+    // TRIAGE ORCH-009
+    // Owner: Orchestrator Crypto Team
+    // Milestone: M3-DISCOVERY-HYBRID-KEX
+    // Due: 2026-07-15
+    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
     // This is a placeholder - implement actual x25519-mlkem768 KEX
     return Buffer.from('placeholder_key_material_for_phase_1_scaffolding');
   }

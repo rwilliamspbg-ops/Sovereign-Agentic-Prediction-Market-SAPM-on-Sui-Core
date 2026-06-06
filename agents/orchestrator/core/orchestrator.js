@@ -184,6 +184,11 @@ class CryptoProvider {
 
   async hybridKeyExchange(attestationData, peerPubKey) {
     // Implementation: x25519-mlkem768 hybrid KEX
+    // TRIAGE ORCH-001
+    // Owner: Orchestrator Crypto Team
+    // Milestone: M3-ORCH-CRYPTO-INTEGRATION
+    // Due: 2026-07-15
+    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
     // This is a placeholder - implement with actual crypto library
     console.log('[CryptoProvider] Performing hybrid key exchange (x25519-mlkem768)');
     return Buffer.from('placeholder_session_keys_for_phase_1_scaffolding');
@@ -191,12 +196,22 @@ class CryptoProvider {
 
   async verifyKeyDerivationProof(sessionKeys) {
     // Implementation: Verify cryptographic proof of key derivation
+    // TRIAGE ORCH-002
+    // Owner: Orchestrator Crypto Team
+    // Milestone: M3-ORCH-KDF-PROOFS
+    // Due: 2026-07-22
+    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
     console.log('[CryptoProvider] Verifying key derivation integrity...');
     return true; // Placeholder for Phase 1
   }
 
   async fetchPeerPublicKey() {
     // Implementation: Fetch peer public key from aggregator or registry
+    // TRIAGE ORCH-003
+    // Owner: Orchestrator Networking Team
+    // Milestone: M3-ORCH-PEER-IDENTITY
+    // Due: 2026-07-29
+    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
     console.log('[CryptoProvider] Fetching peer public key...');
     return '0xplaceholder_peer_public_key'; // Placeholder for Phase 1
   }
@@ -212,6 +227,11 @@ class AttestationClient {
 
   async readTPM() {
     // Implementation: Read TPM measurement registers via TEE runtime
+    // TRIAGE ORCH-004
+    // Owner: Security Attestation Team
+    // Milestone: M3-ATTESTATION-PROD-TPM
+    // Due: 2026-08-05
+    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
     console.log('[AttestationClient] Reading TPM measurement...');
     return {
       platformConfigured: true,
@@ -225,6 +245,11 @@ class AttestationClient {
 
   async verifyCertChain(certChain) {
     // Implementation: Verify certificate chain against root authority
+    // TRIAGE ORCH-005
+    // Owner: Security Attestation Team
+    // Milestone: M3-ATTESTATION-CHAIN-VERIFY
+    // Due: 2026-08-05
+    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
     console.log('[AttestationClient] Verifying attestation certificate chain...');
     return true; // Placeholder for Phase 1
   }
@@ -240,6 +265,11 @@ class NetworkHandler {
 
   async isReachable(url) {
     // Implementation: Health check via HTTP or RPC
+    // TRIAGE ORCH-006
+    // Owner: Orchestrator Networking Team
+    // Milestone: M3-ORCH-NETWORK-HEALTHCHECK
+    // Due: 2026-08-12
+    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
     console.log('[NetworkHandler] Checking connectivity to:', url);
     return true; // Placeholder for Phase 1
   }
@@ -259,12 +289,22 @@ class NetworkHandler {
 
   _checkHugepages() {
     // Implementation: Verify /proc/meminfo for hugepages
+    // TRIAGE ORCH-007
+    // Owner: Runtime Performance Team
+    // Milestone: M3-RUNTIME-HUGEPAGE-CHECKS
+    // Due: 2026-08-19
+    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
     console.log('[NetworkHandler] Checking hugepage availability...');
     return true; // Placeholder - add actual check in Phase 1 hardening
   }
 
   _checkCPUPinning() {
     // Implementation: Verify cgroups/topology hints for CPU pinning
+    // TRIAGE ORCH-008
+    // Owner: Runtime Performance Team
+    // Milestone: M3-RUNTIME-CPU-PINNING-CHECKS
+    // Due: 2026-08-19
+    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
     console.log('[NetworkHandler] Checking CPU pinning configuration...');
     return true; // Placeholder - add actual check in Phase 1 hardening
   }
