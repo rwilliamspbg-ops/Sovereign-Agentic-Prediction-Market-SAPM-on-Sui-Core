@@ -25,14 +25,14 @@ Be respectful, inclusive, and professional. We don't tolerate harassment or disc
 git clone https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core.git
 cd SAPM
 
-# Install dependencies
-npm install
+# Install dependencies for root + agents
+npm run install:all
 
 # Start development stack
 docker compose up
 
-# Run tests
-npm run test:all
+# Run canonical release gate
+npm run release:check
 
 # Lint check
 npm run lint
@@ -63,8 +63,8 @@ Write clear, well-documented code. Follow the style guide below.
 ### 3. Test Your Changes
 
 ```bash
-# Run tests
-npm run test:all
+# Run canonical release gate
+npm run release:check
 
 # Lint check
 npm run lint:fix
@@ -110,6 +110,16 @@ git push origin feat/your-feature-name
 ```
 
 Go to GitHub and create a pull request.
+
+### Canonical Readiness Gate
+
+Use this single gate before pushing:
+
+```bash
+npm run release:check
+```
+
+This command performs dependency normalization (`install:all`) and executes lint + test gates used by CI.
 
 ---
 
@@ -250,8 +260,7 @@ Update docs if the bug was user-facing.
 
 ### Before Submitting
 
-- [ ] All tests passing: `npm run test:all`
-- [ ] No lint errors: `npm run lint`
+- [ ] Canonical gate passing: `npm run release:check`
 - [ ] Code follows style guide
 - [ ] Documentation updated
 - [ ] Branch is up-to-date with main
