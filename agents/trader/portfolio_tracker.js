@@ -13,12 +13,12 @@ class PortfolioTracker {
     
     // Default risk parameters with environment override support
     this.riskLimits = {
-      maxAgentExposure: this._parseEnv('MAX_AGENT_EXPOSURE', '10'),
-      maxSwarmExposure: this._parseEnv('MAX_SWARM_EXPOSURE', '1000'),
-      minConfidenceThreshold: Number(this._parseEnv('MIN_CONFIDENCE_THRESHOLD', 60)), // 60%
-      maxPositionSizeRatio: Number(this._parseEnv('MAX_POSITION_SIZE_RATIO', 0.25)), // Max 25% of available
-      dailyLossLimit: this._parseEnv('DAILY_LOSS_LIMIT', '100'),
-      maxDrawdown: this._parseEnv('MAX_DRAWDOWN', '50')
+      maxAgentExposure: Number(this.config.maxAgentExposure ?? this._parseEnv('MAX_AGENT_EXPOSURE', '10')),
+      maxSwarmExposure: Number(this.config.maxSwarmExposure ?? this._parseEnv('MAX_SWARM_EXPOSURE', '1000')),
+      minConfidenceThreshold: Number(this.config.minConfidenceThreshold ?? this._parseEnv('MIN_CONFIDENCE_THRESHOLD', 60)), // 60%
+      maxPositionSizeRatio: Number(this.config.maxPositionSizeRatio ?? this._parseEnv('MAX_POSITION_SIZE_RATIO', 0.25)), // Max 25% of available
+      dailyLossLimit: Number(this.config.dailyLossLimit ?? this._parseEnv('DAILY_LOSS_LIMIT', '100')),
+      maxDrawdown: Number(this.config.maxDrawdown ?? this._parseEnv('MAX_DRAWDOWN', '50'))
     };
     
     // Initialize tracking state

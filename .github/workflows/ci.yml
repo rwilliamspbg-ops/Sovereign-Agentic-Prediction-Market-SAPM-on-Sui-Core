@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  test-and-lint:
+  release-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,9 +15,5 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Install root dev deps
-        run: npm ci
-      - name: Run tests and lint
-        run: |
-          npm run test:all || true
-          npm run lint || true
+      - name: Run canonical release gate
+        run: npm run release:check

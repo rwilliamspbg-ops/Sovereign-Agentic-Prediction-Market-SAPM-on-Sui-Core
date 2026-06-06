@@ -233,5 +233,29 @@ class MarketDiscovery {
   }
 }
 
+/**
+ * Lightweight discovery helper used by node:test suite.
+ */
+async function discoverMarket(options) {
+  const { rpc, marketObjectId, marketId, client } = options || {};
+
+  if (!marketObjectId) {
+    throw new Error('marketObjectId is required');
+  }
+
+  const activeClient = client || new SuiClient({ url: rpc || 'http://127.0.0.1:9000' });
+  const response = await activeClient.getObject({ id: marketObjectId });
+  const data = response && response.data ? response.data : {};
+
+  return {
+    discovered: true,
+    marketId: marketId || null,
+    objectId: data.objectId || marketObjectId,
+    owner: data.owner || null,
+    type: data.type || null,
+    version: data.version || null
+  };
+}
+
 // Export for module use
-module.exports = { MarketDiscovery };
+module.exports = { MarketDiscovery, discoverMarket };
