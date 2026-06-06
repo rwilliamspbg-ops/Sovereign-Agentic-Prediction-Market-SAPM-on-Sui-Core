@@ -10,7 +10,7 @@ let Ed25519Keypair = null;
 
 try {
   Ed25519Keypair = require('@mysten/sui/keypairs/ed25519').Ed25519Keypair;
-} catch (e) {
+} catch {
   Ed25519Keypair = null;
 }
 
@@ -48,7 +48,7 @@ class PTBBuilder {
    * Build deposit PTB for DeepBook Predict market
    */
   async buildDepositPTB(packageId, marketObjectId, amountCoin, options = {}) {
-    const { dryRun = false, gasBudget = this.gasBudget } = options;
+    const { dryRun = false } = options;
     
     console.log('[PTBBuilder] Building deposit PTB...');
     
@@ -102,7 +102,7 @@ class PTBBuilder {
    * Build mint position PTB (buy yes/no outcomes)
    */
   async buildMintPositionPTB(packageId, marketObjectId, yesAmount, noAmount, options = {}) {
-    const { dryRun = false, gasBudget = this.gasBudget } = options;
+    const { dryRun = false } = options;
     
     console.log('[PTBBuilder] Building mint position PTB...');
     
@@ -195,7 +195,7 @@ class PTBBuilder {
    * Build redeem position PTB (exit positions)
    */
   async buildRedeemPositionPTB(packageId, marketObjectId, positionObjectIds, options = {}) {
-    const { dryRun = false, gasBudget = this.gasBudget } = options;
+    const { dryRun = false } = options;
     
     console.log('[PTBBuilder] Building redeem position PTB...');
     
@@ -251,7 +251,7 @@ class PTBBuilder {
    * Build multi-step PTB sequence (deposit + mint) for full lifecycle
    */
   async buildDepositMintSequence(packageId, marketObjectId, yesAmount, noAmount, options = {}) {
-    const { dryRun = false, gasBudget = this.gasBudget } = options;
+    const { dryRun = false } = options;
     
     console.log('[PTBBuilder] Building deposit+mint sequence PTB...');
     
