@@ -161,8 +161,23 @@ Utility function:
 5. Payout and accountability
 - Honest performance can be rewarded; malicious/poor behavior can be slashed.
 
-## Quick Start (Developer)
+## Frontend - Market Discovery Interface
 
+A professional, production-grade prediction market UI built with Next.js 14 and Sui blockchain integration.
+
+![SAPM Market Discovery Interface](./docs/images/sapm-ui-markets.png)
+
+**Key Features:**
+- 🎨 Professional dark theme with Sui branding
+- 🔍 Real-time market search and filtering
+- 📊 AI confidence visualization and forecasts
+- 💎 Interactive market detail modals
+- 📈 Live statistics dashboard
+- ⚡ Sui blockchain integration
+
+See [FRONTEND.md](./FRONTEND.md) for complete documentation.
+
+## Quick Start (Developer)
 ### Prerequisites
 
 - Node.js >= 18 (Node 24 recommended)
