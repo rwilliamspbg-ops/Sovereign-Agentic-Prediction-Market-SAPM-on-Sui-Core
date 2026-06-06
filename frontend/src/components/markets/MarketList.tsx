@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { MarketCard } from './MarketCard';
-import { SearchIcon, FilterIcon, SortIcons } from '@heroicons/react/24/solid';
+import { MagnifyingGlassIcon, ArrowsUpDownIcon } from '@heroicons/react/24/solid';
 
 interface MarketData {
   id: string;
@@ -99,7 +99,7 @@ export const MarketList: React.FC<MarketListProps> = ({
         <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
           {/* Search Input */}
           <div className="relative flex-1 w-full">
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search markets..."
@@ -144,7 +144,7 @@ export const MarketList: React.FC<MarketListProps> = ({
           >
             <option value="newest">Newest First</option>
             <option value="volume">Highest Volume</option>
-            {agentEdge.some((edge, index) => edge > 0.3 && markets[index]) && (
+            {Object.values(agentEdge).some((edge) => edge > 0.3) && (
               <option value="edge">AI Edge</option>
             )}
           </select>
