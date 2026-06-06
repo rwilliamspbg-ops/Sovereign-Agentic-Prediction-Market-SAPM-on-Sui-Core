@@ -1,7 +1,7 @@
 FROM node:20-alpine
 WORKDIR /app
 
-COPY package.json ./
+COPY package*.json ./
 # Install all dependencies (including dev) for Next.js compilation
 RUN npm install --no-audit --no-fund
 
