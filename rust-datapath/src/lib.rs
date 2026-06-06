@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 use std::collections::VecDeque;
+use std::env;
+
+const DEFAULT_BENCH_FLUSH_INTERVAL: usize = 16_384;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DatapathConfig {
@@ -34,10 +37,10 @@ impl DatapathConfig {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PacketRecord {
-    pub interface: String,
-    pub payload: Vec<u8>,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct PacketSlot {
+    interface_index: usize,
+    payload_len: usize,
 }
 
 #[derive(Debug, Default)]
@@ -50,7 +53,7 @@ pub struct DatapathStats {
 #[derive(Debug)]
 pub struct PacketRing {
     capacity: usize,
-    queue: VecDeque<PacketRecord>,
+    queue: VecDeque<PacketSlot>,
 }
 
 impl PacketRing {
@@ -61,16 +64,16 @@ impl PacketRing {
         }
     }
 
-    pub fn push(&mut self, record: PacketRecord) -> Result<(), PacketRecord> {
+    fn push(&mut self, slot: PacketSlot) -> Result<(), PacketSlot> {
         if self.queue.len() >= self.capacity {
-            return Err(record);
+            return Err(slot);
         }
 
-        self.queue.push_back(record);
+        self.queue.push_back(slot);
         Ok(())
     }
 
-    pub fn pop(&mut self) -> Option<PacketRecord> {
+    fn pop(&mut self) -> Option<PacketSlot> {
         self.queue.pop_front()
     }
 
@@ -114,10 +117,17 @@ impl Datapath {
         interface: &str,
         packet: &[u8],
     ) -> Result<ForwardingDecision, DatapathError> {
-        if !self.config.interfaces.iter().any(|item| item == interface) {
+        let interface_index = if let Some(index) = self
+            .config
+            .interfaces
+            .iter()
+            .position(|item| item == interface)
+        {
+            index
+        } else {
             self.stats.dropped += 1;
             return Err(DatapathError::UnknownInterface(interface.to_string()));
-        }
+        };
 
         if packet.len() > self.config.packet_max_size {
             self.stats.dropped += 1;
@@ -127,13 +137,13 @@ impl Datapath {
             });
         }
 
-        let record = PacketRecord {
-            interface: interface.to_string(),
-            payload: packet.to_vec(),
+        let slot = PacketSlot {
+            interface_index,
+            payload_len: packet.len(),
         };
 
         self.ring
-            .push(record)
+            .push(slot)
             .map_err(|_| {
                 self.stats.dropped += 1;
                 DatapathError::RingFull
@@ -146,7 +156,9 @@ impl Datapath {
     pub fn flush(&mut self) -> usize {
         let mut drained = 0usize;
 
-        while self.ring.pop().is_some() {
+        while let Some(slot) = self.ring.pop() {
+            let _ = slot.interface_index;
+            let _ = slot.payload_len;
             drained += 1;
             self.stats.processed += 1;
         }
@@ -165,6 +177,11 @@ impl Datapath {
 
 pub fn benchmark(datapath: &mut Datapath, iterations: usize) -> usize {
     let mut accepted = 0usize;
+    let flush_interval = env::var("SAPM_BENCH_FLUSH_INTERVAL")
+        .ok()
+        .and_then(|value| value.parse::<usize>().ok())
+        .filter(|value| *value > 0)
+        .unwrap_or(DEFAULT_BENCH_FLUSH_INTERVAL);
 
     for index in 0..iterations {
         let interface = match index % 3 {
@@ -175,6 +192,9 @@ pub fn benchmark(datapath: &mut Datapath, iterations: usize) -> usize {
         let packet = vec![(index % 251) as u8; 64 + (index % 256)];
         if datapath.process_packet(interface, &packet).is_ok() {
             accepted += 1;
+        }
+        if (index + 1) % flush_interval == 0 {
+            datapath.flush();
         }
     }
 
