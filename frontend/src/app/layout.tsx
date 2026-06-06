@@ -3,8 +3,6 @@
 import React, { ReactNode } from "react";
 import "./globals.css";
 
-const inter = { style: { fontFamily: 'Inter, sans-serif' } };
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -19,26 +17,16 @@ export default function RootLayout({
   const handleConnectWallet = async () => {
     setIsConnecting(true);
     try {
-      // Check if wallet is available
-      const { getSignerProvider } = await import('@mysten/sui');
-      const provider = await getSignerProvider?.();
+      // Generate mock Sui address for demo (64 hex chars with 0x prefix)
+      const mockAddress = '0x' + Array(64).fill(0).map(() => 
+        Math.floor(Math.random() * 16).toString(16)
+      ).join('');
       
-      if (provider) {
-        const accounts = await provider.getAccounts?.();
-        if (accounts && accounts.length > 0) {
-          const address = accounts[0];
-          setWalletAddress(address);
-          setWalletConnected(true);
-          // Store in localStorage
-          localStorage.setItem('walletAddress', address);
-        }
-      } else {
-        // Wallet not found - direct user
-        window.open('https://docs.sui.io/guides/user/getting-started/sui-install', '_blank');
-      }
+      setWalletAddress(mockAddress);
+      setWalletConnected(true);
+      localStorage.setItem('walletAddress', mockAddress);
     } catch (error) {
       console.error('Error connecting wallet:', error);
-      // Fallback: show wallet installation prompt
       alert('Please install a Sui wallet (Sui Wallet, Nightly Wallet, or similar)');
     } finally {
       setIsConnecting(false);
@@ -69,7 +57,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body style={{ fontFamily: inter.style.fontFamily, margin: 0, padding: 0, backgroundColor: '#0f172a' }}>
+      <body style={{ margin: 0, padding: 0, backgroundColor: '#0f172a', fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
         {/* Header Navigation */}
         <header style={{
           position: 'fixed',
@@ -262,7 +250,7 @@ export default function RootLayout({
                           Connected Wallet
                         </div>
                         <div style={{ 
-                          fontSize: '0.9rem', 
+                          fontSize: '0.75rem', 
                           color: '#e2e8f0',
                           fontFamily: 'monospace',
                           wordBreak: 'break-all',
@@ -273,7 +261,6 @@ export default function RootLayout({
 
                       <button
                         onClick={() => {
-                          // Copy to clipboard
                           navigator.clipboard.writeText(walletAddress!);
                           alert('Address copied to clipboard!');
                         }}
@@ -411,16 +398,6 @@ export default function RootLayout({
             <p style={{ margin: 0, color: '#64748b' }}>© 2025 SAPM on Sui. All rights reserved. | Built with ⚡ on Sui Blockchain</p>
           </div>
         </footer>
-
-        {/* Wallet Context Script - passes to page component */}
-        <script>
-          {`
-            window.__SAPM_WALLET__ = {
-              connected: ${walletConnected},
-              address: ${walletAddress ? `"${walletAddress}"` : 'null'}
-            };
-          `}
-        </script>
       </body>
     </html>
   );
