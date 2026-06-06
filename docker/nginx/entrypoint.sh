@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
 # Host domain to use for cert paths; default to 'aggregator'

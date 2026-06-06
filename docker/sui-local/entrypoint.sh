@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -e
 
 SUI_BIN="/opt/sui/sui"
 RPC_ADDR="0.0.0.0:9000"
