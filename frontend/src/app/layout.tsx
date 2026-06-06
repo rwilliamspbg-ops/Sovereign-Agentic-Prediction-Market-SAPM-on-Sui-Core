@@ -15,12 +15,18 @@ export default function RootLayout({
   const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
   const [showWalletMenu, setShowWalletMenu] = React.useState(false);
   const [isConnecting, setIsConnecting] = React.useState(false);
+  const [network, setNetwork] = React.useState<'testnet' | 'mainnet'>('testnet');
+  const [showNetworkMenu, setShowNetworkMenu] = React.useState(false);
+
+  const NETWORKS = {
+    testnet: { label: 'Sui Testnet', color: '#fbbf24', bg: '#78350f', badge: 'TESTNET' },
+    mainnet: { label: 'Sui Mainnet', color: '#34d399', bg: '#064e3b', badge: 'MAINNET' },
+  };
 
   // Handle wallet connection
   const handleConnectWallet = async () => {
     setIsConnecting(true);
     try {
-      // Generate mock Sui address for demo (64 hex chars with 0x prefix)
       const mockAddress = '0x' + Array(64).fill(0).map(() => 
         Math.floor(Math.random() * 16).toString(16)
       ).join('');
@@ -44,6 +50,13 @@ export default function RootLayout({
     localStorage.removeItem('walletAddress');
   };
 
+  // Handle network change
+  const handleNetworkChange = (newNetwork: 'testnet' | 'mainnet') => {
+    setNetwork(newNetwork);
+    localStorage.setItem('preferredNetwork', newNetwork);
+    setShowNetworkMenu(false);
+  };
+
   // Format address for display (show first 6 and last 4 chars)
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -54,14 +67,20 @@ export default function RootLayout({
     return pathname === path ? '#0ea5e9' : '#cbd5e1';
   };
 
-  // Load wallet on mount if previously connected
+  // Load wallet and network on mount if previously connected
   React.useEffect(() => {
     const savedAddress = localStorage.getItem('walletAddress');
     if (savedAddress) {
       setWalletAddress(savedAddress);
       setWalletConnected(true);
     }
+    const savedNetwork = localStorage.getItem('preferredNetwork');
+    if (savedNetwork) {
+      setNetwork(savedNetwork as 'testnet' | 'mainnet');
+    }
   }, []);
+
+  const currentNetworkConfig = NETWORKS[network];
 
   return (
     <html lang="en">
@@ -163,6 +182,75 @@ export default function RootLayout({
               }}>
                 Help
               </Link>
+
+              {/* Network Switcher */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowNetworkMenu(!showNetworkMenu)}
+                  style={{
+                    padding: '0.4rem 0.75rem',
+                    backgroundColor: currentNetworkConfig.bg,
+                    color: currentNetworkConfig.color,
+                    border: `1px solid ${currentNetworkConfig.color}`,
+                    borderRadius: '0.375rem',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  🌐 {currentNetworkConfig.badge}
+                  <span style={{ fontSize: '0.9rem' }}>▼</span>
+                </button>
+
+                {showNetworkMenu && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '0.5rem',
+                    backgroundColor: '#1e293b',
+                    border: '1px solid #334155',
+                    borderRadius: '0.5rem',
+                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
+                    minWidth: '180px',
+                    zIndex: 1000,
+                  }}>
+                    {Object.entries(NETWORKS).map(([key, config]) => (
+                      <button
+                        key={key}
+                        onClick={() => handleNetworkChange(key as 'testnet' | 'mainnet')}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem 1rem',
+                          backgroundColor: network === key ? config.bg : 'transparent',
+                          color: network === key ? config.color : '#cbd5e1',
+                          border: 'none',
+                          borderBottom: key !== 'mainnet' ? '1px solid #334155' : 'none',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem',
+                          textAlign: 'left',
+                          transition: 'all 0.2s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#334155';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = network === key ? config.bg : 'transparent';
+                        }}
+                      >
+                        {network === key ? '✓' : '○'} {config.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Notifications */}
               <button style={{
