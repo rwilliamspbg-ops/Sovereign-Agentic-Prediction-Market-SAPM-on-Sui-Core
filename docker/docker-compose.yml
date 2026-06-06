@@ -93,6 +93,23 @@ services:
       timeout: 5s
       retries: 6
 
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: sapm-frontend
+    depends_on:
+      - aggregator-proxy
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost
+      - NEXT_PUBLIC_SUI_RPC=${SUI_RPC:-http://localhost:9000}
+    restart: unless-stopped
+
 volumes:
   sui-data:
     name: sui_local_data
