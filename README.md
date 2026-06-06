@@ -165,7 +165,7 @@ Utility function:
 
 A professional, production-grade prediction market UI built with Next.js 14 and Sui blockchain integration.
 
-![SAPM Market Discovery Interface](./docs/images/sapm-ui-markets.png)
+![SAPM Market Discovery Interface](./sapm-ui-markets.png)
 
 **Key Features:**
 - 🎨 Professional dark theme with Sui branding
