@@ -50,6 +50,21 @@ This repository implements a sovereign, high-performance prediction market aggre
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## Frontend - Market Discovery Interface
+
+A professional, production-grade prediction market UI built with Next.js 14 and Sui blockchain integration.
+
+![SAPM Market Discovery Interface](./docs/images/sapm-ui-markets.png)
+
+**Key Features:**
+- 🎨 Professional dark theme with Sui branding
+- 🔍 Real-time market search and filtering
+- 📊 AI confidence visualization and forecasts
+- 💎 Interactive market detail modals
+- 📈 Live statistics dashboard
+- ⚡ Sui blockchain integration
+
+See [FRONTEND.md](./FRONTEND.md) for complete documentation.
 ## Quick Start
 
 ### Prerequisites
@@ -310,4 +325,5 @@ MODEL_DIR=./tmp_model npm start
 - If CI fails on Node version, ensure your local Node matches `.nvmrc` or the `engines` field in `package.json` (Node >=18; Node 24 recommended).
 
 For further development guidance see DEVELOPMENT.md.
+
 
