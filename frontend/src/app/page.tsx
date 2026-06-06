@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useTradeExecution, TradeForm, ToastContainer } from '@/components/TradeExecution';
 
 interface MarketData {
   id: string;
@@ -27,13 +28,17 @@ export default function MarketDiscovery() {
   const [markets, setMarkets] = useState<MarketData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [walletConnected, setWalletConnected] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+
+  // Trade execution
+  const { executeTrade, positions, toasts, removeToast } = useTradeExecution();
 
   // Initialize with real market data simulation
   useEffect(() => {
     const fetchMarkets = async () => {
       try {
         setLoading(true);
-        // Simulated real market data (in production, this would fetch from Sui RPC)
         const realMarkets: MarketData[] = [
           {
             id: 'SUI_PRICE_2025',
@@ -171,6 +176,13 @@ export default function MarketDiscovery() {
         ];
         setMarkets(realMarkets);
         setError(null);
+
+        // Load wallet from localStorage
+        const savedAddress = localStorage.getItem('walletAddress');
+        if (savedAddress) {
+          setWalletAddress(savedAddress);
+          setWalletConnected(true);
+        }
       } catch (err) {
         setError('Failed to load market data');
         console.error(err);
@@ -186,7 +198,7 @@ export default function MarketDiscovery() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'volume' | 'probability' | 'confidence' | 'tvl'>('tvl');
   const [selectedMarket, setSelectedMarket] = useState<MarketData | null>(null);
-  const [isWalletConnected] = useState(false);
+  const [showTradeConfirm, setShowTradeConfirm] = useState(false);
 
   const categories = useMemo(() => {
     return Array.from(new Set(markets.map(m => m.category).filter(Boolean)));
@@ -370,6 +382,11 @@ export default function MarketDiscovery() {
 
         <div style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#94a3b8' }}>
           Showing {filteredAndSortedMarkets.length} of {markets.length} markets
+          {walletConnected && walletAddress && (
+            <span style={{ marginLeft: '1rem', color: '#34d399' }}>
+              ✓ Wallet Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+            </span>
+          )}
         </div>
       </div>
 
@@ -386,6 +403,7 @@ export default function MarketDiscovery() {
             const priceChange = getPriceChange(market.priceHistory);
             const daysLeft = daysUntilResolution(market.resolutionDate);
             const isExpiring = market.resolutionDate && (market.resolutionDate.getTime() - Date.now()) < 30 * 24 * 60 * 60 * 1000;
+            const position = positions[market.id];
 
             return (
               <div
@@ -446,6 +464,21 @@ export default function MarketDiscovery() {
                 <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem', lineHeight: '1.5', minHeight: '2.5rem', color: '#e2e8f0' }}>
                   {market.question}
                 </h3>
+
+                {/* Position Badge */}
+                {position && (position.yes > 0 || position.no > 0) && (
+                  <div style={{
+                    marginBottom: '0.75rem',
+                    padding: '0.5rem 0.75rem',
+                    backgroundColor: '#0ea5e922',
+                    borderRadius: '0.375rem',
+                    border: '1px solid #06b6d4',
+                    fontSize: '0.75rem',
+                    color: '#22d3ee',
+                  }}>
+                    📊 Position: {position.yes > 0 ? `${position.yes.toFixed(0)} YES` : ''} {position.no > 0 ? `${position.no.toFixed(0)} NO` : ''}
+                  </div>
+                )}
 
                 {/* AI Confidence */}
                 {market.aiConfidence && (
@@ -545,7 +578,7 @@ export default function MarketDiscovery() {
                   </div>
                 </div>
 
-                {/* Risk & Resolution */}
+                {/* Risk & Trade Button */}
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -861,56 +894,17 @@ export default function MarketDiscovery() {
               )}
 
               {/* Trade Form */}
-              {isWalletConnected && (
-                <div style={{
-                  padding: '1rem',
-                  backgroundColor: '#0ea5e922',
-                  borderRadius: '0.5rem',
-                  border: '1px solid #06b6d4',
-                }}>
-                  <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', margin: '0 0 1rem 0', color: '#e2e8f0' }}>Place Trade</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                    <input
-                      type="number"
-                      placeholder="Amount (SUI)"
-                      defaultValue={10}
-                      style={{
-                        padding: '0.75rem',
-                        border: '1px solid #334155',
-                        borderRadius: '0.375rem',
-                        fontFamily: 'inherit',
-                        backgroundColor: '#0f172a',
-                        color: '#e2e8f0',
-                      }}
-                    />
-                    <select style={{
-                      padding: '0.75rem',
-                      border: '1px solid #334155',
-                      borderRadius: '0.375rem',
-                      fontFamily: 'inherit',
-                      backgroundColor: '#0f172a',
-                      color: '#e2e8f0',
-                    }}>
-                      <option>Buy YES</option>
-                      <option>Buy NO</option>
-                    </select>
-                  </div>
-                  <button style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    background: 'linear-gradient(135deg, #0ea5e9, #06b6d4)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '0.375rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                  }}>
-                    Execute Trade
-                  </button>
-                </div>
+              {walletConnected && (
+                <TradeForm
+                  marketId={selectedMarket.id}
+                  yesPrice={selectedMarket.yesPrice}
+                  noPrice={selectedMarket.noPrice}
+                  isWalletConnected={walletConnected}
+                  onExecuteTrade={executeTrade}
+                />
               )}
 
-              {!isWalletConnected && (
+              {!walletConnected && (
                 <div style={{
                   padding: '1rem',
                   backgroundColor: '#fbbf2422',
@@ -920,13 +914,16 @@ export default function MarketDiscovery() {
                   fontSize: '0.875rem',
                   color: '#fcd34d',
                 }}>
-                  Connect your wallet to trade
+                  💼 Connect your wallet to trade
                 </div>
               )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   );
 }
