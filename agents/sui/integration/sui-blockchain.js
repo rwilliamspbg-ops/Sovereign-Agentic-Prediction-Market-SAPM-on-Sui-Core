@@ -6,8 +6,6 @@
 
 const express = require('express');
 const bodyParser = require('body-parser');
-const fs = require('fs').promises;
-const path = require('path');
 const crypto = require('crypto');
 
 // Simplified SUI SDK types (replace with actual @mysten/sui.js in production)
@@ -61,8 +59,6 @@ class SuiClient {
 
   async signTransaction(moveCode) {
     // Simplified signing - use proper SUI SDK signer in production
-    const privateKey = process.env.TRADER_WALLET_PRIVATE_KEY || 'default_test_key';
-    
     // Simplified signature generation (replace with actual SUI signature scheme)
     const hash = crypto.createHash('sha256').update(moveCode).digest('hex');
     
@@ -87,7 +83,6 @@ const router = express.Router();
 const SUI_RPC_URL = process.env.SUI_RPC_URL || 'http://localhost:9000';
 const TRADER_WALLET_ADDRESS = process.env.TRADER_WALLET_ADDRESS || 
   '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
-const TRADER_WALLET_PRIVATE_KEY = process.env.TRADER_WALLET_PRIVATE_KEY || null;
 const ORDER_BOOK_CONTRACT_ID = process.env.ORDER_BOOK_CONTRACT_ID || 
   '0x0000000000000000000000000000000000000000000000000000000000000001';
 

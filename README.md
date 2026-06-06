@@ -3,6 +3,7 @@
 [![Release Gate](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=Release%20Gate)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci.yml)
 [![Stack Validation](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci_validation.yml?branch=main&style=for-the-badge&logo=docker&logoColor=white&label=Stack%20Validation)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci_validation.yml)
 [![Lean Verification](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/lean-verification.yml?branch=main&style=for-the-badge&logo=leanpub&logoColor=white&label=Lean%20Verification)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/lean-verification.yml)
+[![Lean Rust Runner](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/lean-rust-runner-image.yml?branch=main&style=for-the-badge&logo=rust&logoColor=white&label=Lean%20Rust%20Runner)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/lean-rust-runner-image.yml)
 [![Phase2 Hardening](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/phase2-hardening-ci.yml?branch=main&style=for-the-badge&logo=shield&logoColor=white&label=Phase2%20Hardening)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/phase2-hardening-ci.yml)
 [![Node >=18](https://img.shields.io/badge/Node-%3E%3D18-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](package.json)
 [![Sui](https://img.shields.io/badge/Sui-Testnet-6fbcf0?style=for-the-badge&logo=sui&logoColor=0b1f3a)](https://docs.sui.io)
@@ -31,7 +32,7 @@ docker compose up
 # Sui RPC: http://localhost:9000
 ```
 
-See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed setup.
+See [docs/INDEX.md](docs/INDEX.md) for setup and subsystem documentation.
 
 ---
 
@@ -39,12 +40,13 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed setup.
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| **Market Discovery UI** | ✅ Production | Filters, sorting, responsive design |
-| **Agent Decision Pipeline** | ✅ Working | Forecast → Aggregate → Trade (dry-run) |
-| **Docker Environment** | ✅ Working | Full local dev setup |
-| **Move Contracts** | 🟡 Framework | Registry/incentives Move sources present; deployment status not verified in this review |
-| **Sui Integration** | 🟡 Partial | Sui SDK references and PTB builders exist; root release-check now runs cleanly |
-| **Formal Verification** | 🟡 Scaffolding | Formal verification directory and artifacts present; production proof coverage not yet verified |
+| **Market Discovery UI** | ✅ Implemented | Filters, sorting, responsive design, and multi-page frontend routes are present |
+| **Agent Decision Pipeline** | ✅ Validated (Dry-Run) | Forecast → Aggregate → Trade pipeline executes in demo/test flows |
+| **Docker Environment** | ✅ Validated | Local multi-service stack is configured and exercised by validation workflows |
+| **Move Contracts** | 🟡 Source Complete | Registry/incentives Move modules are present; live deployment verification remains external |
+| **Sui Integration** | 🟡 Partial | Sui SDK/PTB logic exists; end-to-end chain execution still depends on runtime network setup |
+| **Formal Verification** | 🟡 Scaffolding | Formal verification assets and workflow are present; full proof coverage is not claimed |
+| **CI/CD Workflows** | ✅ Active | Release gate, stack validation, lean verification, hardening, and runner-image workflows are configured |
 
 **See [docs/PRODUCTION_STATUS.md](docs/PRODUCTION_STATUS.md) for detailed component status.**
 
@@ -71,13 +73,13 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed setup.
 
 ## 📚 Documentation
 
-- **[PRODUCTION_STATUS.md](docs/PRODUCTION_STATUS.md)** ← Start here for component status
-- [QUICKSTART.md](docs/QUICKSTART.md) - Setup instructions
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md) - System design
-- [FRONTEND.md](docs/FRONTEND.md) - UI/UX guide
-- [WALLET.md](docs/WALLET.md) - Wallet integration
-- [ORCHESTRATOR_PLACEHOLDER_TRIAGE.md](docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md) - owner/milestone ledger for placeholder paths
-- [CONTRIBUTING.md](CONTRIBUTING.md) - How to contribute
+- **[docs/INDEX.md](docs/INDEX.md)** ← Primary documentation index (start here)
+- [docs/PRODUCTION_STATUS.md](docs/PRODUCTION_STATUS.md) - Current component status
+- [docs/PRODUCTION_READINESS_CHECKLIST.md](docs/PRODUCTION_READINESS_CHECKLIST.md) - Validation checklist
+- [docs/OPERATIONS_RUNBOOK.md](docs/OPERATIONS_RUNBOOK.md) - Operational procedures
+- [docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md](docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md) - Placeholder owner/milestone ledger
+- [docs/root-archive/PERFORMANCE_OPTIMIZATION_GUIDE.md](docs/root-archive/PERFORMANCE_OPTIMIZATION_GUIDE.md) - Historical performance design notes
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guide
 
 ---
 
@@ -149,6 +151,24 @@ As of the 2026-06-06 stabilization pass:
 Release gate policy:
 - `npm run release:check` is the canonical readiness gate for local validation and CI.
 - It installs required root and agent dependencies, then runs lint + test suites.
+
+## Performance
+
+Measured on the current branch in this workspace (2026-06-06):
+
+- `npm run bench:aggregator` (64 updates x 512 dims):
+   - `avg`: ~0.032 ms/op
+   - `trimmed`: ~0.995 ms/op
+   - `multikrum`: ~1.075 ms/op
+   - `multikrum_reputation`: ~1.244 ms/op
+- Rust datapath benchmark:
+   - `~/.cargo/bin/cargo run --manifest-path rust-datapath/Cargo.toml -- bench --iterations 1000000`
+   - Latest run: `processed=1000000`, `dropped=0`, `elapsed_ms=143`
+- End-to-end validation runtime:
+   - `./scripts/phase2_go_nogo.sh`: ~3.6s
+   - `bash scripts/orchestrator_hardening_check.sh`: ~0.11s
+
+See [docs/root-archive/PERFORMANCE_OPTIMIZATION_GUIDE.md](docs/root-archive/PERFORMANCE_OPTIMIZATION_GUIDE.md) for background details.
 
 ---
 
@@ -243,14 +263,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
 ### For Contributors
 
 1. Read [CONTRIBUTING.md](CONTRIBUTING.md)
-2. Check [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+2. Check [docs/INDEX.md](docs/INDEX.md)
 3. Pick an issue or feature
 4. Create feature branch
 5. Submit PR
 
 ### For Developers
 
-1. Review [docs/QUICKSTART.md](docs/QUICKSTART.md)
+1. Review [docs/INDEX.md](docs/INDEX.md)
 2. Study code structure above
 3. Explore `frontend/src/app` for UI
 4. Explore `agents/` for logic

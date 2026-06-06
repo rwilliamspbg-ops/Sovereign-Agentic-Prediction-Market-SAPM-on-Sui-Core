@@ -4,7 +4,6 @@
  */
 
 const assert = require('assert');
-const portScanner = require('portscanner');
 
 describe('Multi-Market Portfolio Manager', () => {
  let app;

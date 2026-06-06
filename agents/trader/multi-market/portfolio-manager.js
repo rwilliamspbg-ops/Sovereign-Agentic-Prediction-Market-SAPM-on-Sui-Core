@@ -14,8 +14,6 @@ const router = express.Router();
 // Configuration
 const PORTFOLIO_CONFIG_FILE = process.env.PORTFOLIO_CONFIG_FILE || 
   path.resolve('/data', 'portfolio.config.json');
-const RISK_MODEL_DIR = process.env.RISK_MODEL_DIR || '/data/risk';
-const SUI_RPC_URL = process.env.SUI_RPC_URL || 'http://localhost:9000';
 
 // Portfolio state
 let portfolioState = {
@@ -121,7 +119,6 @@ router.post('/compute-allocation', async (req, res) => {
  */
 router.post('/rebalance', async (req, res) => {
  try {
- const rebalanceRequest = req.body;
  const dryRun = req.body.dryRun || false;
 
  console.log(`[Portfolio] Rebalancing portfolio (dryRun: ${dryRun})`);
@@ -329,7 +326,6 @@ async function computeRiskAdjustedAllocations(params) {
  // Simplified mean-variance optimization (replace with full optimizer in production)
  const n = signals.length;
  const weights = new Array(n).fill(0);
- const targetVol = 0.15; // Target volatility
  const riskFreeRate = 0.03;
 
  for (let i = 0; i < n; i++) {
@@ -479,18 +475,7 @@ async function updatePortfolioState(executionResults) {
  try {
  const MODEL_DIR = process.env.MODEL_DIR || '/data';
  
- // Load current model state to persist updates
- const modelFile = path.resolve(MODEL_DIR, 'model.json');
- const metaFile = path.resolve(MODEL_DIR, 'model.meta.json');
- 
- const txt = await fs.readFile(modelFile, 'utf8');
- const model = JSON.parse(txt);
- 
- const metaTxt = await fs.readFile(metaFile, 'utf8');
- const meta = JSON.parse(metaTxt);
-
  // Save updated allocations
- const MODEL_DIR = process.env.MODEL_DIR || '/data';
  const allocationsFile = path.resolve(MODEL_DIR, 'portfolio.allocations.json');
  
  await fs.writeFile(

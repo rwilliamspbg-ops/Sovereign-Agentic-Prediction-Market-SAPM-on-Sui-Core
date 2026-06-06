@@ -45,7 +45,7 @@ class ForecastToTradeAdapter {
     console.log('[ForecastToTrade] Converting forecast to trade plan...');
     
     // Extract forecast metrics
-    const { confidence, prediction, eventQuery, timestamp } = forecastData;
+    const { confidence, prediction, eventQuery } = forecastData;
     
     if (!confidence || !prediction) {
       throw new Error('Missing required forecast fields: confidence, prediction');

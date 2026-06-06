@@ -61,7 +61,7 @@ async function loadModel() {
   try {
     const txt = await fs.readFile(MODEL_FILE, 'utf8');
     model = JSON.parse(txt);
-  } catch (e) {
+  } catch {
     model = await defaultModel();
     await saveModel();
   }
@@ -70,7 +70,7 @@ async function loadModel() {
     const rtxt = await fs.readFile(REGISTRY_FILE, 'utf8');
     const arr = JSON.parse(rtxt || '[]');
     allowedPubkeys = new Set(arr);
-  } catch (e) {
+  } catch {
     allowedPubkeys = new Set();
     await saveRegistry();
   }
@@ -79,7 +79,7 @@ async function loadModel() {
     const stxt = await fs.readFile(SEEN_FILE, 'utf8');
     const arr = JSON.parse(stxt || '[]');
     seen = new Set(arr);
-  } catch (e) {
+  } catch {
     seen = new Set();
     await persistSeen();
   }
@@ -239,7 +239,7 @@ async function loadRounds() {
     const txt = await fs.readFile(ROUNDS_FILE, 'utf8');
     const obj = JSON.parse(txt || '{}');
     rounds = new Map(Object.entries(obj));
-  } catch (e) {
+  } catch {
     rounds = new Map();
   }
 }
@@ -260,7 +260,7 @@ async function ensureAggKey() {
     aggKey = nacl.sign.keyPair.fromSeed(new Uint8Array(seed));
     aggPubkeyB64 = util.encodeBase64(Buffer.from(aggKey.publicKey));
     return;
-  } catch (e) {
+  } catch {
     // fallthrough to generate
   }
   // If AGG_SECRET provided, use it as seed (base64 expected)
@@ -350,7 +350,7 @@ function verifySignature(pubkeyB64, sigB64, payloadStr) {
     const sig = Buffer.from(sigB64, 'base64');
     const msg = Buffer.from(payloadStr, 'utf8');
     return nacl.sign.detached.verify(new Uint8Array(msg), new Uint8Array(sig), new Uint8Array(pub));
-  } catch (e) {
+  } catch {
     return false;
   }
 }

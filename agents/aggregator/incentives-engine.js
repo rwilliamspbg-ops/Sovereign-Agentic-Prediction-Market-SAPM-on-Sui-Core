@@ -55,7 +55,7 @@ class IncentivesEngine {
       const confidence = agentConfidences[index];
 
       // Record report and get update
-      const update = this.tracker.recordReport(
+      this.tracker.recordReport(
         agentId,
         forecast,
         actualOutcome,
