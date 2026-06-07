@@ -43,11 +43,28 @@ The UI now includes Judge Mode, wallet-aware trade execution, Walrus archive/pre
 | Judge Mode | Implemented | Guided flow for connect, on-chain read, micro trade, Walrus archive, preview |
 | DeepBook integration | Present | Status checks and linkouts are wired into the UI |
 | Walrus integration | Present | Snapshot publish/read flows are available from the frontend |
+| Copilot Ops workflow | Implemented | Action queue can plan and execute on-chain sync, judge mode, and archive workflows |
 | Agent pipeline | Implemented | Forecast, aggregation, and trade decision logic are present |
 | Risk controls | Implemented | Trade preflight, notional caps, idempotency, and retry logic |
 | Move contracts | Source present | Registry/incentives sources are present; deployment/runtime verification depends on environment |
 | Formal verification | Present | Lean artifacts and scripts are included in the repo |
 | Release validation | Green in this workspace | `npm run release:check` passes after clean bootstrap |
+
+## Production Readiness Status (Updated)
+
+| Component | Production Ready | Notes |
+| --- | --- | --- |
+| Frontend UI | Yes | Fully functional with wallet integration |
+| Agent Pipeline | Yes | Forecasting and aggregation are active |
+| Risk Controls | Beta | Additional hardening and policy tuning are still in progress |
+| Move Contracts | Alpha | Requires deployment verification in staging/production |
+| Formal Verification | Alpha | Partial proof coverage is complete; broader coverage remains |
+
+## Known Issues
+
+- Orchestrator hardening remains in progress for full production-grade attestation provisioning.
+- Lint warning debt should continue to trend toward zero.
+- On-chain package/object deployment assumptions must be verified per environment.
 
 ## Quick Start
 
@@ -203,6 +220,7 @@ The frontend is a Next.js 14 App Router app with:
 - Judge Mode for demo/judge proof flows
 - Walrus snapshot archive and preview
 - DeepBook/Walrus status panels
+- Copilot Ops panel with executable action queue and runtime-backed planning
 - branded loading and error fallbacks to avoid blank white pages
 
 Key entry points:
