@@ -42,6 +42,30 @@ function hasSuiChain(wallet: { chains?: readonly string[] | undefined }): boolea
   return wallet.chains.includes(SUI_TESTNET_CHAIN) || wallet.chains.includes(SUI_MAINNET_CHAIN);
 }
 
+function hasConnectFeature(wallet: { features?: Record<string, unknown> | undefined }): boolean {
+  return typeof (wallet.features?.['standard:connect'] as { connect?: unknown } | undefined)?.connect === 'function';
+}
+
+function getFirstSuiHexAddress(accounts?: readonly { address: string }[]): string | null {
+  if (!accounts || accounts.length === 0) {
+    return null;
+  }
+
+  const match = accounts.find((account) => isValidSuiHexAddress(account?.address));
+  return match?.address || null;
+}
+
+function formatWalletDiagnostics(wallet: {
+  name?: string;
+  accounts?: readonly { address: string }[];
+  features?: Record<string, unknown>;
+}): string {
+  const walletName = wallet.name || 'Unknown wallet';
+  const accounts = (wallet.accounts || []).map((account) => account.address).join(', ') || 'none';
+  const features = Object.keys(wallet.features || {}).join(', ') || 'none';
+  return `Selected wallet: ${walletName}. Accounts: ${accounts}. Features: ${features}.`;
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -72,10 +96,10 @@ export default function RootLayout({
     setWalletError(null);
     try {
       const liveWallets = getWallets().get();
-      const compatibleWallets = liveWallets.filter((wallet) => typeof (wallet.features?.['standard:connect'] as { connect?: unknown } | undefined)?.connect === 'function');
+      const compatibleWallets = liveWallets.filter((wallet) => hasConnectFeature(wallet) && hasSuiChain(wallet));
 
       if (compatibleWallets.length === 0) {
-        throw new Error('No compatible Sui wallet found');
+        throw new Error('No compatible Sui wallet found. Choose a Sui wallet account on testnet/mainnet.');
       }
 
       const savedWalletId = localStorage.getItem(LAST_WALLET_ID_KEY);
@@ -97,16 +121,13 @@ export default function RootLayout({
       } catch {
         output = await connectFeature.connect({ silent: false });
       }
-      const accountAddress = output.accounts?.[0]?.address || wallet.accounts?.[0]?.address;
+      const accountAddress = getFirstSuiHexAddress(output.accounts)
+        || getFirstSuiHexAddress(wallet.accounts as readonly { address: string }[] | undefined);
 
       if (!accountAddress) {
-        throw new Error('Wallet returned no account');
-      }
-
-      if (!isValidSuiHexAddress(accountAddress)) {
         localStorage.removeItem(LAST_WALLET_ID_KEY);
         localStorage.removeItem(LAST_WALLET_ADDRESS_KEY);
-        throw new Error(`Connected wallet account is not a valid Sui hex address: ${accountAddress}. Select a Sui wallet/account.`);
+        throw new Error(`Connected wallet does not expose a valid Sui account. ${formatWalletDiagnostics(wallet)} Choose a Sui wallet account on testnet/mainnet.`);
       }
 
       setWalletAddress(accountAddress);
@@ -201,7 +222,9 @@ export default function RootLayout({
       }
 
       const wallet = registry.get().find((item) => (item.id || item.name) === savedWalletId);
-      if (!wallet) {
+      if (!wallet || !hasSuiChain(wallet) || !hasConnectFeature(wallet)) {
+        localStorage.removeItem(LAST_WALLET_ID_KEY);
+        localStorage.removeItem(LAST_WALLET_ADDRESS_KEY);
         return;
       }
 
@@ -221,7 +244,9 @@ export default function RootLayout({
         } catch {
           output = await connectFeature.connect();
         }
-        const accountAddress = output.accounts?.[0]?.address || wallet.accounts?.[0]?.address || savedAddress;
+        const accountAddress = getFirstSuiHexAddress(output.accounts)
+          || getFirstSuiHexAddress(wallet.accounts as readonly { address: string }[] | undefined)
+          || (isValidSuiHexAddress(savedAddress) ? savedAddress : null);
         if (accountAddress && isValidSuiHexAddress(accountAddress)) {
           setWalletAddress(accountAddress);
           setWalletConnected(true);
@@ -254,9 +279,7 @@ export default function RootLayout({
   }, []);
 
   React.useEffect(() => {
-    const compatibleWallets = availableWallets.filter((wallet) => {
-      return typeof (wallet.features?.['standard:connect'] as { connect?: unknown } | undefined)?.connect === 'function';
-    });
+    const compatibleWallets = availableWallets.filter((wallet) => hasConnectFeature(wallet) && hasSuiChain(wallet));
 
     if (compatibleWallets.length === 0) {
       setSelectedWalletId('');
@@ -272,6 +295,9 @@ export default function RootLayout({
   }, [availableWallets, selectedWalletId]);
 
   const currentNetworkConfig = NETWORKS[network];
+  const suiConnectWallets = React.useMemo(() => {
+    return availableWallets.filter((wallet) => hasConnectFeature(wallet) && hasSuiChain(wallet));
+  }, [availableWallets]);
   const explorerBase = network === 'mainnet'
     ? 'https://suiscan.xyz/mainnet/account/'
     : 'https://suiscan.xyz/testnet/account/';
@@ -540,7 +566,7 @@ export default function RootLayout({
                   {/* Wallet Button or Connected State */}
                   {!walletConnected ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '240px' }}>
-                      {availableWallets.length > 1 && (
+                      {suiConnectWallets.length > 1 && (
                         <select
                           value={selectedWalletId}
                           onChange={(event) => setSelectedWalletId(event.target.value)}
@@ -554,9 +580,7 @@ export default function RootLayout({
                             padding: '0.25rem 0.5rem',
                           }}
                         >
-                          {availableWallets
-                            .filter((wallet) => hasSuiChain(wallet))
-                            .map((wallet) => {
+                          {suiConnectWallets.map((wallet) => {
                               const walletId = wallet.id || wallet.name;
                               return (
                                 <option key={walletId} value={walletId}>
@@ -569,7 +593,7 @@ export default function RootLayout({
 
                       <button
                         onClick={handleConnectWallet}
-                        disabled={isConnecting || availableWallets.length === 0}
+                        disabled={isConnecting || suiConnectWallets.length === 0}
                         style={{
                           padding: '0.6rem 1.5rem',
                           background: 'linear-gradient(135deg, #0ea5e9, #06b6d4)',
@@ -577,14 +601,14 @@ export default function RootLayout({
                           borderRadius: '0.375rem',
                           border: 'none',
                           fontWeight: '600',
-                          cursor: isConnecting || availableWallets.length === 0 ? 'not-allowed' : 'pointer',
+                          cursor: isConnecting || suiConnectWallets.length === 0 ? 'not-allowed' : 'pointer',
                           fontSize: '0.9rem',
                           transition: 'all 0.2s',
                           boxShadow: '0 4px 15px rgba(6, 182, 212, 0.2)',
-                          opacity: isConnecting || availableWallets.length === 0 ? 0.7 : 1,
+                          opacity: isConnecting || suiConnectWallets.length === 0 ? 0.7 : 1,
                         }}
                       >
-                        {isConnecting ? '🔗 Connecting...' : availableWallets.length === 0 ? 'Install Sui Wallet' : '💼 Connect Wallet'}
+                        {isConnecting ? '🔗 Connecting...' : suiConnectWallets.length === 0 ? 'Install Sui Wallet' : '💼 Connect Wallet'}
                       </button>
 
                       {walletError && (
