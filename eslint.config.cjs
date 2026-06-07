@@ -1,7 +1,7 @@
 module.exports = {
   languageOptions: {
     ecmaVersion: 'latest',
-    sourceType: 'script'
+    sourceType: 'module'
   },
   settings: {},
   plugins: {},

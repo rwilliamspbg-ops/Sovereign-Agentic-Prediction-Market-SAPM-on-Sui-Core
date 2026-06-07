@@ -6,6 +6,8 @@
 'use client';
 
 export interface AgentIntent {
+  id?: string;
+  timestamp?: number;
   type: 'insight' | 'action-request' | 'context-update' | 'alert';
   payload: Record<string, unknown>;
   priority: 'low' | 'medium' | 'high' | 'urgent';
@@ -14,6 +16,13 @@ export interface AgentIntent {
 export interface CopilotBridgeConfig {
   chatId?: string;
   enableStreaming?: boolean;
+}
+
+async function initCopilotConnection(config?: CopilotBridgeConfig): Promise<{ connected: boolean; config?: CopilotBridgeConfig }> {
+  return {
+    connected: true,
+    config,
+  };
 }
 
 export class CopilotBridge {

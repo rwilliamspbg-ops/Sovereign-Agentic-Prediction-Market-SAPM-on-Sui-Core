@@ -3,13 +3,13 @@
  * Handles Move contract interactions and transaction execution
  */
 
-import { SuiClient, Provider, Ed25519WalletAdapter } from '@mysten/sui';
-import { getFullnodeUrl, SUI_CHAIN_ID } from '@mysten/wallet-standard';
+import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
+import { SUI_PACKAGE_ID } from '@/lib/sui-config';
 
 export class SuiIntegrationService {
   private suiClient: SuiClient | null = null;
-  private provider: Provider | null = null;
   private network: 'testnet' | 'mainnet' = 'testnet';
+  private packageId: string = SUI_PACKAGE_ID;
   
   constructor(network: 'testnet' | 'mainnet' = 'testnet') {
     this.network = network;
@@ -22,12 +22,9 @@ export class SuiIntegrationService {
     const rpcUrl = this.getRpcUrl();
     this.suiClient = new SuiClient({ url: rpcUrl });
     
-    // Initialize wallet provider
-    const walletAdapter = await Ed25519WalletAdapter.init();
-    this.provider = await Provider.create(rpcUrl, walletAdapter);
-    
     console.log('✅ Sui Integration Service initialized');
     console.log(`📍 Connected to: ${this.network === 'testnet' ? 'Sui Testnet' : 'Sui Mainnet'}`);
+    console.log(`📦 Package ID: ${this.packageId}`);
   }
   
   private getRpcUrl(): string {
@@ -45,9 +42,9 @@ export class SuiIntegrationService {
     }
     
     try {
-      const balance = await this.suiClient.object.getBalance({
+      const balance = await this.suiClient.getBalance({
         owner: walletAddress,
-        coinType: '0x0000000000000000000000000000000000000000000000000000000000000001'
+        coinType: '0x2::sui::SUI'
       });
       
       return Number(balance.totalBalance);
@@ -67,47 +64,18 @@ export class SuiIntegrationService {
     if (!this.suiClient) {
       throw new Error('Sui client not initialized.');
     }
-    
-    try {
-      // Generate market object ID (simplified - real implementation uses Move contract)
-      const objectId = `market_${Date.now()}`;
-      
-      return {
-        success: true,
-        marketId: objectId,
-        question,
-        yesPrice,
-        noPrice,
-        category,
-        resolutionDate: resolutionDate.toISOString(),
-        createdAt: new Date().toISOString()
-      };
-    } catch (error) {
-      console.error('❌ Error creating market:', error);
-      throw error;
-    }
+
+    // Contract write support requires deployed package/object IDs and wallet signer integration.
+    throw new Error('createMarket is not configured: provide deployed Move package IDs and signer integration.');
   }
   
   async predictOutcome(marketId: string): Promise<any> {
     if (!this.suiClient) {
       throw new Error('Sui client not initialized.');
     }
-    
-    try {
-      // Call prediction function on Move contract (placeholder)
-      const prediction = await this.suiClient.callContract({
-        target: 'your_move_contract_object_id', // Replace with actual contract
-        function: 'predict_outcome',
-        arguments: [marketId],
-        typeArguments: [],
-        value: '0x0' // SUI payment for gas
-      });
-      
-      return prediction;
-    } catch (error) {
-      console.error('❌ Error predicting outcome:', error);
-      throw error;
-    }
+
+    // AI forecast computation must be sourced from a real model service, not a local stub.
+    throw new Error(`predictOutcome is not configured for market ${marketId}: connect model inference service.`);
   }
   
   async executeTrade(
@@ -115,38 +83,12 @@ export class SuiIntegrationService {
     outcome: 'yes' | 'no',
     amount: number
   ): Promise<any> {
-    if (!this.provider || !this.suiClient) {
-      throw new Error('Sui client/provider not initialized. Connect wallet first.');
+    if (!this.suiClient) {
+      throw new Error('Sui client not initialized. Connect wallet first.');
     }
-    
-    try {
-      // Build and execute trade transaction (simplified)
-      const tx = await this.provider.signAndExecuteTransaction({
-        transaction: {
-          moveToCall: {
-            module: 'market_module',
-            function: 'buy_outcome',
-            typeArguments: [outcome],
-            arguments: [
-              marketId,
-              amount.toString()
-            ]
-          }
-        },
-        sender: this.provider.getSigner()
-      });
-      
-      return {
-        success: true,
-        transactionHash: tx.digest,
-        marketId,
-        outcome,
-        amount
-      };
-    } catch (error) {
-      console.error('❌ Error executing trade:', error);
-      throw error;
-    }
+
+    // Frontend now executes wallet-signed testnet transactions via TradeExecution hook.
+    throw new Error(`executeTrade service stub removed. Use wallet-signed flow in TradeExecution for market ${marketId}.`);
   }
   
   async getMarketData(marketId: string): Promise<any> {
@@ -156,19 +98,45 @@ export class SuiIntegrationService {
     
     try {
       // Fetch market object from Sui
-      const marketObject = await this.suiClient.object.get({
+      const marketObject = await this.suiClient.getObject({
         id: `0x${marketId.replace(/\./g, '')}` // Normalize ID if needed
       });
       
       return {
         success: true,
-        market: marketObject.data.fields,
-        owner: marketObject.data.owner,
-        createdAt: marketObject.data.timestamp?.toISOString() || ''
+        market: (marketObject.data as any)?.content || null,
+        owner: (marketObject.data as any)?.owner || null,
+        createdAt: ''
       };
     } catch (error) {
       console.error('❌ Error getting market data:', error);
       return null;
+    }
+  }
+
+  async getPackageMetadata(): Promise<any> {
+    if (!this.suiClient) {
+      throw new Error('Sui client not initialized.');
+    }
+
+    try {
+      const pkg = await this.suiClient.getObject({
+        id: this.packageId,
+        options: {
+          showType: true,
+          showOwner: true,
+          showContent: true,
+        },
+      });
+
+      return {
+        packageId: this.packageId,
+        exists: Boolean(pkg.data),
+        type: pkg.data?.type || null,
+      };
+    } catch (error) {
+      console.error('❌ Error loading package metadata:', error);
+      throw error;
     }
   }
   

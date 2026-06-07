@@ -25,6 +25,9 @@ interface OrderBookProps {
  * Visualizes bid/ask spread with real-time updates
  */
 export const OrderBook: React.FC<OrderBookProps> = ({ marketId, onPlaceOrder }) => {
+  const MAKER_FEE_BPS = 10;
+  const TAKER_FEE_BPS = 30;
+
   // Generate simulated order book depth
   const [orderBook, setOrderBook] = useState<OrderBookData>({
     bidLevels: [],
@@ -34,6 +37,7 @@ export const OrderBook: React.FC<OrderBookProps> = ({ marketId, onPlaceOrder }) 
     totalBidVolume: 150000,
     totalAskVolume: 80000,
   });
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
 
   // Simulate real-time updates
   useEffect(() => {
@@ -58,7 +62,7 @@ export const OrderBook: React.FC<OrderBookProps> = ({ marketId, onPlaceOrder }) 
   // Generate price levels (8 bid levels, 8 ask levels)
   useEffect(() => {
     const numLevels = 8;
-    const levelsPerSide: OrderBookData['bidLevels'] & OrderBookData['askLevels'] = {
+    const levelsPerSide: { bidLevels: OrderBookLevel[]; askLevels: OrderBookLevel[] } = {
       bidLevels: [],
       askLevels: []
     };
@@ -107,6 +111,17 @@ export const OrderBook: React.FC<OrderBookProps> = ({ marketId, onPlaceOrder }) 
     ...orderBook.bidLevels.map(l => l.size),
     ...orderBook.askLevels.map(l => l.size)
   );
+
+  const handlePlaceOrder = async (price: number, side: 'buy' | 'sell') => {
+    const slippage = Math.abs(price - orderBook.midPrice) / Math.max(orderBook.midPrice, 0.0001);
+    if (slippage > 0.01) {
+      setWarningMessage(`Warning: Estimated slippage ${(slippage * 100).toFixed(2)}% exceeds 1.00%.`);
+    } else {
+      setWarningMessage(null);
+    }
+
+    await onPlaceOrder(price, 100, side);
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
@@ -171,7 +186,7 @@ export const OrderBook: React.FC<OrderBookProps> = ({ marketId, onPlaceOrder }) 
             {/* Action Button */}
             <button
               onClick={async () => {
-                await onPlaceOrder(level.price, 100, 'sell');
+                await handlePlaceOrder(level.price, 'sell');
               }}
               className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-700 rounded text-sm font-medium transition-colors"
             >
@@ -222,7 +237,7 @@ export const OrderBook: React.FC<OrderBookProps> = ({ marketId, onPlaceOrder }) 
             {/* Action Button */}
             <button
               onClick={async () => {
-                await onPlaceOrder(level.price, 100, 'buy');
+                await handlePlaceOrder(level.price, 'buy');
               }}
               className="px-3 py-1 bg-green-50 hover:bg-green-100 text-green-700 rounded text-sm font-medium transition-colors"
             >
@@ -247,6 +262,22 @@ export const OrderBook: React.FC<OrderBookProps> = ({ marketId, onPlaceOrder }) 
           <span className="ml-1 font-medium text-orange-600">{formatPrice(orderBook.spread)}</span>
         </div>
       </div>
+
+      {/* Fee and slippage information */}
+      <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+        <div className="rounded-lg bg-gray-50 px-3 py-2 text-gray-700">
+          Maker Fee: <span className="font-semibold">{(MAKER_FEE_BPS / 100).toFixed(2)}%</span>
+        </div>
+        <div className="rounded-lg bg-gray-50 px-3 py-2 text-gray-700">
+          Taker Fee: <span className="font-semibold">{(TAKER_FEE_BPS / 100).toFixed(2)}%</span>
+        </div>
+      </div>
+
+      {warningMessage && (
+        <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+          {warningMessage}
+        </div>
+      )}
     </div>
   );
 };

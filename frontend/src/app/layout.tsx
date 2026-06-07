@@ -3,9 +3,43 @@
 import React, { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { getWallets } from '@wallet-standard/app';
+import { SUI_MAINNET_CHAIN, SUI_TESTNET_CHAIN } from '@mysten/wallet-standard';
 import "./globals.css";
-import { useCopilotChat as useChat } from '@copilotkit/react-core';
-import { CopilotKit as CopilotProvider } from '@copilotkit/react-core';
+import { CommandPalette } from '@/components/ui/CommandPalette';
+import { SUI_PACKAGE_ID, SUISCAN_PACKAGE_URL } from '@/lib/sui-config';
+
+type ActiveMarketInsight = {
+  id: string;
+  question: string;
+  yesPrice: number;
+  noPrice: number;
+  aiConfidence: number;
+  spread: number;
+  liquidityDepth: number;
+  volume24h: number;
+  riskLevel: 'Low' | 'Medium' | 'High';
+  updatedAt: number;
+};
+
+const ACTIVE_MARKET_INSIGHT_KEY = 'sapm.activeMarketInsight';
+const LAST_WALLET_ID_KEY = 'walletId';
+const LAST_WALLET_ADDRESS_KEY = 'walletAddress';
+
+function isValidSuiHexAddress(value: string | null | undefined): boolean {
+  if (!value) {
+    return false;
+  }
+  return /^0x[0-9a-fA-F]{1,64}$/.test(value);
+}
+
+function hasSuiChain(wallet: { chains?: readonly string[] | undefined }): boolean {
+  if (!Array.isArray(wallet.chains)) {
+    return false;
+  }
+
+  return wallet.chains.includes(SUI_TESTNET_CHAIN) || wallet.chains.includes(SUI_MAINNET_CHAIN);
+}
 
 export default function RootLayout({
   children,
@@ -19,9 +53,11 @@ export default function RootLayout({
   const [isConnecting, setIsConnecting] = React.useState(false);
   const [network, setNetwork] = React.useState<'testnet' | 'mainnet'>('testnet');
   const [showNetworkMenu, setShowNetworkMenu] = React.useState(false);
-
-  // Initialize CopilotKit chat session
-  const chat = useChat();
+  const [showInsightModal, setShowInsightModal] = React.useState(false);
+  const [activeMarketInsight, setActiveMarketInsight] = React.useState<ActiveMarketInsight | null>(null);
+  const [availableWallets, setAvailableWallets] = React.useState<ReturnType<ReturnType<typeof getWallets>['get']>>([]);
+  const [selectedWalletId, setSelectedWalletId] = React.useState<string>('');
+  const [walletError, setWalletError] = React.useState<string | null>(null);
 
   const NETWORKS = {
     testnet: { label: 'Sui Testnet', color: '#fbbf24', bg: '#78350f', badge: 'TESTNET' },
@@ -31,17 +67,55 @@ export default function RootLayout({
   // Handle wallet connection
   const handleConnectWallet = async () => {
     setIsConnecting(true);
+    setWalletError(null);
     try {
-      const mockAddress = '0x' + Array(64).fill(0).map(() => 
-        Math.floor(Math.random() * 16).toString(16)
-      ).join('');
-      
-      setWalletAddress(mockAddress);
+      const liveWallets = getWallets().get();
+      const compatibleWallets = liveWallets.filter((wallet) => typeof (wallet.features?.['standard:connect'] as { connect?: unknown } | undefined)?.connect === 'function');
+
+      if (compatibleWallets.length === 0) {
+        throw new Error('No compatible Sui wallet found');
+      }
+
+      const savedWalletId = localStorage.getItem(LAST_WALLET_ID_KEY);
+      const wallet = compatibleWallets.find((item) => (item.id || item.name) === selectedWalletId)
+        || compatibleWallets.find((item) => (item.id || item.name) === savedWalletId)
+        || compatibleWallets[0];
+
+      const connectFeature = wallet.features['standard:connect'] as
+        | { connect: (input?: { silent?: boolean }) => Promise<{ accounts: readonly { address: string }[] }> }
+        | undefined;
+
+      if (!connectFeature) {
+        throw new Error(`Wallet ${wallet.name} does not support connect`);
+      }
+
+      let output: { accounts: readonly { address: string }[] };
+      try {
+        output = await connectFeature.connect();
+      } catch {
+        output = await connectFeature.connect({ silent: false });
+      }
+      const accountAddress = output.accounts?.[0]?.address || wallet.accounts?.[0]?.address;
+
+      if (!accountAddress) {
+        throw new Error('Wallet returned no account');
+      }
+
+      if (!isValidSuiHexAddress(accountAddress)) {
+        localStorage.removeItem(LAST_WALLET_ID_KEY);
+        localStorage.removeItem(LAST_WALLET_ADDRESS_KEY);
+        throw new Error(`Connected wallet account is not a valid Sui hex address: ${accountAddress}. Select a Sui wallet/account.`);
+      }
+
+      setWalletAddress(accountAddress);
       setWalletConnected(true);
-      localStorage.setItem('walletAddress', mockAddress);
+      localStorage.setItem(LAST_WALLET_ID_KEY, wallet.id || wallet.name);
+      localStorage.setItem(LAST_WALLET_ADDRESS_KEY, accountAddress);
+      window.dispatchEvent(new CustomEvent('sapm:wallet-updated', { detail: { connected: true, address: accountAddress } }));
     } catch (error) {
       console.error('Error connecting wallet:', error);
-      alert('Please install a Sui wallet (Sui Wallet, Nightly Wallet, or similar)');
+      const message = error instanceof Error ? error.message : 'Unknown wallet connection error';
+      setWalletError(message);
     } finally {
       setIsConnecting(false);
     }
@@ -49,10 +123,23 @@ export default function RootLayout({
 
   // Disconnect wallet
   const handleDisconnectWallet = () => {
+    const connectedWallet = availableWallets.find((wallet) => (wallet.id || wallet.name) === localStorage.getItem(LAST_WALLET_ID_KEY));
+    const disconnectFeature = connectedWallet?.features?.['standard:disconnect'] as
+      | { disconnect: () => Promise<void> }
+      | undefined;
+
+    if (disconnectFeature) {
+      disconnectFeature.disconnect().catch((err) => {
+        console.warn('Wallet disconnect failed, clearing local session only', err);
+      });
+    }
+
     setWalletConnected(false);
     setWalletAddress(null);
     setShowWalletMenu(false);
-    localStorage.removeItem('walletAddress');
+    localStorage.removeItem(LAST_WALLET_ID_KEY);
+    localStorage.removeItem(LAST_WALLET_ADDRESS_KEY);
+    window.dispatchEvent(new CustomEvent('sapm:wallet-updated', { detail: { connected: false, address: null } }));
   };
 
   // Handle network change
@@ -74,26 +161,168 @@ export default function RootLayout({
 
   // Load wallet and network on mount if previously connected
   React.useEffect(() => {
-    const savedAddress = localStorage.getItem('walletAddress');
-    if (savedAddress) {
-      setWalletAddress(savedAddress);
-      setWalletConnected(true);
-    }
+    const registry = getWallets();
+    const refreshWallets = () => setAvailableWallets(registry.get());
+    refreshWallets();
+
+    const offRegister = registry.on('register', refreshWallets);
+    const offUnregister = registry.on('unregister', refreshWallets);
+
     const savedNetwork = localStorage.getItem('preferredNetwork');
     if (savedNetwork) {
       setNetwork(savedNetwork as 'testnet' | 'mainnet');
     }
+
+    const rawInsight = localStorage.getItem(ACTIVE_MARKET_INSIGHT_KEY);
+    if (rawInsight) {
+      try {
+        setActiveMarketInsight(JSON.parse(rawInsight) as ActiveMarketInsight);
+      } catch {
+        setActiveMarketInsight(null);
+      }
+    }
+
+    const onInsightUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<ActiveMarketInsight>;
+      if (customEvent.detail?.id) {
+        setActiveMarketInsight(customEvent.detail);
+      }
+    };
+
+    window.addEventListener('sapm:active-market-insight', onInsightUpdate as EventListener);
+
+    const reconnect = async () => {
+      const savedWalletId = localStorage.getItem(LAST_WALLET_ID_KEY);
+      const savedAddress = localStorage.getItem(LAST_WALLET_ADDRESS_KEY);
+      if (!savedWalletId || !savedAddress) {
+        return;
+      }
+
+      const wallet = registry.get().find((item) => (item.id || item.name) === savedWalletId);
+      if (!wallet) {
+        return;
+      }
+
+      const connectFeature = wallet.features['standard:connect'] as
+        | { connect: (input?: { silent?: boolean }) => Promise<{ accounts: readonly { address: string }[] }> }
+        | undefined;
+
+      if (!connectFeature) {
+        return;
+      }
+
+      try {
+        setIsConnecting(true);
+        let output: { accounts: readonly { address: string }[] };
+        try {
+          output = await connectFeature.connect({ silent: true });
+        } catch {
+          output = await connectFeature.connect();
+        }
+        const accountAddress = output.accounts?.[0]?.address || wallet.accounts?.[0]?.address || savedAddress;
+        if (accountAddress && isValidSuiHexAddress(accountAddress)) {
+          setWalletAddress(accountAddress);
+          setWalletConnected(true);
+          localStorage.setItem(LAST_WALLET_ID_KEY, wallet.id || wallet.name);
+          localStorage.setItem(LAST_WALLET_ADDRESS_KEY, accountAddress);
+          window.dispatchEvent(new CustomEvent('sapm:wallet-updated', { detail: { connected: true, address: accountAddress } }));
+        } else {
+          setWalletConnected(false);
+          setWalletAddress(null);
+          localStorage.removeItem(LAST_WALLET_ID_KEY);
+          localStorage.removeItem(LAST_WALLET_ADDRESS_KEY);
+          window.dispatchEvent(new CustomEvent('sapm:wallet-updated', { detail: { connected: false, address: null } }));
+        }
+      } catch {
+        setWalletConnected(false);
+        setWalletAddress(null);
+        window.dispatchEvent(new CustomEvent('sapm:wallet-updated', { detail: { connected: false, address: null } }));
+      } finally {
+        setIsConnecting(false);
+      }
+    };
+
+    reconnect();
+
+    return () => {
+      offRegister();
+      offUnregister();
+      window.removeEventListener('sapm:active-market-insight', onInsightUpdate as EventListener);
+    };
   }, []);
 
+  React.useEffect(() => {
+    const compatibleWallets = availableWallets.filter((wallet) => {
+      return typeof (wallet.features?.['standard:connect'] as { connect?: unknown } | undefined)?.connect === 'function';
+    });
+
+    if (compatibleWallets.length === 0) {
+      setSelectedWalletId('');
+      return;
+    }
+
+    const savedWalletId = localStorage.getItem(LAST_WALLET_ID_KEY) || '';
+    const nextSelected = compatibleWallets.find((item) => (item.id || item.name) === savedWalletId)
+      || compatibleWallets.find((item) => (item.id || item.name) === selectedWalletId)
+      || compatibleWallets[0];
+
+    setSelectedWalletId(nextSelected.id || nextSelected.name);
+  }, [availableWallets, selectedWalletId]);
+
   const currentNetworkConfig = NETWORKS[network];
+  const explorerBase = network === 'mainnet'
+    ? 'https://suiscan.xyz/mainnet/account/'
+    : 'https://suiscan.xyz/testnet/account/';
+  const currentInsight = React.useMemo(() => {
+    if (pathname.startsWith('/markets') && activeMarketInsight) {
+      const confidence = Math.max(0.5, Math.min(0.98, activeMarketInsight.aiConfidence || 0.5));
+      const impliedYes = Math.round(activeMarketInsight.yesPrice * 100);
+      const impliedNo = Math.round(activeMarketInsight.noPrice * 100);
+      const spreadBps = Math.round((activeMarketInsight.spread || 0) * 10000);
+
+      return {
+        title: 'Live Market Insight',
+        message: `${activeMarketInsight.question} | YES ${impliedYes}% / NO ${impliedNo}% | Spread ${spreadBps} bps | Risk ${activeMarketInsight.riskLevel}.`,
+        confidence,
+        ctaLabel: 'Open Selected Market',
+        ctaPath: '/markets',
+      };
+    }
+
+    if (pathname.startsWith('/markets')) {
+      return {
+        title: 'Market Insight',
+        message: 'Liquidity is concentrated in the top 3 markets. Use the Board view to compare spread and depth before entering.',
+        confidence: 0.86,
+        ctaLabel: 'Open Markets Board',
+        ctaPath: '/markets',
+      };
+    }
+
+    if (pathname.startsWith('/portfolio')) {
+      return {
+        title: 'Portfolio Insight',
+        message: 'Risk exposure is best managed by pairing high-conviction positions with lower-spread markets for faster exit optionality.',
+        confidence: 0.79,
+        ctaLabel: 'Review Markets',
+        ctaPath: '/markets',
+      };
+    }
+
+    return {
+      title: 'Platform Insight',
+      message: 'Momentum is strongest in crypto category markets today. Start in Board mode for faster scan and one-click ticket routing.',
+      confidence: 0.82,
+      ctaLabel: 'Start Trading',
+      ctaPath: '/markets',
+    };
+  }, [pathname]);
 
   return (
     <html lang="en">
       <body style={{ margin: 0, padding: 0, backgroundColor: '#0f172a', fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
-        {/* CopilotKit Provider - Enable Agent Communication */}
-        <CopilotProvider>
-          {/* Main Application Content */}
-          <div style={{ position: 'relative' }}>
+        {/* Main Application Content */}
+        <div style={{ position: 'relative' }}>
             
             {/* Header Navigation */}
             <header style={{
@@ -152,6 +381,10 @@ export default function RootLayout({
 
                 {/* Navigation Links */}
                 <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+                  <CommandPalette />
+
+                  <AgentInsightButton onClick={() => setShowInsightModal(true)} />
+
                   <Link href="/markets" style={{
                     color: isActive('/markets'),
                     textDecoration: 'none',
@@ -191,6 +424,16 @@ export default function RootLayout({
                     transition: 'color 0.2s',
                   }}>
                     Help
+                  </Link>
+                  <Link href="/resource-hub" style={{
+                    color: isActive('/resource-hub'),
+                    textDecoration: 'none',
+                    fontWeight: '500',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    transition: 'color 0.2s',
+                  }}>
+                    Resource Hub
                   </Link>
 
                   {/* Network Switcher */}
@@ -293,25 +536,60 @@ export default function RootLayout({
 
                   {/* Wallet Button or Connected State */}
                   {!walletConnected ? (
-                    <button
-                      onClick={handleConnectWallet}
-                      disabled={isConnecting}
-                      style={{
-                        padding: '0.6rem 1.5rem',
-                        background: 'linear-gradient(135deg, #0ea5e9, #06b6d4)',
-                        color: 'white',
-                        borderRadius: '0.375rem',
-                        border: 'none',
-                        fontWeight: '600',
-                        cursor: isConnecting ? 'not-allowed' : 'pointer',
-                        fontSize: '0.9rem',
-                        transition: 'all 0.2s',
-                        boxShadow: '0 4px 15px rgba(6, 182, 212, 0.2)',
-                        opacity: isConnecting ? 0.7 : 1,
-                      }}
-                    >
-                      {isConnecting ? '🔗 Connecting...' : '💼 Connect Wallet'}
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '240px' }}>
+                      {availableWallets.length > 1 && (
+                        <select
+                          value={selectedWalletId}
+                          onChange={(event) => setSelectedWalletId(event.target.value)}
+                          style={{
+                            minHeight: '36px',
+                            borderRadius: '0.375rem',
+                            border: '1px solid #334155',
+                            backgroundColor: '#0f172a',
+                            color: '#e2e8f0',
+                            fontSize: '0.8rem',
+                            padding: '0.25rem 0.5rem',
+                          }}
+                        >
+                          {availableWallets
+                            .filter((wallet) => hasSuiChain(wallet))
+                            .map((wallet) => {
+                              const walletId = wallet.id || wallet.name;
+                              return (
+                                <option key={walletId} value={walletId}>
+                                  {wallet.name}
+                                </option>
+                              );
+                            })}
+                        </select>
+                      )}
+
+                      <button
+                        onClick={handleConnectWallet}
+                        disabled={isConnecting || availableWallets.length === 0}
+                        style={{
+                          padding: '0.6rem 1.5rem',
+                          background: 'linear-gradient(135deg, #0ea5e9, #06b6d4)',
+                          color: 'white',
+                          borderRadius: '0.375rem',
+                          border: 'none',
+                          fontWeight: '600',
+                          cursor: isConnecting || availableWallets.length === 0 ? 'not-allowed' : 'pointer',
+                          fontSize: '0.9rem',
+                          transition: 'all 0.2s',
+                          boxShadow: '0 4px 15px rgba(6, 182, 212, 0.2)',
+                          opacity: isConnecting || availableWallets.length === 0 ? 0.7 : 1,
+                        }}
+                      >
+                        {isConnecting ? '🔗 Connecting...' : availableWallets.length === 0 ? 'Install Sui Wallet' : '💼 Connect Wallet'}
+                      </button>
+
+                      {walletError && (
+                        <div style={{ fontSize: '0.75rem', color: '#fca5a5', backgroundColor: '#7f1d1d33', border: '1px solid #7f1d1d', borderRadius: '0.375rem', padding: '0.4rem 0.55rem' }}>
+                          Wallet error: {walletError}
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <div style={{ position: 'relative' }}>
                       <button
@@ -392,7 +670,7 @@ export default function RootLayout({
 
                           <button
                             onClick={() => {
-                              window.open(`https://suiscan.xyz/account/${walletAddress}`, '_blank');
+                              window.open(`${explorerBase}${walletAddress}`, '_blank');
                               setShowWalletMenu(false);
                             }}
                             style={{
@@ -442,10 +720,18 @@ export default function RootLayout({
             {/* Main Content */}
             <main style={{ paddingTop: '4rem', minHeight: '100vh' }}>
               {children}
-              
-              {/* Agent Insight Button (A2UI) */}
-              <AgentInsightButton chat={chat} />
             </main>
+
+            {showInsightModal && (
+              <AgentInsightModal
+                title={currentInsight.title}
+                message={currentInsight.message}
+                confidence={currentInsight.confidence}
+                ctaLabel={currentInsight.ctaLabel}
+                ctaPath={currentInsight.ctaPath}
+                onClose={() => setShowInsightModal(false)}
+              />
+            )}
 
             {/* Footer */}
             <footer style={{
@@ -483,9 +769,24 @@ export default function RootLayout({
                 <div>
                   <h3 style={{ color: '#e2e8f0', fontWeight: '700', marginBottom: '1rem', fontSize: '0.95rem' }}>Community</h3>
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                    <li style={{ marginBottom: '0.5rem' }}><a href="https://discord.gg" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>💬 Discord</a></li>
-                    <li style={{ marginBottom: '0.5rem' }}><a href="https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>🐙 GitHub</a></li>
-                    <li><a href="https://twitter.com" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>𝕏 Twitter</a></li>
+                    <li style={{ marginBottom: '0.5rem' }}><a href="https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>🐙 GitHub Repository</a></li>
+                    <li style={{ marginBottom: '0.5rem' }}><a href="https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/issues" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>🐞 Issue Tracker</a></li>
+                    <li><a href="https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/pulls" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>🔀 Pull Requests</a></li>
+                  </ul>
+                </div>
+
+                {/* On-chain */}
+                <div>
+                  <h3 style={{ color: '#e2e8f0', fontWeight: '700', marginBottom: '1rem', fontSize: '0.95rem' }}>On-chain</h3>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    <li style={{ marginBottom: '0.5rem' }}>
+                      <a href={SUISCAN_PACKAGE_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.875rem' }}>
+                        📦 Package On SuiScan
+                      </a>
+                    </li>
+                    <li style={{ color: '#64748b', fontSize: '0.75rem', lineHeight: 1.5 }}>
+                      {SUI_PACKAGE_ID}
+                    </li>
                   </ul>
                 </div>
 
@@ -509,22 +810,126 @@ export default function RootLayout({
                 <p style={{ margin: 0, color: '#64748b' }}>© 2025 SAPM on Sui. All rights reserved. | Built with ⚡ on Sui Blockchain</p>
               </div>
             </footer>
-          </div>
-        </CopilotProvider>
+        </div>
       </body>
     </html>
   );
 }
 
 // AgentInsightButton Component - A2UI Integration
-function AgentInsightButton({ chat }: { chat: any }) {
+function AgentInsightButton({ onClick }: { onClick: () => void }) {
   return (
-    <button 
-      onClick={() => chat.post({ type: 'insight-request', message: 'Get AI agent forecast' })}
-      className="fixed bottom-4 right-4 bg-cyan-600 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-cyan-500 transition-colors z-40"
-      title="🤖 Get AI Agent Insight on Market Predictions"
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        minHeight: '44px',
+        borderRadius: '0.5rem',
+        border: '1px solid #155e75',
+        backgroundColor: '#083344',
+        color: '#67e8f9',
+        padding: '0.45rem 0.8rem',
+        cursor: 'pointer',
+        fontWeight: 700,
+        fontSize: '0.8rem',
+        letterSpacing: '0.02em',
+      }}
+      title="Get AI Agent Insight on market conditions"
     >
-      🤖 Get Agent Insight
+      Agent Insight
     </button>
+  );
+}
+
+function AgentInsightModal({
+  title,
+  message,
+  confidence,
+  ctaLabel,
+  ctaPath,
+  onClose,
+}: {
+  title: string;
+  message: string;
+  confidence: number;
+  ctaLabel: string;
+  ctaPath: string;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(2, 6, 23, 0.68)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 3000,
+        padding: '1rem',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          width: 'min(560px, 100%)',
+          borderRadius: '0.9rem',
+          border: '1px solid #334155',
+          background: 'linear-gradient(180deg, #111827 0%, #0b1220 100%)',
+          boxShadow: '0 24px 50px rgba(2, 6, 23, 0.6)',
+          padding: '1.15rem',
+        }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div style={{ color: '#67e8f9', fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
+          AI Agent
+        </div>
+        <h3 style={{ margin: '0.45rem 0 0.6rem 0', color: '#f8fafc', fontSize: '1.15rem' }}>{title}</h3>
+        <p style={{ margin: 0, color: '#94a3b8', lineHeight: 1.6 }}>{message}</p>
+
+        <div style={{ marginTop: '0.9rem', color: '#cbd5e1', fontSize: '0.85rem' }}>
+          Confidence: <span style={{ color: '#67e8f9', fontWeight: 700 }}>{Math.round(confidence * 100)}%</span>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '1rem' }}>
+          <Link
+            href={ctaPath}
+            onClick={onClose}
+            style={{
+              flex: 1,
+              textAlign: 'center',
+              minHeight: '44px',
+              borderRadius: '0.55rem',
+              border: '1px solid #155e75',
+              backgroundColor: '#083344',
+              color: '#67e8f9',
+              textDecoration: 'none',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {ctaLabel}
+          </Link>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              flex: 1,
+              minHeight: '44px',
+              borderRadius: '0.55rem',
+              border: '1px solid #334155',
+              backgroundColor: '#111827',
+              color: '#cbd5e1',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

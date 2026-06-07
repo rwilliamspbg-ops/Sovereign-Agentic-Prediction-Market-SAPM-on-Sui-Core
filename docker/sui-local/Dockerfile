@@ -23,4 +23,4 @@ HEALTHCHECK --interval=10s --timeout=3s --retries=5 CMD curl -f http://localhost
 COPY entrypoint.sh /opt/sui/entrypoint.sh
 RUN chmod +x /opt/sui/entrypoint.sh
 
-CMD ["/opt/sui/entrypoint.sh"]
+CMD ["/bin/sh", "/opt/sui/entrypoint.sh"]

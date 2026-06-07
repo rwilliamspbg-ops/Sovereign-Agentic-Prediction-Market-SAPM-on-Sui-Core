@@ -1,4 +1,4 @@
-// File: /app/src/app/help/page.tsx
+// File: /workspaces/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/frontend/src/app/help/page.tsx
 import * as entry from '../../../../src/app/help/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

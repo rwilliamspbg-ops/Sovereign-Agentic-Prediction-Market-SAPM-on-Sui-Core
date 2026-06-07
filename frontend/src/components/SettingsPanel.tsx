@@ -2,6 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { NetworkSwitcher, NETWORK_CONFIGS } from './NetworkSwitcher';
+import {
+  getNotificationPermissionState,
+  requestNotificationPermission,
+  loadNotificationPreferences,
+  saveNotificationPreferences,
+  notifyLocalPreview,
+  type NotificationPermissionState,
+} from '@/lib/firebase-config';
 
 export interface UserSettings {
   network: 'testnet' | 'mainnet';
@@ -28,6 +36,8 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps) {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermissionState>('default');
+  const [notificationPrefs, setNotificationPrefs] = useState(loadNotificationPreferences());
 
   // Load settings from localStorage
   useEffect(() => {
@@ -41,11 +51,26 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
     }
   }, []);
 
+  useEffect(() => {
+    setNotificationPermission(getNotificationPermissionState());
+  }, []);
+
   const updateSetting = (key: keyof UserSettings, value: any) => {
     const updated = { ...settings, [key]: value };
     setSettings(updated);
     localStorage.setItem('userSettings', JSON.stringify(updated));
     onSettingsChange?.(updated);
+  };
+
+  const updateNotificationPreference = (key: keyof typeof notificationPrefs, value: boolean) => {
+    const next = { ...notificationPrefs, [key]: value };
+    setNotificationPrefs(next);
+    saveNotificationPreferences(next);
+  };
+
+  const handleEnableNotifications = async () => {
+    const permission = await requestNotificationPermission();
+    setNotificationPermission(permission);
   };
 
   const SettingRow = ({
@@ -199,6 +224,36 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
           />
         </SettingRow>
 
+        <SettingRow label="Permission Status" description="Browser notification access">
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+            <span style={{
+              color: notificationPermission === 'granted' ? '#34d399' : notificationPermission === 'denied' ? '#f87171' : '#fbbf24',
+              fontWeight: '600',
+              fontSize: '0.875rem',
+            }}>
+              {notificationPermission.toUpperCase()}
+            </span>
+            {notificationPermission !== 'granted' && notificationPermission !== 'unsupported' && (
+              <button
+                onClick={handleEnableNotifications}
+                style={{
+                  minWidth: '44px',
+                  minHeight: '44px',
+                  borderRadius: '0.5rem',
+                  border: '1px solid #06b6d4',
+                  backgroundColor: '#083344',
+                  color: '#22d3ee',
+                  fontWeight: '600',
+                  padding: '0.5rem 0.75rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Grant Permission
+              </button>
+            )}
+          </div>
+        </SettingRow>
+
         {settings.notifications && (
           <SettingRow label="Sound Effects" description="Play sound for notifications">
             <Toggle
@@ -206,6 +261,48 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
               onChange={(val) => updateSetting('notificationSound', val)}
             />
           </SettingRow>
+        )}
+
+        {settings.notifications && (
+          <>
+            <SettingRow label="Market Resolution Alerts" description="Notify when markets resolve">
+              <Toggle
+                checked={notificationPrefs.marketResolutionAlerts}
+                onChange={(val) => updateNotificationPreference('marketResolutionAlerts', val)}
+              />
+            </SettingRow>
+            <SettingRow label="Price Change Alerts" description="Notify on >5% market move">
+              <Toggle
+                checked={notificationPrefs.priceChangeAlerts}
+                onChange={(val) => updateNotificationPreference('priceChangeAlerts', val)}
+              />
+            </SettingRow>
+            <SettingRow label="Agent Forecast Alerts" description="Notify for high-confidence forecasts">
+              <Toggle
+                checked={notificationPrefs.agentForecastAlerts}
+                onChange={(val) => updateNotificationPreference('agentForecastAlerts', val)}
+              />
+            </SettingRow>
+
+            <div style={{ marginTop: '1rem' }}>
+              <button
+                onClick={() => notifyLocalPreview('SAPM Alert Preview', 'Notifications are configured for this browser.')}
+                style={{
+                  minWidth: '44px',
+                  minHeight: '44px',
+                  borderRadius: '0.5rem',
+                  border: '1px solid #334155',
+                  backgroundColor: '#0f172a',
+                  color: '#cbd5e1',
+                  fontWeight: '600',
+                  padding: '0.5rem 0.75rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Send Test Notification
+              </button>
+            </div>
+          </>
         )}
 
         <SettingRow label="Auto-Refresh" description="Automatically refresh market data">

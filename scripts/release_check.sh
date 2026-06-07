@@ -13,6 +13,9 @@ npm run test:all
 echo "[release-check] Running e2e tests..."
 npm run test:e2e
 
+echo "[release-check] Running frontend production gate..."
+npm run check:frontend:prod
+
 echo "[release-check] Running orchestrator experimental checks (non-blocking)..."
 npm run test:orchestrator:experimental || true
 

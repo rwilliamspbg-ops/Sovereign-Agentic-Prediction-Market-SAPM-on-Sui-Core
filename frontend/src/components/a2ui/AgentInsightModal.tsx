@@ -5,6 +5,25 @@ import { useState, useEffect } from 'react';
 
 export function AgentInsightModal({ insight }: { insight: any }) {
   const chat = useChat();
+
+  const sendIntent = (intent: Record<string, unknown>) => {
+    const chatAny = chat as unknown as {
+      post?: (payload: Record<string, unknown>) => void;
+      appendMessage?: (payload: Record<string, unknown>) => void;
+    };
+
+    if (typeof chatAny.post === 'function') {
+      chatAny.post(intent);
+      return;
+    }
+
+    if (typeof chatAny.appendMessage === 'function') {
+      chatAny.appendMessage(intent);
+      return;
+    }
+
+    console.log('Copilot chat intent (fallback):', intent);
+  };
   
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -22,7 +41,7 @@ export function AgentInsightModal({ insight }: { insight: any }) {
         
         {insight.action && (
           <button
-            onClick={() => chat.post({ type: 'accept-insight', data: insight })}
+            onClick={() => sendIntent({ type: 'accept-insight', data: insight })}
             className="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded"
           >
             Accept Insight → Trade Now
@@ -30,7 +49,7 @@ export function AgentInsightModal({ insight }: { insight: any }) {
         )}
         
         <button
-          onClick={() => chat.post({ type: 'dismiss-insight' })}
+          onClick={() => sendIntent({ type: 'dismiss-insight' })}
           className="mt-4 w-full bg-slate-700 hover:bg-slate-600 py-3 rounded"
         >
           Dismiss

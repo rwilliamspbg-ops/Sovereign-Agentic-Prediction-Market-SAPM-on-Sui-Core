@@ -27,12 +27,19 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
   onDeposit,
   onRedeem,
 }) => {
+  const PORTFOLIO_BASELINE = 100000;
+
   // Current position state
   const [position, setPosition] = useState<{
     outcome: 'yes' | 'no';
     size: number;
     entryPrice: number;
+    openedAt: Date;
   } | null>(null);
+
+  const [realizedPnl, setRealizedPnl] = useState(0);
+  const [slippageTolerance, setSlippageTolerance] = useState(1);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   // Deposit amount
   const [depositAmount, setDepositAmount] = useState('');
@@ -46,7 +53,9 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
     return size * priceDiff * 1000; // Convert to SUI units
   };
 
-  const pnl = position ? calculatePnL(position.entryPrice, position ? position.entryPrice : yesPrice, position?.size || 0) : 0;
+  const currentMarketPrice = position?.outcome === 'yes' ? yesPrice : noPrice;
+  const unrealizedPnl = position ? calculatePnL(position.entryPrice, currentMarketPrice, position.size) : 0;
+  const totalPnl = realizedPnl + unrealizedPnl;
 
   // Format currency
   const formatCurrency = (value: number): string => {
@@ -80,17 +89,75 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
     try {
       await onRedeem(marketId, position?.outcome || 'yes', amount);
       setRedeemAmount('');
+      const currentPrice = position?.outcome === 'yes' ? yesPrice : noPrice;
+
+      if (position) {
+        const realizedChunk = calculatePnL(position.entryPrice, currentPrice, amount);
+        setRealizedPnl((previous) => previous + realizedChunk);
+      }
+
       // Update position size
-      setPosition(prev => prev ? { ...prev, size: prev.size - amount } : null);
+      setPosition(prev => {
+        if (!prev) {
+          return null;
+        }
+
+        const nextSize = prev.size - amount;
+        if (nextSize <= 0) {
+          return null;
+        }
+
+        return { ...prev, size: nextSize };
+      });
     } catch (error) {
       console.error('Redeem failed:', error);
       alert('Redeem failed. Please try again.');
     }
   };
 
+  const handleClosePosition = async () => {
+    if (!position) {
+      return;
+    }
+
+    try {
+      await onRedeem(marketId, position.outcome, position.size);
+      const currentPrice = position.outcome === 'yes' ? yesPrice : noPrice;
+      const realizedChunk = calculatePnL(position.entryPrice, currentPrice, position.size);
+      setRealizedPnl((previous) => previous + realizedChunk);
+      setPosition(null);
+      setRedeemAmount('');
+      setShowCloseConfirm(false);
+    } catch (error) {
+      console.error('Close position failed:', error);
+      alert('Close position failed. Please try again.');
+    }
+  };
+
+  const getPositionAge = (): string => {
+    if (!position?.openedAt) {
+      return 'N/A';
+    }
+
+    const ageMs = Date.now() - position.openedAt.getTime();
+    const minutes = Math.floor(ageMs / 60000);
+    if (minutes < 60) {
+      return `${minutes}m`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) {
+      return `${hours}h`;
+    }
+
+    return `${Math.floor(hours / 24)}d`;
+  };
+
   // P&L color and formatting
-  const pnlColor = pnl >= 0 ? 'text-green-600' : 'text-red-600';
-  const pnlSign = pnl >= 0 ? '+' : '';
+  const pnlColor = totalPnl >= 0 ? 'text-green-600' : 'text-red-600';
+  const pnlSign = totalPnl >= 0 ? '+' : '';
+  const exposure = position ? (position.size / PORTFOLIO_BASELINE) * 100 : 0;
+  const isHighRisk = exposure > 20;
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
@@ -98,8 +165,8 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-bold text-gray-900">Your Position</h3>
         {position && (
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${pnl >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-            P&L: {pnlSign}{formatCurrency(pnl)} SUI
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${totalPnl >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+            Total P&L: {pnlSign}{formatCurrency(totalPnl)} SUI
           </span>
         )}
       </div>
@@ -115,13 +182,13 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
             <p className="text-gray-500 mb-4">No active position</p>
             <div className="grid grid-cols-2 gap-4 text-center">
               <button
-                onClick={() => setPosition({ outcome: 'yes', size: 100, entryPrice: yesPrice })}
+                onClick={() => setPosition({ outcome: 'yes', size: 100, entryPrice: yesPrice, openedAt: new Date() })}
                 className="px-4 py-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
               >
                 Open YES Position
               </button>
               <button
-                onClick={() => setPosition({ outcome: 'no', size: 100, entryPrice: noPrice })}
+                onClick={() => setPosition({ outcome: 'no', size: 100, entryPrice: noPrice, openedAt: new Date() })}
                 className="px-4 py-3 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
               >
                 Open NO Position
@@ -132,33 +199,69 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
           // Active Position State
           <div className="space-y-4">
             {/* Position Info */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-600">Position Type:</span>
-                <span className={`font-bold ${position.outcome === 'yes' ? 'text-green-600' : 'text-red-600'}`}>
-                  {position.outcome.toUpperCase()} Position
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Entry Price:</span>
-                <span className="font-medium">{formatCurrency(position.entryPrice)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Current Position Size:</span>
-                <span className="font-bold text-lg">
-                  {formatCurrency(position.size)} SUI
-                </span>
-              </div>
+            <div className="bg-gray-50 rounded-lg p-4 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500">
+                    <th className="pb-2 pr-3">Market</th>
+                    <th className="pb-2 pr-3">Position</th>
+                    <th className="pb-2 pr-3">Size</th>
+                    <th className="pb-2 pr-3">Entry</th>
+                    <th className="pb-2 pr-3">Current</th>
+                    <th className="pb-2 pr-3">Age</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="text-gray-800">
+                    <td className="py-1 pr-3 font-medium">{marketId}</td>
+                    <td className={`py-1 pr-3 font-semibold ${position.outcome === 'yes' ? 'text-green-600' : 'text-red-600'}`}>
+                      {position.outcome.toUpperCase()}
+                    </td>
+                    <td className="py-1 pr-3 font-medium">{formatCurrency(position.size)} SUI</td>
+                    <td className="py-1 pr-3">{formatCurrency(position.entryPrice)}</td>
+                    <td className="py-1 pr-3">{formatCurrency(currentMarketPrice)}</td>
+                    <td className="py-1 pr-3">{getPositionAge()}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
-            {/* P&L Display */}
-            {pnl !== 0 && (
-              <div className={`text-center py-3 rounded-lg ${pnl >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-                <span className="font-bold text-lg">
-                  {pnlSign}{formatCurrency(pnl)} SUI
-                </span>
+            {isHighRisk && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                High-risk exposure: {exposure.toFixed(1)}% of portfolio threshold.
               </div>
             )}
+
+            {/* P&L Display */}
+            {(unrealizedPnl !== 0 || realizedPnl !== 0) && (
+              <div className="grid grid-cols-1 gap-2 rounded-lg bg-slate-50 p-3 text-sm md:grid-cols-3">
+                <div>
+                  <div className="text-gray-500">Unrealized P&L</div>
+                  <div className={`font-semibold ${unrealizedPnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {(unrealizedPnl >= 0 ? '+' : '') + formatCurrency(unrealizedPnl)} SUI
+                  </div>
+                </div>
+                <div>
+                  <div className="text-gray-500">Realized P&L</div>
+                  <div className={`font-semibold ${realizedPnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {(realizedPnl >= 0 ? '+' : '') + formatCurrency(realizedPnl)} SUI
+                  </div>
+                </div>
+                <div>
+                  <div className="text-gray-500">Total P&L</div>
+                  <div className={`font-semibold ${pnlColor}`}>
+                    {pnlSign}{formatCurrency(totalPnl)} SUI
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowCloseConfirm(true)}
+              className="w-full rounded-lg bg-gray-900 px-4 py-2 font-semibold text-white transition-colors hover:bg-black"
+            >
+              Close Position
+            </button>
           </div>
         )}
       </div>
@@ -190,6 +293,22 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
       {position && (
         <div className="border-t border-gray-200 pt-4">
           <h4 className="font-semibold text-gray-900 mb-3">Redeem Position</h4>
+          <div className="mb-3 rounded-lg bg-gray-50 p-3">
+            <div className="mb-1 flex justify-between text-sm text-gray-600">
+              <span>Slippage Tolerance</span>
+              <span className="font-medium text-gray-800">{slippageTolerance.toFixed(1)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0.1"
+              max="5"
+              step="0.1"
+              value={slippageTolerance}
+              onChange={(event) => setSlippageTolerance(parseFloat(event.target.value))}
+              className="w-full"
+            />
+          </div>
+
           <div className="flex gap-3">
             <input
               type="number"
@@ -232,6 +351,32 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
       <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
         <strong>Position Limit:</strong> Maximum $50,000 per market (configurable in admin settings)
       </div>
+
+      {/* Close Position Confirmation Modal */}
+      {showCloseConfirm && position && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
+            <h4 className="mb-2 text-lg font-semibold text-gray-900">Close Position?</h4>
+            <p className="mb-4 text-sm text-gray-600">
+              This will redeem your full {position.outcome.toUpperCase()} position and realize P&L at current price.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowCloseConfirm(false)}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClosePosition}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+              >
+                Confirm Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,0 +1,2 @@
+# Ensure shell scripts keep LF line endings across platforms.
+*.sh text eol=lf

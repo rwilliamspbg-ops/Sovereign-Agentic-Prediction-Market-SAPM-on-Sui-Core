@@ -36,7 +36,7 @@ export const MarketList: React.FC<MarketListProps> = ({
 
   // Extract unique categories
   const categories = useMemo(() => {
-    return Array.from(new Set(markets.map(m => m.category).filter(Boolean)));
+    return Array.from(new Set(markets.map(m => m.category).filter((value): value is string => Boolean(value))));
   }, [markets]);
 
   // Filter and sort markets

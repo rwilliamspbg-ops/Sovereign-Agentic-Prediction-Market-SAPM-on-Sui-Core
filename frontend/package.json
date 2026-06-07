@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "SAPM Production Frontend - Next.js with TypeScript and Tailwind CSS",
   "scripts": {
-    "dev": "next dev",
+    "dev": "NEXT_DISABLE_FILE_SYSTEM_CACHE=1 next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

@@ -1,7 +1,9 @@
 {
-  "/portfolio/page": "app/portfolio/page.js",
-  "/leaderboard/page": "app/leaderboard/page.js",
-  "/markets/page": "app/markets/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/page": "app/page.js",
-  "/help/page": "app/help/page.js"
+  "/portfolio/page": "app/portfolio/page.js",
+  "/markets/page": "app/markets/page.js",
+  "/leaderboard/page": "app/leaderboard/page.js",
+  "/help/page": "app/help/page.js",
+  "/resource-hub/page": "app/resource-hub/page.js"
 }

@@ -4,6 +4,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
+  hapticPattern?: number | number[];
 }
 
 /**
@@ -15,11 +16,13 @@ export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'md',
   isLoading = false,
+  hapticPattern,
   className = '',
   disabled,
+  onClick,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseStyles = 'inline-flex min-h-[44px] min-w-[44px] items-center justify-center font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variantStyles = {
     primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow',
@@ -35,10 +38,19 @@ export const Button: React.FC<ButtonProps> = ({
     lg: 'px-6 py-3 text-lg',
   };
 
+  const handleClick: React.MouseEventHandler<HTMLButtonElement> = (event) => {
+    if (hapticPattern !== undefined && typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      navigator.vibrate(hapticPattern);
+    }
+
+    onClick?.(event);
+  };
+
   return (
     <button
       className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
       disabled={disabled || isLoading}
+      onClick={handleClick}
       {...props}
     >
       {isLoading ? (
