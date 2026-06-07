@@ -13,13 +13,14 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@copilotkit/react-core": "^1.0.0",
+    "@copilotkit/react-ui": "^1.0.0",
+    "@copilotkit/runtime": "^1.59.5",
     "@heroicons/react": "^2.2.0",
     "@mysten/sui": "^1.0.0",
     "@mysten/wallet-standard": "^0.12.0",
     "@tanstack/react-query": "^5.20.0",
     "clsx": "^2.1.0",
-    "@copilotkit/react-core": "^1.0.0",
-    "@copilotkit/react-ui": "^1.0.0",
     "framer-motion": "^12.40.0",
     "lucide-react": "^0.363.0",
     "next": "14.2.0",
