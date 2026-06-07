@@ -9,6 +9,12 @@ This repository keeps only core docs at the root:
 
 All other markdown docs are located under `docs/`.
 
+Start here when you need the current repository snapshot:
+
+1. [README.md](../README.md) for the top-level overview, run commands, and architecture.
+2. [PRODUCTION_STATUS.md](PRODUCTION_STATUS.md) for the latest validation and readiness summary.
+3. [OPERATIONS_RUNBOOK.md](OPERATIONS_RUNBOOK.md) for operational guidance.
+
 ## Core Docs
 
 - [PRODUCTION_STATUS.md](PRODUCTION_STATUS.md)

@@ -4,8 +4,8 @@ import React, { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import "./globals.css";
-import { useChat } from 'copilotkit-react';
-import { CopilotProvider } from 'copilotkit/react-core';
+import { useCopilotChat as useChat } from '@copilotkit/react-core';
+import { CopilotKit as CopilotProvider } from '@copilotkit/react-core';
 
 export default function RootLayout({
   children,

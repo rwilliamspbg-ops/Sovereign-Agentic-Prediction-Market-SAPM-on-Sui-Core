@@ -1,11 +1,11 @@
 # SAPM Production Status
 
-Last updated: 2026-06-06
-Scope: repository-level code and command verification
+Last updated: 2026-06-07
+Scope: repository-level code, frontend runtime behavior, and command verification
 
 ## Executive Summary
 
-SAPM has substantial implementation coverage across frontend, agents, data, risk, and contract modules. A canonical root release-check gate now executes successfully from a clean dependency bootstrap path.
+SAPM has substantial implementation coverage across frontend, agents, data, risk, and contract modules. The root release-check gate executes successfully from a clean dependency bootstrap path, and the frontend has been hardened with wallet validation, loading/error fallbacks, and production build checks.
 
 ## Current Production Readiness
 
@@ -14,6 +14,7 @@ SAPM has substantial implementation coverage across frontend, agents, data, risk
 | Feature implementation | Strong | Core modules and UI are present and actively developed |
 | Test reproducibility | Strong | release-check runs install + lint + tests from root |
 | Tooling consistency | Strong | root e2e is now backed by root jest dependency and CI gate |
+| Frontend runtime stability | Strong | Loading/error boundaries and wallet/session guards are in place |
 | Security-hardening completion | Partial | Placeholder logic remains in parts of orchestrator and related scaffolding |
 | Deployment certainty | Partial | Manifests and contracts exist; full deploy/runbook verification not executed in this review |
 
@@ -31,12 +32,17 @@ Overall readiness classification: IMPLEMENTED / RELEASE-GATE GREEN (WITH KNOWN W
   - root e2e suite passes.
 - npm run lint
   - passes with warnings and no errors.
+- npm --prefix frontend run type-check -- --pretty false
+  - frontend TypeScript check passes.
+- npm run check:frontend:prod
+  - clean frontend production build passes.
 
 ## Component Readiness View
 
 | Component | Readiness | Notes |
 | --- | --- | --- |
 | Frontend routes and components | Beta | Broadly implemented; runtime behavior not deeply load-tested in this review |
+| Frontend runtime and wallet flow | Beta+ | Wallet/session validation and loading/error fallbacks are present |
 | Trader pipeline | Beta+ | Logic implemented and validated in gate tests |
 | Aggregator and reputation | Beta+ | Aggregation and reputation tests pass in gate path |
 | Orchestrator | Alpha/Beta mix | Contains explicit placeholder security and attestation paths |
@@ -50,6 +56,7 @@ Overall readiness classification: IMPLEMENTED / RELEASE-GATE GREEN (WITH KNOWN W
 2. Placeholder risk: unresolved scaffold logic in security-sensitive orchestrator flows.
 3. Release confidence risk: orchestrator tests are still marked experimental/non-blocking.
 4. Operational risk: deployment hardening and chain-level verification still need dedicated validation.
+5. Frontend integration risk: real wallet availability still depends on the browser extension environment, even though the UI now fails gracefully.
 
 ## Production Gate Recommendations
 
@@ -59,6 +66,7 @@ Before declaring production-ready, require all of the following:
 2. Reduce lint warnings over time toward zero-warning policy.
 3. Close orchestrator placeholders tracked in docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md.
 4. Keep README + CONTRIBUTING aligned with release-check behavior.
+5. Keep frontend runtime notes aligned with the current wallet and loading fallback behavior.
 
 ## Recommended Status Labeling For External Docs
 
