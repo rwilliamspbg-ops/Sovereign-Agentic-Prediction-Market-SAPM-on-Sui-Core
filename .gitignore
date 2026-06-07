@@ -33,6 +33,7 @@ eslint.config.cjs
 .yarn/
 frontend/.next/
 package-lock.json
+!frontend/package-lock.json
 pnpm-lock.yaml
 
 # On-chain registry build artifacts
