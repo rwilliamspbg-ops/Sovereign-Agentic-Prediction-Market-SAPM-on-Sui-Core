@@ -1,6 +1,6 @@
 'use client';
 
-import { useChat } from 'copilotkit-react';
+import { useCopilotChat as useChat } from '@copilotkit/react-core';
 
 export function SimpleAgentInsight() {
   const chat = useChat();
