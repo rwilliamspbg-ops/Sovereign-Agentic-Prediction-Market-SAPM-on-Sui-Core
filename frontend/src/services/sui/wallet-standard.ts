@@ -4,6 +4,7 @@ import type { Transaction } from '@mysten/sui/transactions';
 
 const LAST_WALLET_ID_KEY = 'walletId';
 const LAST_WALLET_ADDRESS_KEY = 'walletAddress';
+const CONNECT_TIMEOUT_MS = 15000;
 
 type WalletLike = ReturnType<ReturnType<typeof getWallets>['get']>[number];
 type WalletAccount = WalletLike['accounts'][number];
@@ -13,6 +14,39 @@ function isValidSuiHexAddress(value: string | null | undefined): boolean {
     return false;
   }
   return /^0x[0-9a-fA-F]{1,64}$/.test(value);
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(`Wallet ${label} timed out after ${timeoutMs}ms. Check extension popup and retry.`));
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        clearTimeout(timeoutId);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
+
+function normalizeConnectError(error: unknown): Error {
+  const message = error instanceof Error ? error.message : String(error);
+  const lower = message.toLowerCase();
+
+  if (lower.includes('json-rpc: method call timeout') || (lower.includes('timeout') && lower.includes('connect'))) {
+    return new Error('Wallet connect timed out. Unlock/approve in your wallet extension and retry.');
+  }
+
+  if (lower.includes('reject') || lower.includes('denied') || lower.includes('cancel')) {
+    return new Error('Wallet connection request was canceled. Please approve the request to continue.');
+  }
+
+  return error instanceof Error ? error : new Error(message);
 }
 
 export type WalletExecutionContext = {
@@ -81,11 +115,15 @@ export async function getConnectedWalletContext(preferredWalletId?: string): Pro
   });
   let account = validWalletAccounts.find((item) => item.address === savedAddress) || validWalletAccounts[0];
   if (!account) {
-    const output = await connectFeature.connect({ silent: false });
-    const connectedAddress = output.accounts?.[0]?.address;
-    account = validWalletAccounts.find((item) => item.address === connectedAddress)
-      || wallet.accounts.find((item) => item.address === connectedAddress && isValidSuiHexAddress(item.address))
-      || validWalletAccounts[0];
+    try {
+      const output = await withTimeout(connectFeature.connect({ silent: false }), CONNECT_TIMEOUT_MS, 'connect');
+      const connectedAddress = output.accounts?.[0]?.address;
+      account = validWalletAccounts.find((item) => item.address === connectedAddress)
+        || wallet.accounts.find((item) => item.address === connectedAddress && isValidSuiHexAddress(item.address))
+        || validWalletAccounts[0];
+    } catch (error) {
+      throw normalizeConnectError(error);
+    }
   }
 
   if (!account) {

@@ -17,6 +17,7 @@ type WalletLike = ReturnType<ReturnType<typeof getWallets>['get']>[number];
 
 const CONNECT_FEATURE = 'standard:connect';
 const DISCONNECT_FEATURE = 'standard:disconnect';
+const CONNECT_TIMEOUT_MS = 15000;
 
 const LAST_WALLET_ID_KEY = 'sapm:last-wallet-id';
 const LAST_WALLET_ADDRESS_KEY = 'sapm:last-wallet-address';
@@ -28,6 +29,24 @@ function isValidSuiHexAddress(value: string | null | undefined): boolean {
     return false;
   }
   return /^0x[0-9a-fA-F]{1,64}$/.test(value);
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        clearTimeout(timeoutId);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
 }
 
 const suiClient = new SuiClient({
@@ -84,6 +103,9 @@ export const WalletConnector: React.FC<{ onConnect?: () => void }> = ({ onConnec
 
   const getFriendlyError = (err: unknown): string => {
     const message = err instanceof Error ? err.message.toLowerCase() : '';
+    if (message.includes('json-rpc: method call timeout') || (message.includes('timeout') && message.includes('connect'))) {
+      return 'Wallet connection timed out. Unlock/approve the request in your extension, then retry.';
+    }
     if (message.includes('insufficient') || message.includes('gas')) {
       return 'Insufficient gas balance. Add SUI to your wallet and retry.';
     }
@@ -112,7 +134,7 @@ export const WalletConnector: React.FC<{ onConnect?: () => void }> = ({ onConnec
       throw new Error('Selected wallet does not support standard:connect');
     }
 
-    const output = await connectFeature.connect({ silent });
+    const output = await withTimeout(connectFeature.connect({ silent }), CONNECT_TIMEOUT_MS, 'Wallet connect');
     const accountAddress = output.accounts?.[0]?.address || wallet.accounts?.[0]?.address;
 
     if (!accountAddress) {
