@@ -2,28 +2,13 @@
 
 import React, { ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { CopilotKit } from '@copilotkit/react-core';
 import { getWallets } from '@wallet-standard/app';
 import { SUI_MAINNET_CHAIN, SUI_TESTNET_CHAIN } from '@mysten/wallet-standard';
 import "./globals.css";
 import { CommandPalette } from '@/components/ui/CommandPalette';
+import { CopilotOpsPanel } from '@/components/a2ui/CopilotOpsPanel';
 import { SUI_PACKAGE_ID, SUISCAN_PACKAGE_URL } from '@/lib/sui-config';
-
-type ActiveMarketInsight = {
-  id: string;
-  question: string;
-  yesPrice: number;
-  noPrice: number;
-  aiConfidence: number;
-  spread: number;
-  liquidityDepth: number;
-  volume24h: number;
-  riskLevel: 'Low' | 'Medium' | 'High';
-  updatedAt: number;
-};
-
-const ACTIVE_MARKET_INSIGHT_KEY = 'sapm.activeMarketInsight';
 const LAST_WALLET_ID_KEY = 'walletId';
 const LAST_WALLET_ADDRESS_KEY = 'walletAddress';
 const CONNECT_TIMEOUT_MS = 15000;
@@ -136,15 +121,13 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   const copilotRuntimeUrl = process.env.NEXT_PUBLIC_COPILOTKIT_RUNTIME_URL || '/api/copilotkit';
-  const pathname = usePathname();
   const [walletConnected, setWalletConnected] = React.useState(false);
   const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
   const [showWalletMenu, setShowWalletMenu] = React.useState(false);
   const [isConnecting, setIsConnecting] = React.useState(false);
   const [network, setNetwork] = React.useState<'testnet' | 'mainnet'>('testnet');
   const [showNetworkMenu, setShowNetworkMenu] = React.useState(false);
-  const [showInsightModal, setShowInsightModal] = React.useState(false);
-  const [activeMarketInsight, setActiveMarketInsight] = React.useState<ActiveMarketInsight | null>(null);
+  const [showCopilotPanel, setShowCopilotPanel] = React.useState(false);
   const [availableWallets, setAvailableWallets] = React.useState<ReturnType<ReturnType<typeof getWallets>['get']>>([]);
   const [selectedWalletId, setSelectedWalletId] = React.useState<string>('');
   const [walletError, setWalletError] = React.useState<string | null>(null);
@@ -269,24 +252,6 @@ export default function RootLayout({
       setNetwork(savedNetwork as 'testnet' | 'mainnet');
     }
 
-    const rawInsight = localStorage.getItem(ACTIVE_MARKET_INSIGHT_KEY);
-    if (rawInsight) {
-      try {
-        setActiveMarketInsight(JSON.parse(rawInsight) as ActiveMarketInsight);
-      } catch {
-        setActiveMarketInsight(null);
-      }
-    }
-
-    const onInsightUpdate = (event: Event) => {
-      const customEvent = event as CustomEvent<ActiveMarketInsight>;
-      if (customEvent.detail?.id) {
-        setActiveMarketInsight(customEvent.detail);
-      }
-    };
-
-    window.addEventListener('sapm:active-market-insight', onInsightUpdate as EventListener);
-
     const reconnect = async () => {
       const savedWalletId = localStorage.getItem(LAST_WALLET_ID_KEY);
       const savedAddress = localStorage.getItem(LAST_WALLET_ADDRESS_KEY);
@@ -347,7 +312,6 @@ export default function RootLayout({
     return () => {
       offRegister();
       offUnregister();
-      window.removeEventListener('sapm:active-market-insight', onInsightUpdate as EventListener);
     };
   }, []);
 
@@ -399,50 +363,6 @@ export default function RootLayout({
   const explorerBase = network === 'mainnet'
     ? 'https://suiscan.xyz/mainnet/account/'
     : 'https://suiscan.xyz/testnet/account/';
-  const currentInsight = React.useMemo(() => {
-    if (pathname.startsWith('/markets') && activeMarketInsight) {
-      const confidence = Math.max(0.5, Math.min(0.98, activeMarketInsight.aiConfidence || 0.5));
-      const impliedYes = Math.round(activeMarketInsight.yesPrice * 100);
-      const impliedNo = Math.round(activeMarketInsight.noPrice * 100);
-      const spreadBps = Math.round((activeMarketInsight.spread || 0) * 10000);
-
-      return {
-        title: 'Live Market Insight',
-        message: `${activeMarketInsight.question} | YES ${impliedYes}% / NO ${impliedNo}% | Spread ${spreadBps} bps | Risk ${activeMarketInsight.riskLevel}.`,
-        confidence,
-        ctaLabel: 'Open Selected Market',
-        ctaPath: '/markets',
-      };
-    }
-
-    if (pathname.startsWith('/markets')) {
-      return {
-        title: 'Market Insight',
-        message: 'Liquidity is concentrated in the top 3 markets. Use the Board view to compare spread and depth before entering.',
-        confidence: 0.86,
-        ctaLabel: 'Open Markets Board',
-        ctaPath: '/markets',
-      };
-    }
-
-    if (pathname.startsWith('/portfolio')) {
-      return {
-        title: 'Portfolio Insight',
-        message: 'Risk exposure is best managed by pairing high-conviction positions with lower-spread markets for faster exit optionality.',
-        confidence: 0.79,
-        ctaLabel: 'Review Markets',
-        ctaPath: '/markets',
-      };
-    }
-
-    return {
-      title: 'Platform Insight',
-      message: 'Momentum is strongest in crypto category markets today. Start in Board mode for faster scan and one-click ticket routing.',
-      confidence: 0.82,
-      ctaLabel: 'Start Trading',
-      ctaPath: '/markets',
-    };
-  }, [pathname]);
 
   return (
     <html lang="en">
@@ -510,7 +430,7 @@ export default function RootLayout({
                 <div style={{ display: 'flex', gap: '0.9rem', alignItems: 'center' }}>
                   {!isNarrowScreen && <CommandPalette />}
 
-                  <AgentInsightButton onClick={() => setShowInsightModal(true)} />
+                  <AgentInsightButton onClick={() => setShowCopilotPanel(true)} />
 
                   {/* Network Switcher */}
                   <div style={{ position: 'relative' }}>
@@ -807,16 +727,7 @@ export default function RootLayout({
               {children}
             </main>
 
-            {showInsightModal && (
-              <AgentInsightModal
-                title={currentInsight.title}
-                message={currentInsight.message}
-                confidence={currentInsight.confidence}
-                ctaLabel={currentInsight.ctaLabel}
-                ctaPath={currentInsight.ctaPath}
-                onClose={() => setShowInsightModal(false)}
-              />
-            )}
+            <CopilotOpsPanel open={showCopilotPanel} onClose={() => setShowCopilotPanel(false)} />
 
             {/* Footer */}
             <footer style={{
@@ -920,102 +831,10 @@ function AgentInsightButton({ onClick }: { onClick: () => void }) {
         fontSize: '0.8rem',
         letterSpacing: '0.02em',
       }}
-      title="Get AI Agent Insight on market conditions"
+      title="Open Copilot operations panel"
     >
-      Agent Insight
+      Copilot Ops
     </button>
   );
 }
 
-function AgentInsightModal({
-  title,
-  message,
-  confidence,
-  ctaLabel,
-  ctaPath,
-  onClose,
-}: {
-  title: string;
-  message: string;
-  confidence: number;
-  ctaLabel: string;
-  ctaPath: string;
-  onClose: () => void;
-}) {
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(2, 6, 23, 0.68)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 3000,
-        padding: '1rem',
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          width: 'min(560px, 100%)',
-          borderRadius: '0.9rem',
-          border: '1px solid #334155',
-          background: 'linear-gradient(180deg, #111827 0%, #0b1220 100%)',
-          boxShadow: '0 24px 50px rgba(2, 6, 23, 0.6)',
-          padding: '1.15rem',
-        }}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div style={{ color: '#67e8f9', fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
-          AI Agent
-        </div>
-        <h3 style={{ margin: '0.45rem 0 0.6rem 0', color: '#f8fafc', fontSize: '1.15rem' }}>{title}</h3>
-        <p style={{ margin: 0, color: '#94a3b8', lineHeight: 1.6 }}>{message}</p>
-
-        <div style={{ marginTop: '0.9rem', color: '#cbd5e1', fontSize: '0.85rem' }}>
-          Confidence: <span style={{ color: '#67e8f9', fontWeight: 700 }}>{Math.round(confidence * 100)}%</span>
-        </div>
-
-        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '1rem' }}>
-          <Link
-            href={ctaPath}
-            onClick={onClose}
-            style={{
-              flex: 1,
-              textAlign: 'center',
-              minHeight: '44px',
-              borderRadius: '0.55rem',
-              border: '1px solid #155e75',
-              backgroundColor: '#083344',
-              color: '#67e8f9',
-              textDecoration: 'none',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {ctaLabel}
-          </Link>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              flex: 1,
-              minHeight: '44px',
-              borderRadius: '0.55rem',
-              border: '1px solid #334155',
-              backgroundColor: '#111827',
-              color: '#cbd5e1',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}

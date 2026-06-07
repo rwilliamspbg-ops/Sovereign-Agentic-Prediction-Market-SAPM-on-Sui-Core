@@ -42,6 +42,13 @@ export type DeepBookReconciliation = {
   timestampMs?: number;
 };
 
+export type DeepBookPreflightResult = {
+  valid: boolean;
+  reason?: string;
+  impactPct?: number;
+  clockSkewMs?: number;
+};
+
 export class DeepBookService {
   private readonly client: SuiClient;
   private readonly network: 'testnet' | 'mainnet';
@@ -272,6 +279,62 @@ export class DeepBookService {
         error: error instanceof Error ? error.message : 'Unable to load DeepBook package',
       };
     }
+  }
+
+  async preflightOrder(params: {
+    poolId: string;
+    ownerAddress: string;
+    amountMist: number;
+    maxAllowedImpactPercent?: number;
+    expectedPriceMist?: number;
+  }): Promise<DeepBookPreflightResult> {
+    const maxImpact = params.maxAllowedImpactPercent ?? 5;
+    const expectedPrice = params.expectedPriceMist ?? 1;
+
+    let poolState: Record<string, unknown> | null = null;
+    try {
+      const pool = await this.client.getObject({ id: params.poolId, options: { showContent: true } });
+      poolState = (pool.data?.content as Record<string, unknown>) || null;
+    } catch {
+      return { valid: false, reason: 'Pool is not reachable.' };
+    }
+
+    const poolStatus = String((poolState?.status as string) || 'active').toLowerCase();
+    if (poolStatus !== 'active') {
+      return { valid: false, reason: `Pool is not active (${poolStatus}).` };
+    }
+
+    const balance = await this.client.getBalance({ owner: params.ownerAddress, coinType: '0x2::sui::SUI' });
+    const availableMist = Number(balance.totalBalance || '0');
+    if (!Number.isFinite(availableMist) || availableMist < params.amountMist) {
+      return { valid: false, reason: 'Insufficient wallet balance for order.' };
+    }
+
+    const impactPct = Number(((params.amountMist / Math.max(expectedPrice, 1)) * 100) / Math.max(availableMist, 1));
+    if (impactPct > maxImpact) {
+      return {
+        valid: false,
+        reason: `Price impact ${impactPct.toFixed(2)}% exceeds ${maxImpact.toFixed(2)}%`,
+        impactPct,
+      };
+    }
+
+    const systemState = await this.client.getLatestSuiSystemState();
+    const epochStartMs = Number(systemState.epochStartTimestampMs || Date.now());
+    const clockSkewMs = Math.abs(Date.now() - epochStartMs);
+    if (clockSkewMs > 5 * 60_000) {
+      return {
+        valid: false,
+        reason: 'Clock skew detected against chain timestamp.',
+        clockSkewMs,
+      };
+    }
+
+    return {
+      valid: true,
+      impactPct,
+      clockSkewMs,
+    };
   }
 }
 

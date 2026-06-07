@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Transaction } from '@mysten/sui/transactions';
 import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 import { getConnectedWalletContext, signAndExecuteWalletTransaction } from '@/services/sui/wallet-standard';
+import { WalletSecurityService, type AttestationData } from '@/services/sui/wallet-security';
 import { SUI_PACKAGE_ID } from '@/lib/sui-config';
 import { emitObservabilityEvent } from '@/lib/observability';
 
@@ -48,6 +49,7 @@ const CONFIGURED_DEEPBOOK_POOL_OBJECT_ID = process.env.NEXT_PUBLIC_DEEPBOOK_POOL
 const CONFIGURED_DEEPBOOK_BALANCE_MANAGER_OBJECT_ID = process.env.NEXT_PUBLIC_DEEPBOOK_BALANCE_MANAGER_OBJECT_ID || '';
 const CONFIGURED_SUI_CLOCK_OBJECT_ID = process.env.NEXT_PUBLIC_SUI_CLOCK_OBJECT_ID || '0x6';
 const LOCAL_ONCHAIN_OBJECT_IDS_KEY = 'sapm.onchainObjectIds';
+const walletSecurityService = new WalletSecurityService();
 
 export type ParsedTarget = {
   packageId: string;
@@ -387,6 +389,24 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function getOptionalWalletAttestation(): AttestationData | undefined {
+  const leafCertificateFingerprint = process.env.NEXT_PUBLIC_WALLET_ATTESTATION_FINGERPRINT || '';
+  const nonce = process.env.NEXT_PUBLIC_WALLET_ATTESTATION_NONCE || '';
+  const signature = process.env.NEXT_PUBLIC_WALLET_ATTESTATION_SIGNATURE || '';
+
+  if (!leafCertificateFingerprint || !nonce || !signature) {
+    return undefined;
+  }
+
+  return {
+    leafCertificateFingerprint,
+    issuerFingerprint: process.env.NEXT_PUBLIC_WALLET_ATTESTATION_ISSUER || undefined,
+    issuedAt: new Date().toISOString(),
+    nonce,
+    signature,
+  };
+}
+
 function isRetryableError(error: unknown): boolean {
   const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
   return (
@@ -410,6 +430,12 @@ export function useTradeExecution() {
   const executeOnchainTransaction = async (trade: TradeRequest, totalCost: number) => {
     const preferredNetwork: 'testnet' | 'mainnet' = localStorage.getItem('preferredNetwork') === 'mainnet' ? 'mainnet' : 'testnet';
     const context = await getConnectedWalletContext(localStorage.getItem('walletId') || undefined);
+    const walletIsTrusted = await walletSecurityService.verifyWalletAuthenticity(context.account.address);
+    if (!walletIsTrusted) {
+      throw new Error(`Wallet address is blocked by local security policy: ${context.account.address}`);
+    }
+
+    const walletAttestation = getOptionalWalletAttestation();
     const client = new SuiClient({ url: getFullnodeUrl(preferredNetwork) });
     const tradeTarget = resolveTradeTarget();
     const parsedTarget = parseTarget(tradeTarget);
@@ -530,7 +556,13 @@ export function useTradeExecution() {
           arguments: args,
         });
 
-        const result = await signAndExecuteWalletTransaction(context, tx, preferredNetwork);
+        const securedTx = await walletSecurityService.signTransactionWithAttestation(
+          tx,
+          context,
+          walletAttestation,
+        );
+
+        const result = await signAndExecuteWalletTransaction(context, securedTx, preferredNetwork);
         if (!result?.digest) {
           throw new Error('Transaction did not return a digest.');
         }

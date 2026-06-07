@@ -4,7 +4,11 @@
   "description": "SAPM Production Frontend - Next.js with TypeScript and Tailwind CSS",
   "scripts": {
     "dev": "NEXT_DISABLE_FILE_SYSTEM_CACHE=1 next dev",
+    "clean": "rm -rf .next node_modules",
+    "reset": "npm run clean && npm install",
+    "prebuild": "npm run type-check",
     "build": "next build",
+    "analyze": "ANALYZE=true next build",
     "start": "next start",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
