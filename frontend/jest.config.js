@@ -7,9 +7,18 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  testMatch: [
+    '**/tests/**/*.test.[jt]s?(x)',
+    '**/src/__tests__/**/*.test.[jt]s?(x)',
+  ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  testPathIgnorePatterns: [
+    '/node_modules/',
+  ],
+  // Use exports conditions so Jest resolves the CJS build of ESM-typed packages
+  customExportConditions: ['require', 'node', 'default'],
 };
 
 module.exports = createJestConfig(customJestConfig);
