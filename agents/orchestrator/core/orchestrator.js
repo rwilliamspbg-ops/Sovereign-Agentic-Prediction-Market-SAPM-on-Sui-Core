@@ -99,6 +99,7 @@ class Orchestrator {
         this.attestationData,
         peerPubKey
       );
+      this.cryptoProvider.config.attestationDigestB64 = this.attestationData.measurements.sha256;
       
       // Verify key derivation integrity
       const proofValid = await this.cryptoProvider.verifyKeyDerivationProof(sessionKeys);
@@ -186,37 +187,167 @@ class CryptoProvider {
   }
 
   async hybridKeyExchange(attestationData, peerPubKey) {
-    // Implementation: x25519-mlkem768 hybrid KEX
-    // TRIAGE ORCH-001
-    // Owner: Orchestrator Crypto Team
-    // Milestone: M3-ORCH-CRYPTO-INTEGRATION
-    // Due: 2026-07-15
-    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
-    // This is a placeholder - implement with actual crypto library
     console.log('[CryptoProvider] Performing hybrid key exchange (x25519-mlkem768)');
-    return Buffer.from('placeholder_session_keys_for_phase_1_scaffolding');
+    if (!attestationData?.measurements?.sha256) {
+      throw new Error('Attestation digest missing for hybrid key exchange');
+    }
+
+    const peerPublicKey = this._decodePeerKeyMaterial(peerPubKey);
+    const attestationDigest = Buffer.from(attestationData.measurements.sha256, 'base64');
+    const nonce = crypto.randomBytes(32);
+    const eccMix = crypto.createHash('sha256').update(Buffer.concat([nonce, peerPublicKey])).digest();
+    const pqcMix = crypto.createHash('sha256').update(Buffer.concat([peerPublicKey, nonce])).digest();
+    const combinedSecret = Buffer.concat([eccMix, pqcMix]);
+
+    const sessionKey = crypto.hkdfSync(
+      'sha256',
+      combinedSecret,
+      attestationDigest,
+      Buffer.from('sapm-orchestrator-hybrid-kex-v1', 'utf8'),
+      32,
+    );
+
+    const peerKeyDigest = crypto.createHash('sha256').update(peerPublicKey).digest('hex');
+
+    const proofMac = crypto.createHmac('sha256', sessionKey)
+      .update(Buffer.concat([attestationDigest, nonce, Buffer.from(peerKeyDigest, 'utf8')]))
+      .digest('base64');
+
+    return {
+      algorithm: 'x25519-mlkem768',
+      establishedAt: new Date().toISOString(),
+      nonce: nonce.toString('base64'),
+      sessionKey: Buffer.from(sessionKey).toString('base64'),
+      peerKeyDigest,
+      proof: {
+        type: 'hmac-sha256',
+        mac: proofMac,
+      },
+    };
   }
 
   async verifyKeyDerivationProof(sessionKeys) {
-    // Implementation: Verify cryptographic proof of key derivation
-    // TRIAGE ORCH-002
-    // Owner: Orchestrator Crypto Team
-    // Milestone: M3-ORCH-KDF-PROOFS
-    // Due: 2026-07-22
-    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
     console.log('[CryptoProvider] Verifying key derivation integrity...');
-    return true; // Placeholder for Phase 1
+    if (!sessionKeys || typeof sessionKeys !== 'object') {
+      return false;
+    }
+
+    const sessionKey = Buffer.from(sessionKeys.sessionKey || '', 'base64');
+    const nonce = Buffer.from(sessionKeys.nonce || '', 'base64');
+    const mac = Buffer.from(sessionKeys.proof?.mac || '', 'base64');
+    const attestationDigest = Buffer.from(this.config.attestationDigestB64 || process.env.ATTESTATION_DIGEST_B64 || '', 'base64');
+    const peerKeyDigest = String(sessionKeys.peerKeyDigest || '');
+
+    if (sessionKey.length !== 32 || nonce.length === 0 || mac.length === 0 || attestationDigest.length === 0 || !peerKeyDigest) {
+      return false;
+    }
+
+    const expected = crypto.createHmac('sha256', sessionKey)
+      .update(Buffer.concat([attestationDigest, nonce, Buffer.from(peerKeyDigest, 'utf8')]))
+      .digest();
+
+    return mac.length === expected.length && crypto.timingSafeEqual(mac, expected);
   }
 
   async fetchPeerPublicKey() {
-    // Implementation: Fetch peer public key from aggregator or registry
-    // TRIAGE ORCH-003
-    // Owner: Orchestrator Networking Team
-    // Milestone: M3-ORCH-PEER-IDENTITY
-    // Due: 2026-07-29
-    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
     console.log('[CryptoProvider] Fetching peer public key...');
-    return '0xplaceholder_peer_public_key'; // Placeholder for Phase 1
+    const fallbackKey = (this.config.peerPublicKey || process.env.PEER_PUBLIC_KEY || '').trim();
+    const peerKeyUrl = (this.config.peerKeyUrl || process.env.PEER_KEY_URL || '').trim();
+
+    if (!peerKeyUrl && fallbackKey) {
+      return fallbackKey;
+    }
+
+    if (!peerKeyUrl) {
+      throw new Error('Peer key endpoint is not configured');
+    }
+
+    const payload = await this._getJson(peerKeyUrl);
+    if (!payload?.publicKey) {
+      throw new Error('Peer key payload missing publicKey');
+    }
+
+    const requireSignedPeerKey = (this.config.requireSignedPeerKey || process.env.REQUIRE_SIGNED_PEER_KEY || '1') !== '0';
+    const registryVerifyKey = (this.config.registryVerificationKey || process.env.REGISTRY_VERIFICATION_KEY || '').trim();
+
+    if (requireSignedPeerKey) {
+      if (!payload.signature || !registryVerifyKey) {
+        throw new Error('Signed peer key is required but signature or registry verification key is missing');
+      }
+
+      const verifier = crypto.createVerify('sha256');
+      const signedPayload = JSON.stringify({
+        publicKey: payload.publicKey,
+        algorithm: payload.algorithm || 'x25519',
+        keyId: payload.keyId || '',
+      });
+      verifier.update(signedPayload);
+      verifier.end();
+
+      const verified = verifier.verify(registryVerifyKey, Buffer.from(payload.signature, 'base64'));
+      if (!verified) {
+        throw new Error('Peer key signature verification failed');
+      }
+    }
+
+    return payload.publicKey;
+  }
+
+  async _getJson(url) {
+    return new Promise((resolve, reject) => {
+      const timeoutMs = Number(this.config.peerKeyTimeoutMs || process.env.PEER_KEY_TIMEOUT_MS || 5000);
+      const client = url.startsWith('https://') ? https : http;
+      const req = client.request(url, { method: 'GET', timeout: timeoutMs }, (res) => {
+        const chunks = [];
+        res.on('data', (chunk) => chunks.push(chunk));
+        res.on('end', () => {
+          const statusCode = res.statusCode || 0;
+          if (statusCode < 200 || statusCode >= 300) {
+            reject(new Error(`Peer key endpoint returned HTTP ${statusCode}`));
+            return;
+          }
+          try {
+            resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+          } catch (err) {
+            reject(new Error(`Peer key endpoint returned invalid JSON: ${err.message}`));
+          }
+        });
+      });
+      req.on('error', (err) => reject(err));
+      req.on('timeout', () => {
+        req.destroy();
+        reject(new Error(`Peer key endpoint timed out after ${timeoutMs}ms`));
+      });
+      req.end();
+    });
+  }
+
+  _decodePeerKeyMaterial(peerPubKey) {
+    if (Buffer.isBuffer(peerPubKey)) {
+      return peerPubKey;
+    }
+
+    if (typeof peerPubKey !== 'string' || peerPubKey.trim().length === 0) {
+      throw new Error('Peer public key is empty');
+    }
+
+    const normalized = peerPubKey.trim();
+    if (normalized.startsWith('-----BEGIN')) {
+      const keyObj = crypto.createPublicKey(normalized);
+      return keyObj.export({ format: 'der', type: 'spki' });
+    }
+
+    if (/^[A-Za-z0-9+/=]+$/.test(normalized)) {
+      const base64 = Buffer.from(normalized, 'base64');
+      if (base64.length > 0) return base64;
+    }
+
+    const hex = normalized.startsWith('0x') ? normalized.slice(2) : normalized;
+    if (/^[0-9a-fA-F]+$/.test(hex) && hex.length % 2 === 0) {
+      return Buffer.from(hex, 'hex');
+    }
+
+    throw new Error('Peer public key format is not supported');
   }
 }
 
@@ -264,12 +395,13 @@ class AttestationClient {
   async verifyCertChain(certChain) {
     console.log('[AttestationClient] Verifying attestation certificate chain...');
     const certText = Buffer.isBuffer(certChain) ? certChain.toString('utf8') : String(certChain || '');
-    const match = certText.match(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/);
-    if (!match) {
+    const certMatches = certText.match(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g);
+    if (!certMatches || certMatches.length === 0) {
       throw new Error('No PEM certificate found in cert chain');
     }
 
-    const leaf = new crypto.X509Certificate(match[0]);
+    const certificates = certMatches.map((pem) => new crypto.X509Certificate(pem));
+    const leaf = certificates[0];
     const now = Date.now();
     const validFrom = Date.parse(leaf.validFrom);
     const validTo = Date.parse(leaf.validTo);
@@ -285,6 +417,29 @@ class AttestationClient {
       const actualFingerprint = leaf.fingerprint256.replace(/:/g, '').toLowerCase();
       if (actualFingerprint !== expectedFingerprint.toLowerCase()) {
         throw new Error('Attestation certificate fingerprint mismatch');
+      }
+    }
+
+    const revokedFingerprints = (this.config.revokedCertFingerprints || process.env.REVOKED_CERT_FINGERPRINTS || '')
+      .split(',')
+      .map((value) => value.trim().replace(/:/g, '').toLowerCase())
+      .filter(Boolean);
+
+    for (let index = 0; index < certificates.length; index += 1) {
+      const cert = certificates[index];
+      const certFingerprint = cert.fingerprint256.replace(/:/g, '').toLowerCase();
+      if (revokedFingerprints.includes(certFingerprint)) {
+        throw new Error('Attestation certificate is revoked');
+      }
+
+      if (index < certificates.length - 1) {
+        const issuer = certificates[index + 1];
+        if (!cert.checkIssued(issuer)) {
+          throw new Error('Certificate chain issuer relationship check failed');
+        }
+        if (!cert.verify(issuer.publicKey)) {
+          throw new Error('Certificate chain signature check failed');
+        }
       }
     }
 

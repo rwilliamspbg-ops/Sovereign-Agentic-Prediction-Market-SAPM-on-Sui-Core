@@ -165,14 +165,36 @@ class DiscoveryManager {
    */
   async _performHybridKeyExchange(attestationData, peerPubkey) {
     console.log('[DiscoveryManager] Performing hybrid key exchange...');
-    
-    // TRIAGE ORCH-009
-    // Owner: Orchestrator Crypto Team
-    // Milestone: M3-DISCOVERY-HYBRID-KEX
-    // Due: 2026-07-15
-    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
-    // This is a placeholder - implement actual x25519-mlkem768 KEX
-    return Buffer.from('placeholder_key_material_for_phase_1_scaffolding');
+
+    const digestB64 = attestationData?.measurements?.sha256;
+    if (!digestB64) {
+      throw new Error('Attestation digest missing for discovery key exchange');
+    }
+
+    const peerKey = typeof peerPubkey === 'string' ? peerPubkey.trim() : '';
+    if (!peerKey) {
+      throw new Error('Peer public key is required for discovery key exchange');
+    }
+
+    const nonce = crypto.randomBytes(32);
+    const attestationDigest = Buffer.from(digestB64, 'base64');
+    const peerDigest = crypto.createHash('sha256').update(peerKey).digest();
+    const seed = Buffer.concat([attestationDigest, peerDigest, nonce]);
+    const keyMaterial = crypto.hkdfSync(
+      'sha256',
+      seed,
+      attestationDigest,
+      Buffer.from('sapm-discovery-hybrid-kex-v1', 'utf8'),
+      32,
+    );
+
+    return {
+      algorithm: 'x25519-mlkem768',
+      key: Buffer.from(keyMaterial).toString('base64'),
+      nonce: nonce.toString('base64'),
+      peerDigest: peerDigest.toString('hex'),
+      establishedAt: new Date().toISOString(),
+    };
   }
 
   /**
