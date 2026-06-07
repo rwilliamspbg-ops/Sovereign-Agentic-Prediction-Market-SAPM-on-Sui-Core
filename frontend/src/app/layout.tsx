@@ -39,7 +39,20 @@ function hasSuiChain(wallet: { chains?: readonly string[] | undefined }): boolea
     return false;
   }
 
-  return wallet.chains.includes(SUI_TESTNET_CHAIN) || wallet.chains.includes(SUI_MAINNET_CHAIN);
+  return wallet.chains.some((chain) => chain === SUI_TESTNET_CHAIN || chain === SUI_MAINNET_CHAIN || chain.startsWith('sui:'));
+}
+
+function hasSuiAccountChain(wallet: { accounts?: readonly { chains?: readonly string[] }[] | undefined }): boolean {
+  if (!Array.isArray(wallet.accounts)) {
+    return false;
+  }
+
+  return wallet.accounts.some((account) => Array.isArray(account.chains)
+    && account.chains.some((chain: string) => chain === SUI_TESTNET_CHAIN || chain === SUI_MAINNET_CHAIN || chain.startsWith('sui:')));
+}
+
+function hasSuiFeature(wallet: { features?: Record<string, unknown> | undefined }): boolean {
+  return Object.keys(wallet.features || {}).some((feature) => feature.startsWith('sui:'));
 }
 
 function hasConnectFeature(wallet: { features?: Record<string, unknown> | undefined }): boolean {
@@ -96,7 +109,8 @@ export default function RootLayout({
     setWalletError(null);
     try {
       const liveWallets = getWallets().get();
-      const compatibleWallets = liveWallets.filter((wallet) => hasConnectFeature(wallet) && hasSuiChain(wallet));
+      const compatibleWallets = liveWallets.filter((wallet) => hasConnectFeature(wallet)
+        && (hasSuiChain(wallet) || hasSuiAccountChain(wallet) || hasSuiFeature(wallet)));
 
       if (compatibleWallets.length === 0) {
         throw new Error('No compatible Sui wallet found. Choose a Sui wallet account on testnet/mainnet.');
@@ -222,7 +236,9 @@ export default function RootLayout({
       }
 
       const wallet = registry.get().find((item) => (item.id || item.name) === savedWalletId);
-      if (!wallet || !hasSuiChain(wallet) || !hasConnectFeature(wallet)) {
+      if (!wallet
+        || !hasConnectFeature(wallet)
+        || !(hasSuiChain(wallet) || hasSuiAccountChain(wallet) || hasSuiFeature(wallet))) {
         localStorage.removeItem(LAST_WALLET_ID_KEY);
         localStorage.removeItem(LAST_WALLET_ADDRESS_KEY);
         return;
@@ -279,7 +295,8 @@ export default function RootLayout({
   }, []);
 
   React.useEffect(() => {
-    const compatibleWallets = availableWallets.filter((wallet) => hasConnectFeature(wallet) && hasSuiChain(wallet));
+    const compatibleWallets = availableWallets.filter((wallet) => hasConnectFeature(wallet)
+      && (hasSuiChain(wallet) || hasSuiAccountChain(wallet) || hasSuiFeature(wallet)));
 
     if (compatibleWallets.length === 0) {
       setSelectedWalletId('');
@@ -296,7 +313,8 @@ export default function RootLayout({
 
   const currentNetworkConfig = NETWORKS[network];
   const suiConnectWallets = React.useMemo(() => {
-    return availableWallets.filter((wallet) => hasConnectFeature(wallet) && hasSuiChain(wallet));
+    return availableWallets.filter((wallet) => hasConnectFeature(wallet)
+      && (hasSuiChain(wallet) || hasSuiAccountChain(wallet) || hasSuiFeature(wallet)));
   }, [availableWallets]);
   const explorerBase = network === 'mainnet'
     ? 'https://suiscan.xyz/mainnet/account/'
