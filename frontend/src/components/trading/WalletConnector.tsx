@@ -58,7 +58,22 @@ function hasSuiChain(wallet: WalletLike): boolean {
     return false;
   }
 
-  return wallet.chains.includes(SUI_TESTNET_CHAIN) || wallet.chains.includes(SUI_MAINNET_CHAIN);
+  return wallet.chains.includes(SUI_TESTNET_CHAIN)
+    || wallet.chains.includes(SUI_MAINNET_CHAIN)
+    || wallet.chains.some((chain) => typeof chain === 'string' && chain.startsWith('sui:'));
+}
+
+function hasSuiAccountChain(wallet: WalletLike): boolean {
+  if (!Array.isArray(wallet.accounts)) {
+    return false;
+  }
+
+  return wallet.accounts.some((account) => Array.isArray(account.chains)
+    && account.chains.some((chain: string) => chain === SUI_TESTNET_CHAIN || chain === SUI_MAINNET_CHAIN || chain.startsWith('sui:')));
+}
+
+function hasSuiFeature(wallet: WalletLike): boolean {
+  return Object.keys(wallet.features || {}).some((feature) => feature.startsWith('sui:'));
 }
 
 /**
@@ -88,7 +103,8 @@ export const WalletConnector: React.FC<{ onConnect?: () => void }> = ({ onConnec
           return false;
         }
 
-        return typeof (wallet.features?.['standard:connect'] as { connect?: unknown } | undefined)?.connect === 'function' && hasSuiChain(wallet);
+        const hasConnect = typeof (wallet.features?.['standard:connect'] as { connect?: unknown } | undefined)?.connect === 'function';
+        return hasConnect && (hasSuiChain(wallet) || hasSuiAccountChain(wallet) || hasSuiFeature(wallet));
       });
 
     setAvailableWallets(discovered);
