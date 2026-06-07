@@ -611,7 +611,8 @@ export default function RootLayout({
 
                       <button
                         onClick={handleConnectWallet}
-                        disabled={isConnecting || suiConnectWallets.length === 0}
+                        disabled={isConnecting}
+                        title={suiConnectWallets.length === 0 ? 'No compatible Sui wallet detected. Click for diagnostics.' : 'Connect compatible Sui wallet'}
                         style={{
                           padding: '0.6rem 1.5rem',
                           background: 'linear-gradient(135deg, #0ea5e9, #06b6d4)',
@@ -619,11 +620,11 @@ export default function RootLayout({
                           borderRadius: '0.375rem',
                           border: 'none',
                           fontWeight: '600',
-                          cursor: isConnecting || suiConnectWallets.length === 0 ? 'not-allowed' : 'pointer',
+                          cursor: isConnecting ? 'not-allowed' : 'pointer',
                           fontSize: '0.9rem',
                           transition: 'all 0.2s',
                           boxShadow: '0 4px 15px rgba(6, 182, 212, 0.2)',
-                          opacity: isConnecting || suiConnectWallets.length === 0 ? 0.7 : 1,
+                          opacity: isConnecting ? 0.7 : 1,
                         }}
                       >
                         {isConnecting ? '🔗 Connecting...' : suiConnectWallets.length === 0 ? 'Install Sui Wallet' : '💼 Connect Wallet'}
