@@ -98,6 +98,59 @@ npm run dev -- -p 3000
 
 The frontend dev script is configured to avoid filesystem-cache issues in this workspace.
 
+### Browser Wallet Trade Execution (End-to-End)
+
+The trade form now enforces preflight checks and on-chain target introspection before wallet signing. Configure one of the two paths below in `frontend/.env.local`, then restart the frontend.
+
+Option A: Registry path (current default package in this repo)
+
+```bash
+NEXT_PUBLIC_SUI_TRADE_TARGET=0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8::registry::add_key
+NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID=0x<your_registry_object_id>
+```
+
+Option B: DeepBook limit-order path
+
+```bash
+NEXT_PUBLIC_SUI_TRADE_TARGET=0x<deepbook_package_id>::pool::place_limit_order
+NEXT_PUBLIC_DEEPBOOK_POOL_OBJECT_ID=0x<pool_object_id>
+NEXT_PUBLIC_DEEPBOOK_BALANCE_MANAGER_OBJECT_ID=0x<balance_manager_object_id>
+NEXT_PUBLIC_SUI_CLOCK_OBJECT_ID=0x6
+```
+
+Execution flow:
+
+1. Open the frontend and connect a Sui wallet account on testnet or mainnet.
+2. Confirm the trade form shows no preflight issues.
+3. Verify the target introspection card resolves your target and parameter types.
+4. Submit a trade and approve in wallet.
+5. Confirm digest and SuiScan toast output after chain confirmation.
+
+### DeepBook and Walrus Capability Coverage
+
+Current implemented coverage in this repo:
+
+- DeepBook: target introspection, preflight checks, and signature-aware transaction encoding for `pool::place_limit_order` in the trade form.
+- DeepBook lifecycle primitives: `place_limit_order`, `cancel_order`, and replace-order transaction builders plus digest reconciliation helpers in the frontend service layer.
+- Walrus: endpoint readiness checks, snapshot publish (`POST /v1/blobs`), and snapshot read/preview (`GET /v1/blobs/{blobId}`) from the UI.
+- Walrus snapshot manifest: versioned `sapm.walrus.snapshot.manifest.v1` payload with checksum and lineage fields before publish.
+- Sui proof path: transaction digest capture and direct SuiScan verification links in the trading flow.
+- Runtime observability: structured deepbook/walrus/trade events for readiness checks, latency, preflight blocks, and execution outcomes.
+
+Current gaps (not fully implemented yet):
+
+- DeepBook advanced lifecycle flows such as order cancellation, partial-fill management, and richer order-book/position reconciliation.
+- Walrus advanced capabilities such as richer metadata/indexing strategy, long-term retention/versioning policy, and signed retrieval attestations in UI.
+
+CI update:
+
+- Frontend production gate now runs as a standalone CI job with explicit timeout controls and always-uploaded logs for deterministic debugging.
+
+Reference docs:
+
+- DeepBook docs: https://docs.sui.io/standards/deepbookv3
+- Walrus repository/docs: https://github.com/MystenLabs/walrus
+
 ## Validation and Scripts
 
 Root-level scripts:
@@ -133,6 +186,12 @@ npm run check:frontend:prod
 ```
 
 That gate performs a clean frontend type-check and production build.
+
+CI gate behavior:
+
+- `release-check` can skip frontend production build when `SKIP_FRONTEND_GATE=1` (used by CI to avoid duplicate frontend builds).
+- Frontend production build runs in a standalone CI job (`frontend-prod-gate`) with explicit timeout control via `FRONTEND_BUILD_TIMEOUT_SECONDS`.
+- CI uploads release and frontend gate logs as artifacts for deterministic failure triage.
 
 ## Frontend Overview
 

@@ -1,75 +1,75 @@
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, jest } from '@jest/globals';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MarketCard } from '@/components/markets/MarketCard';
 
-interface MockMarketData {
-  id: string;
-  question: string;
-  yesPrice: number;
-  noPrice: number;
-  yesVolume: number;
-  noVolume: number;
-  lastUpdate: Date;
-}
+jest.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  },
+}));
 
 describe('MarketCard Component', () => {
-  const mockMarket: MockMarketData = {
+  const baseMarket = {
     id: 'TEST_MARKET_001',
     question: 'Will Bitcoin reach $100K in 2026?',
     yesPrice: 0.72,
     noPrice: 0.28,
     yesVolume: 150000,
     noVolume: 80000,
-    lastUpdate: new Date(),
+    lastUpdate: new Date(Date.now() - 2 * 60 * 60 * 1000),
+    category: 'crypto',
   };
 
-  it('renders market card with correct prices', () => {
-    // This test would run in the browser environment
-    console.log('✓ MarketCard component renders correctly');
-    expect(true).toBe(true);
+  it('renders question, category, and formatted prices', () => {
+    render(<MarketCard market={baseMarket} onTrade={() => undefined} />);
+
+    expect(screen.getByText('Will Bitcoin reach $100K in 2026?')).toBeTruthy();
+    expect(screen.getByText('crypto')).toBeTruthy();
+    expect(screen.getByText('0.7200 SUI')).toBeTruthy();
+    expect(screen.getByText('0.2800 SUI')).toBeTruthy();
+    expect(screen.getByText('72.00% Prob.')).toBeTruthy();
+    expect(screen.getByText('28.00% Prob.')).toBeTruthy();
   });
 
-  it('displays YES/NO outcome buttons', () => {
-    console.log('✓ YES button rendered with correct price');
-    console.log('✓ NO button rendered with correct price');
-    expect(true).toBe(true);
+  it('calls onTrade with yes when YES card is clicked', () => {
+    const onTrade = jest.fn();
+    render(<MarketCard market={baseMarket} onTrade={onTrade} />);
+
+    fireEvent.click(screen.getByText('YES'));
+    expect(onTrade).toHaveBeenCalledWith('TEST_MARKET_001', 'yes');
   });
 
-  it('shows agent edge indicator when provided', () => {
-    const mockMarketWithEdge = { ...mockMarket, yesPrice: 0.85 };
-    console.log('✓ Agent edge badge displayed for high confidence predictions');
-    expect(true).toBe(true);
+  it('calls onTrade with no when NO card is clicked', () => {
+    const onTrade = jest.fn();
+    render(<MarketCard market={baseMarket} onTrade={onTrade} />);
+
+    fireEvent.click(screen.getByText('NO'));
+    expect(onTrade).toHaveBeenCalledWith('TEST_MARKET_001', 'no');
   });
 
-  it('displays risk level based on price imbalance', () => {
-    const balancedMarket = { ...mockMarket, yesPrice: 0.5, noPrice: 0.5 };
-    console.log('✓ Risk level calculated correctly for balanced markets');
-    expect(true).toBe(true);
+  it('shows agent edge badge when edge is above threshold', () => {
+    render(<MarketCard market={baseMarket} onTrade={() => undefined} agentEdge={0.85} />);
+
+    expect(screen.getByText('85% Edge')).toBeTruthy();
   });
 
-  it('handles hover state with tooltip', () => {
-    console.log('✓ Tooltip appears on hover showing market details');
-    expect(true).toBe(true);
+  it('hides agent edge badge when edge is at or below threshold', () => {
+    render(<MarketCard market={baseMarket} onTrade={() => undefined} agentEdge={0.3} />);
+
+    expect(screen.queryByText(/Edge/)).toBeNull();
   });
 
-  it('is responsive across breakpoints', () => {
-    console.log('✓ Mobile view: single column layout');
-    console.log('✓ Tablet view: 2-3 columns');
-    console.log('✓ Desktop view: 4 columns');
-    expect(true).toBe(true);
-  });
-});
+  it('shows calculated risk level from liquidity imbalance', () => {
+    render(<MarketCard market={baseMarket} onTrade={() => undefined} />);
 
-describe('MarketCard Performance', () => {
-  it('renders within 100ms for demo data', () => {
-    // Performance test would measure actual render time
-    const startTime = performance.now();
-    // Simulate component mounting
-    const endTime = performance.now();
-    expect(endTime - startTime).toBeLessThan(100);
+    expect(screen.getByText('Risk: High')).toBeTruthy();
   });
 
-  it('has optimized bundle size', () => {
-    console.log('✓ MarketCard bundle size: ~3.5KB (gzipped)');
-    expect(true).toBe(true);
+  it('shows updated time and market details tooltip text', () => {
+    render(<MarketCard market={baseMarket} onTrade={() => undefined} />);
+
+    expect(screen.getByText(/Updated/)).toBeTruthy();
+    expect(screen.getByText('Market Details')).toBeTruthy();
+    expect(screen.getByText('ID: TEST_MARKET_001')).toBeTruthy();
   });
 });

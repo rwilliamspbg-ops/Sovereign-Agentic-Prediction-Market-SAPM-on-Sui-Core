@@ -46,12 +46,6 @@ function hasSuiChain(wallet: WalletLike): boolean {
   return false;
 }
 
-function hasSignAndExecuteFeature(wallet: WalletLike): boolean {
-  const modern = typeof (wallet.features?.['sui:signAndExecuteTransaction'] as { signAndExecuteTransaction?: unknown } | undefined)?.signAndExecuteTransaction === 'function';
-  const legacy = typeof (wallet.features?.['sui:signAndExecuteTransactionBlock'] as { signAndExecuteTransactionBlock?: unknown } | undefined)?.signAndExecuteTransactionBlock === 'function';
-  return modern || legacy;
-}
-
 export function getCompatibleWallets(): WalletLike[] {
   return getWallets()
     .get()

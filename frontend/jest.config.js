@@ -1,24 +1,21 @@
 /** @type {import('jest').Config} */
 const config = {
-  testEnvironment: 'node',
+  testEnvironment: 'jsdom',
+  preset: 'ts-jest',
   testMatch: [
     '**/tests/**/*.test.[jt]s?(x)',
     '**/src/__tests__/**/*.test.[jt]s?(x)',
   ],
-  // No transform needed for plain .js CommonJS test files.
-  // TypeScript tests are skipped via testPathIgnorePatterns until ts-jest is added.
-  transform: {},
+  transform: {
+    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.jest.json' }],
+  },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  // Ignore .tsx tests that need TypeScript transform (not available without ts-jest)
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testPathIgnorePatterns: [
     '/node_modules/',
-    '\\.tsx?$',
   ],
-  // Use exports conditions so Jest resolves the CJS build of ESM-typed packages
-  resolver: undefined,
-  customExportConditions: ['require', 'node', 'default'],
 };
 
 module.exports = config;

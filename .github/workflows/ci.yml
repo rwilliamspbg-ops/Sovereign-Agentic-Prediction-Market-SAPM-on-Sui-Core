@@ -16,6 +16,10 @@ permissions:
 jobs:
   release-check:
     runs-on: ubuntu-latest
+    env:
+      FRONTEND_BUILD_TIMEOUT_SECONDS: '900'
+      NEXT_TELEMETRY_DISABLED: '1'
+      SKIP_FRONTEND_GATE: '1'
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js
@@ -24,7 +28,42 @@ jobs:
           node-version: '20'
           cache: npm
       - name: Run canonical release gate
-        run: npm run release:check
+        run: |
+          mkdir -p artifacts/ci-logs
+          npm run release:check 2>&1 | tee artifacts/ci-logs/release-check.log
+      - name: Upload release gate logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-check-logs
+          path: artifacts/ci-logs/release-check.log
+          if-no-files-found: warn
+
+  frontend-prod-gate:
+    runs-on: ubuntu-latest
+    env:
+      FRONTEND_BUILD_TIMEOUT_SECONDS: '900'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install monorepo dependencies
+        run: npm run install:all
+      - name: Run frontend production gate
+        run: |
+          mkdir -p artifacts/ci-logs
+          npm run check:frontend:prod 2>&1 | tee artifacts/ci-logs/frontend-prod-gate.log
+      - name: Upload frontend production gate logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-prod-gate-logs
+          path: artifacts/ci-logs/frontend-prod-gate.log
+          if-no-files-found: warn
 
   orchestrator-hardening-check:
     runs-on: ubuntu-latest
