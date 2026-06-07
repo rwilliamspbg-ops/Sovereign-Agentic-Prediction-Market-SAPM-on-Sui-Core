@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 
 interface MarketData {
   id: string;
@@ -159,82 +159,7 @@ export default function Markets() {
       priceHistory: [0.32, 0.33, 0.34, 0.34, 0.35, 0.35],
     },
   ]), []);
-
-  const [markets, setMarkets] = useState<MarketData[]>(realMarkets);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<'volume' | 'probability' | 'confidence' | 'tvl'>('tvl');
-  const [selectedMarket, setSelectedMarket] = useState<MarketData | null>(null);
-  const [isWalletConnected] = useState(false);
-
-  useEffect(() => {
-    setError(null);
-  }, []);
-
-  const categories = useMemo(() => {
-    return Array.from(new Set(markets.map(m => m.category).filter(Boolean)));
-  }, [markets]);
-
-  const filteredAndSortedMarkets = useMemo(() => {
-    return markets
-      .filter(m => {
-        if (searchTerm) {
-          return m.question.toLowerCase().includes(searchTerm.toLowerCase());
-        }
-        return true;
-      })
-      .filter(m => {
-        if (selectedCategory) {
-          return m.category === selectedCategory;
-        }
-        return true;
-      })
-      .sort((a, b) => {
-        switch (sortBy) {
-          case 'probability':
-            return Math.abs(b.yesPrice - 0.5) - Math.abs(a.yesPrice - 0.5);
-          case 'confidence':
-            return (b.aiConfidence || 0) - (a.aiConfidence || 0);
-          case 'tvl':
-            return (b.tvl || 0) - (a.tvl || 0);
-          default:
-            return (b.volume24h || 0) - (a.volume24h || 0);
-        }
-      });
-  }, [markets, searchTerm, selectedCategory, sortBy]);
-
-  const daysUntilResolution = (date?: Date) => {
-    if (!date) return null;
-    const days = Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    if (days < 1) return 'Today';
-    if (days === 1) return 'Tomorrow';
-    if (days < 30) return `${days}d`;
-    return `${Math.ceil(days / 30)}mo`;
-  };
-
-  const getPriceChange = (history?: number[]) => {
-    if (!history || history.length < 2) return 0;
-    return ((history[history.length - 1] - history[0]) / history[0]) * 100;
-  };
-
-  const getRiskColor = (risk?: string) => {
-    switch (risk) {
-      case 'Low': return '#10b981';
-      case 'Medium': return '#f59e0b';
-      case 'High': return '#ef4444';
-      default: return '#6b7280';
-    }
-  };
-
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `$${(num / 1000).toFixed(0)}k`;
-    return `$${num.toFixed(0)}`;
-  };
-
-  const totalTVL = filteredAndSortedMarkets.reduce((sum, m) => sum + (m.tvl || 0), 0);
-  const total24hVolume = filteredAndSortedMarkets.reduce((sum, m) => sum + (m.volume24h || 0), 0);
+  const markets = realMarkets;
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0f172a', color: '#e2e8f0', padding: '2rem 1rem' }}>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useCopilotChat as useChat } from '@copilotkit/react-core';
-import { useState, useEffect } from 'react';
 
 export function AgentInsightModal({ insight }: { insight: any }) {
   const chat = useChat();

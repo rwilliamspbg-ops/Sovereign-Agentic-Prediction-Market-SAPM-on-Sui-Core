@@ -6,7 +6,7 @@
     "dev": "NEXT_DISABLE_FILE_SYSTEM_CACHE=1 next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "test": "jest",
     "test:unit": "jest tests/unit",
@@ -44,6 +44,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
+    "ts-jest": "^29.4.11",
     "typescript": "5.4.5"
   }
 }

@@ -119,8 +119,13 @@ export default function RootLayout({
         throw new Error('No Wallet Standard wallet detected. Ensure your wallet extension is installed, unlocked, and wallet-standard compatible.');
       }
 
+      if (compatibleWallets.length === 0) {
+        const detected = connectableWallets.map((wallet) => wallet.name).join(', ') || 'none';
+        throw new Error(`No Sui-compatible wallet found. Detected wallets: ${detected}. Install or enable a Sui wallet account on testnet/mainnet.`);
+      }
+
       const savedWalletId = localStorage.getItem(LAST_WALLET_ID_KEY);
-      const candidateWallets = compatibleWallets.length > 0 ? compatibleWallets : connectableWallets;
+      const candidateWallets = compatibleWallets;
       const wallet = candidateWallets.find((item) => (item.id || item.name) === selectedWalletId)
         || candidateWallets.find((item) => (item.id || item.name) === savedWalletId)
         || candidateWallets[0];
@@ -308,8 +313,13 @@ export default function RootLayout({
       return;
     }
 
+    if (compatibleWallets.length === 0) {
+      setSelectedWalletId('');
+      return;
+    }
+
     const savedWalletId = localStorage.getItem(LAST_WALLET_ID_KEY) || '';
-    const candidateWallets = compatibleWallets.length > 0 ? compatibleWallets : connectableWallets;
+    const candidateWallets = compatibleWallets;
     const nextSelected = candidateWallets.find((item) => (item.id || item.name) === savedWalletId)
       || candidateWallets.find((item) => (item.id || item.name) === selectedWalletId)
       || candidateWallets[0];
@@ -376,7 +386,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body style={{ margin: 0, padding: 0, backgroundColor: '#0f172a', fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
-        <CopilotKit runtimeUrl={copilotRuntimeUrl}>
+        <CopilotKit runtimeUrl={copilotRuntimeUrl} useSingleEndpoint={false}>
           {/* Main Application Content */}
           <div style={{ position: 'relative' }}>
             

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { MarketCard } from './MarketCard';
-import { MagnifyingGlassIcon, ArrowsUpDownIcon } from '@heroicons/react/24/solid';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 
 interface MarketData {
   id: string;
@@ -77,15 +77,6 @@ export const MarketList: React.FC<MarketListProps> = ({
         }
       });
   }, [markets, searchTerm, selectedCategory, sortBy, agentEdge]);
-
-  // Format time ago
-  const timeAgo = (date: Date): string => {
-    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-    if (seconds < 60) return 'Just now';
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    return `${Math.floor(minutes / 60)}h ago`;
-  };
 
   // Get agent edge for a market
   const getAgentEdge = (marketId: string): number => {

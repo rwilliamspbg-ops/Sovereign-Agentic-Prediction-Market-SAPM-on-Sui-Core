@@ -53,9 +53,66 @@ type JudgeStep = {
   detail?: string;
 };
 
+type ObservabilityEntry = {
+  ts: string;
+  category: string;
+  action: string;
+  severity: 'info' | 'warn' | 'error';
+  details?: Record<string, unknown>;
+};
+
 const ACTIVE_MARKET_INSIGHT_KEY = 'sapm.activeMarketInsight';
 const LOCAL_ONCHAIN_OBJECT_IDS_KEY = 'sapm.onchainObjectIds';
 const PAGE_BOOT_TIMEOUT_MS = 15000;
+const DEEPBOOK_DOCS_URL = 'https://docs.sui.io/standards/deepbookv3';
+const WALRUS_DOCS_URL = 'https://github.com/MystenLabs/walrus';
+
+function ProtocolBadge({
+  accent,
+  symbol,
+  label,
+  logoSrc,
+}: {
+  accent: string;
+  symbol: string;
+  label: string;
+  logoSrc?: string;
+}) {
+  return (
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+      <div
+        style={{
+          width: '1.3rem',
+          height: '1.3rem',
+          borderRadius: '999px',
+          border: `1px solid ${accent}`,
+          color: accent,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '0.68rem',
+          fontWeight: 800,
+          letterSpacing: '0.02em',
+          backgroundColor: '#020617',
+          overflow: 'hidden',
+        }}
+      >
+        {logoSrc ? (
+          <img
+            src={logoSrc}
+            alt={`${label} logo`}
+            width={18}
+            height={18}
+            style={{ display: 'block' }}
+          />
+        ) : symbol}
+      </div>
+      <span style={{ color: '#67e8f9', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        {label}
+      </span>
+    </div>
+  );
+}
 
 function isValidSuiHexAddress(value: string | null | undefined): boolean {
   if (!value) {
@@ -205,7 +262,7 @@ function createFixtureMarkets(): MarketData[] {
 export default function MarketDiscovery() {
   const [markets, setMarkets] = useState<MarketData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [walletCapabilities, setWalletCapabilities] = useState<WalletCapabilities | null>(null);
@@ -223,6 +280,9 @@ export default function MarketDiscovery() {
   const [manualOnchainObjectIds, setManualOnchainObjectIds] = useState('');
   const [onchainLoadMessage, setOnchainLoadMessage] = useState('');
   const [isLoadingOnchainMarkets, setIsLoadingOnchainMarkets] = useState(false);
+  const [openOrders, setOpenOrders] = useState<Array<{ owner: string; objectId: string; type: string }>>([]);
+  const [openOrdersMessage, setOpenOrdersMessage] = useState('Connect wallet to load DeepBook open orders.');
+  const [observabilityEvents, setObservabilityEvents] = useState<ObservabilityEntry[]>([]);
   const [judgeSteps, setJudgeSteps] = useState<JudgeStep[]>([
     { label: 'Connect wallet', status: 'pending' },
     { label: 'Load on-chain market', status: 'pending' },
@@ -445,7 +505,7 @@ export default function MarketDiscovery() {
             ? deepbook.packageReachable
               ? `Connected to DeepBook package ${deepbook.packageId.slice(0, 8)}...${deepbook.packageId.slice(-6)}`
               : deepbook.error || 'DeepBook package configured but not reachable'
-            : 'RPC connected. Set NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID for package-level checks.',
+            : `RPC connected. Package checks default to ${SUI_PACKAGE_ID.slice(0, 8)}...${SUI_PACKAGE_ID.slice(-6)}.`,
         },
         walrus: {
           ready: walrus.aggregatorReachable && walrus.publisherReachable,
@@ -462,6 +522,54 @@ export default function MarketDiscovery() {
     });
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    const loadOpenOrders = async () => {
+      if (!walletConnected || !walletAddress) {
+        setOpenOrders([]);
+        setOpenOrdersMessage('Connect wallet to load DeepBook open orders.');
+        return;
+      }
+
+      setOpenOrdersMessage('Loading open orders...');
+      try {
+        const orders = await deepbookService.getOpenOrders(walletAddress);
+        if (!active) {
+          return;
+        }
+
+        setOpenOrders(orders);
+        setOpenOrdersMessage(orders.length > 0 ? `${orders.length} open order object(s) found.` : 'No open orders found.');
+      } catch (error) {
+        if (!active) {
+          return;
+        }
+
+        setOpenOrders([]);
+        setOpenOrdersMessage(error instanceof Error ? error.message : 'Failed to load open orders.');
+      }
+    };
+
+    loadOpenOrders();
+
+    return () => {
+      active = false;
+    };
+  }, [walletConnected, walletAddress]);
+
+  useEffect(() => {
+    const handle = window.setInterval(() => {
+      const state = window as typeof window & { __SAPM_OBSERVABILITY__?: ObservabilityEntry[] };
+      const entries = state.__SAPM_OBSERVABILITY__ || [];
+      setObservabilityEvents(entries.slice(-8).reverse());
+    }, 1200);
+
+    return () => {
+      window.clearInterval(handle);
+    };
+  }, []);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'volume' | 'probability' | 'confidence' | 'tvl'>('tvl');
@@ -469,7 +577,6 @@ export default function MarketDiscovery() {
   const [selectedMarket, setSelectedMarket] = useState<MarketData | null>(null);
   const [boardTicketMarketId, setBoardTicketMarketId] = useState<string | null>(null);
   const [boardTicketSide, setBoardTicketSide] = useState<'yes' | 'no'>('yes');
-  const [showTradeConfirm, setShowTradeConfirm] = useState(false);
 
   const categories = useMemo(() => {
     return Array.from(new Set(markets.map(m => m.category).filter((value): value is string => Boolean(value))));
@@ -571,7 +678,14 @@ export default function MarketDiscovery() {
         market: boardTicketMarket,
       };
 
-      const result = await walrusService.publishMarketSnapshot(payload);
+      const manifest = await walrusService.buildSnapshotManifest({
+        marketId: boardTicketMarket.id,
+        walletAddress: walletAddress || undefined,
+        payload,
+        previousBlobId: walrusBlobId || undefined,
+      });
+
+      const result = await walrusService.publishMarketSnapshot(manifest);
       setWalrusBlobId(result.blobId);
       setWalrusBlobPreview('');
       setWalrusActionMessage(`Published to Walrus blob ${result.blobId.slice(0, 8)}...${result.blobId.slice(-6)}.`);
@@ -649,13 +763,21 @@ export default function MarketDiscovery() {
       updateStep(2, 'done', `Digest ${tradeResult.transactionHash.slice(0, 10)}...`);
       updateStep(3, 'running', 'Publishing snapshot...');
 
-      const publishResult = await walrusService.publishMarketSnapshot({
+      const manifest = await walrusService.buildSnapshotManifest({
+        marketId: activeMarket.id,
+        txDigest: tradeResult.transactionHash,
+        walletAddress: walletAddress || undefined,
+        previousBlobId: walrusBlobId || undefined,
+        payload: {
         source: 'judge-mode-snapshot',
         createdAt: new Date().toISOString(),
         walletAddress,
         txDigest: tradeResult.transactionHash,
         market: activeMarket,
+        },
       });
+
+      const publishResult = await walrusService.publishMarketSnapshot(manifest);
       setWalrusBlobId(publishResult.blobId);
       updateStep(3, 'done', `Blob ${publishResult.blobId.slice(0, 10)}...`);
 
@@ -803,35 +925,51 @@ export default function MarketDiscovery() {
           }}
         >
           <div style={{ border: '1px solid #334155', borderRadius: '0.6rem', padding: '0.7rem 0.8rem', backgroundColor: '#0b1324' }}>
-            <div style={{ color: '#67e8f9', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              DeepBook
-            </div>
+            <ProtocolBadge accent="#7dd3fc" symbol="DB" label="DeepBook" logoSrc="/brand/deepbook.svg" />
             <div style={{ color: integrationStatus.deepbook.ready ? '#86efac' : '#fca5a5', fontWeight: 700, marginTop: '0.35rem', fontSize: '0.86rem' }}>
               {integrationStatus.deepbook.ready ? 'Ready' : 'Needs Config'}
             </div>
             <div style={{ color: '#94a3b8', fontSize: '0.78rem', lineHeight: 1.5, marginTop: '0.35rem' }}>{integrationStatus.deepbook.message}</div>
-            <a href={DEEPBOOK_SANDBOX_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#67e8f9', fontSize: '0.78rem', textDecoration: 'none', fontWeight: 700 }}>
-              Open DeepBook Sandbox
-            </a>
+            <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginTop: '0.45rem' }}>
+              <a href={DEEPBOOK_SANDBOX_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#67e8f9', fontSize: '0.78rem', textDecoration: 'none', fontWeight: 700 }}>
+                Open DeepBook Sandbox
+              </a>
+              <a href={DEEPBOOK_DOCS_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#93c5fd', fontSize: '0.78rem', textDecoration: 'none', fontWeight: 700 }}>
+                DeepBook Docs
+              </a>
+            </div>
+            <div style={{ marginTop: '0.55rem', color: '#94a3b8', fontSize: '0.75rem', lineHeight: 1.45 }}>
+              {openOrdersMessage}
+            </div>
+            {openOrders.length > 0 && (
+              <div style={{ marginTop: '0.4rem', display: 'grid', gap: '0.22rem' }}>
+                {openOrders.slice(0, 4).map((order) => (
+                  <div key={order.objectId} style={{ fontSize: '0.72rem', color: '#cbd5e1' }}>
+                    {order.objectId.slice(0, 10)}... ({order.type.split('::').slice(-1)[0]})
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div style={{ border: '1px solid #334155', borderRadius: '0.6rem', padding: '0.7rem 0.8rem', backgroundColor: '#0b1324' }}>
-            <div style={{ color: '#67e8f9', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Walrus
-            </div>
+            <ProtocolBadge accent="#a5b4fc" symbol="W" label="Walrus" logoSrc="/brand/walrus.svg" />
             <div style={{ color: integrationStatus.walrus.ready ? '#86efac' : '#fca5a5', fontWeight: 700, marginTop: '0.35rem', fontSize: '0.86rem' }}>
               {integrationStatus.walrus.ready ? 'Endpoints Reachable' : 'Endpoint Check Failed'}
             </div>
             <div style={{ color: '#94a3b8', fontSize: '0.78rem', lineHeight: 1.5, marginTop: '0.35rem' }}>{integrationStatus.walrus.message}</div>
-            <a href={WALRUS_AGGREGATOR_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#67e8f9', fontSize: '0.78rem', textDecoration: 'none', fontWeight: 700 }}>
-              Open Walrus Aggregator
-            </a>
+            <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginTop: '0.45rem' }}>
+              <a href={WALRUS_AGGREGATOR_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#67e8f9', fontSize: '0.78rem', textDecoration: 'none', fontWeight: 700 }}>
+                Open Walrus Aggregator
+              </a>
+              <a href={WALRUS_DOCS_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#93c5fd', fontSize: '0.78rem', textDecoration: 'none', fontWeight: 700 }}>
+                Walrus Repo
+              </a>
+            </div>
           </div>
 
           <div style={{ border: '1px solid #334155', borderRadius: '0.6rem', padding: '0.7rem 0.8rem', backgroundColor: '#0b1324' }}>
-            <div style={{ color: '#67e8f9', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Wallet + Package
-            </div>
+            <ProtocolBadge accent="#5eead4" symbol="S" label="Sui Wallet + Package" logoSrc="/brand/sui.svg" />
             <div style={{ color: walletConnected ? '#86efac' : '#fbbf24', fontWeight: 700, marginTop: '0.35rem', fontSize: '0.86rem' }}>
               {walletConnected ? `Connected ${walletAddress?.slice(0, 6)}...${walletAddress?.slice(-4)}` : 'Connect wallet to execute'}
             </div>
@@ -943,6 +1081,27 @@ export default function MarketDiscovery() {
               >
                 Open latest transaction proof
               </a>
+            )}
+          </div>
+
+          <div style={{ border: '1px solid #334155', borderRadius: '0.6rem', padding: '0.7rem 0.8rem', backgroundColor: '#0b1324' }}>
+            <div style={{ color: '#67e8f9', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Observability
+            </div>
+            <div style={{ marginTop: '0.35rem', color: '#94a3b8', fontSize: '0.76rem', lineHeight: 1.45 }}>
+              Recent runtime events for deepbook/walrus/trade actions.
+            </div>
+            {observabilityEvents.length === 0 && (
+              <div style={{ marginTop: '0.45rem', color: '#94a3b8', fontSize: '0.74rem' }}>No events captured yet.</div>
+            )}
+            {observabilityEvents.length > 0 && (
+              <div style={{ marginTop: '0.45rem', display: 'grid', gap: '0.25rem' }}>
+                {observabilityEvents.map((event, index) => (
+                  <div key={`${event.ts}-${event.action}-${index}`} style={{ fontSize: '0.72rem', color: event.severity === 'error' ? '#fca5a5' : event.severity === 'warn' ? '#fcd34d' : '#cbd5e1' }}>
+                    [{event.category}] {event.action} ({event.severity})
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 

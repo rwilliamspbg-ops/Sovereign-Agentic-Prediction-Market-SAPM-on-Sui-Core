@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
 
-interface Position {
-  marketId: string;
-  outcome: 'yes' | 'no';
-  size: number;
-  entryPrice: number;
-  currentPrice: number;
-}
-
 interface PositionManagerProps {
   marketId: string;
   yesPrice: number;

@@ -513,7 +513,8 @@ describe('10. Sui config and deployed package', () => {
     };
     expect(() => {
       // Just verify params are well-formed — don't await (would need network)
-      const _ = client.getBalance.bind(client, callParams);
+      const bound = client.getBalance.bind(client, callParams);
+      expect(typeof bound).toBe('function');
     }).not.toThrow();
   });
 
@@ -524,7 +525,8 @@ describe('10. Sui config and deployed package', () => {
       options: { showType: true, showOwner: true, showContent: true },
     };
     expect(() => {
-      const _ = client.getObject.bind(client, callParams);
+      const bound = client.getObject.bind(client, callParams);
+      expect(typeof bound).toBe('function');
     }).not.toThrow();
   });
 });

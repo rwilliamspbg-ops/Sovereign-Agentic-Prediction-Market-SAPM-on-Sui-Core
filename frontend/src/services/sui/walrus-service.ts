@@ -1,4 +1,5 @@
 import { WALRUS_AGGREGATOR_URL, WALRUS_PUBLISHER_URL } from '@/lib/sui-config';
+import { emitObservabilityEvent } from '@/lib/observability';
 
 export type WalrusStatus = {
   aggregatorUrl: string;
@@ -13,6 +14,25 @@ export type WalrusPublishResult = {
   raw: unknown;
 };
 
+export type WalrusSnapshotManifestV1 = {
+  schema: 'sapm.walrus.snapshot.manifest.v1';
+  version: 1;
+  createdAt: string;
+  marketId: string;
+  txDigest?: string;
+  walletAddress?: string;
+  lineage: {
+    previousBlobId?: string;
+  };
+  payloadChecksumSha256: string;
+  payload: unknown;
+};
+
+export type WalrusManifestValidationResult = {
+  valid: boolean;
+  errors: string[];
+};
+
 async function probeEndpoint(url: string): Promise<boolean> {
   try {
     const response = await fetch(url, { method: 'GET' });
@@ -23,11 +43,96 @@ async function probeEndpoint(url: string): Promise<boolean> {
 }
 
 export class WalrusService {
+  private async digestSha256Hex(input: string): Promise<string> {
+    if (typeof crypto !== 'undefined' && crypto.subtle) {
+      const encoded = new TextEncoder().encode(input);
+      const hash = await crypto.subtle.digest('SHA-256', encoded);
+      const bytes = Array.from(new Uint8Array(hash));
+      return bytes.map((b) => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Fallback lightweight checksum for environments without SubtleCrypto.
+    let hash = 0;
+    for (let index = 0; index < input.length; index += 1) {
+      hash = ((hash << 5) - hash) + input.charCodeAt(index);
+      hash |= 0;
+    }
+    return `fallback-${Math.abs(hash)}`;
+  }
+
+  async buildSnapshotManifest(input: {
+    marketId: string;
+    payload: unknown;
+    txDigest?: string;
+    walletAddress?: string;
+    previousBlobId?: string;
+  }): Promise<WalrusSnapshotManifestV1> {
+    const payloadJson = JSON.stringify(input.payload);
+    const payloadChecksumSha256 = await this.digestSha256Hex(payloadJson);
+
+    return {
+      schema: 'sapm.walrus.snapshot.manifest.v1',
+      version: 1,
+      createdAt: new Date().toISOString(),
+      marketId: input.marketId,
+      txDigest: input.txDigest,
+      walletAddress: input.walletAddress,
+      lineage: {
+        previousBlobId: input.previousBlobId,
+      },
+      payloadChecksumSha256,
+      payload: input.payload,
+    };
+  }
+
+  validateSnapshotManifest(manifest: unknown): WalrusManifestValidationResult {
+    const errors: string[] = [];
+
+    if (typeof manifest !== 'object' || manifest === null) {
+      return { valid: false, errors: ['Manifest must be an object.'] };
+    }
+
+    const candidate = manifest as Partial<WalrusSnapshotManifestV1>;
+
+    if (candidate.schema !== 'sapm.walrus.snapshot.manifest.v1') {
+      errors.push('schema must be sapm.walrus.snapshot.manifest.v1');
+    }
+    if (candidate.version !== 1) {
+      errors.push('version must be 1');
+    }
+    if (typeof candidate.createdAt !== 'string' || candidate.createdAt.length === 0) {
+      errors.push('createdAt is required');
+    }
+    if (typeof candidate.marketId !== 'string' || candidate.marketId.length === 0) {
+      errors.push('marketId is required');
+    }
+    if (typeof candidate.payloadChecksumSha256 !== 'string' || candidate.payloadChecksumSha256.length === 0) {
+      errors.push('payloadChecksumSha256 is required');
+    }
+    if (!candidate.lineage || typeof candidate.lineage !== 'object') {
+      errors.push('lineage object is required');
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+    };
+  }
+
   async getStatus(): Promise<WalrusStatus> {
+    const startedAt = performance.now();
     const [aggregatorReachable, publisherReachable] = await Promise.all([
       probeEndpoint(WALRUS_AGGREGATOR_URL),
       probeEndpoint(WALRUS_PUBLISHER_URL),
     ]);
+
+    emitObservabilityEvent('walrus', 'status_check', 'info', {
+      latencyMs: Math.round(performance.now() - startedAt),
+      aggregatorReachable,
+      publisherReachable,
+      aggregatorUrl: WALRUS_AGGREGATOR_URL,
+      publisherUrl: WALRUS_PUBLISHER_URL,
+    });
 
     return {
       aggregatorUrl: WALRUS_AGGREGATOR_URL,
@@ -63,6 +168,7 @@ export class WalrusService {
   }
 
   async publishMarketSnapshot(snapshot: unknown): Promise<WalrusPublishResult> {
+    const startedAt = performance.now();
     const response = await fetch(`${WALRUS_PUBLISHER_URL}/v1/blobs`, {
       method: 'POST',
       headers: {
@@ -81,13 +187,25 @@ export class WalrusService {
     }
 
     if (!response.ok) {
+      emitObservabilityEvent('walrus', 'publish_failed', 'error', {
+        status: response.status,
+        latencyMs: Math.round(performance.now() - startedAt),
+      });
       throw new Error(`Walrus publish failed (${response.status}): ${text.slice(0, 240)}`);
     }
 
     const blobId = this.extractBlobId(parsed);
     if (!blobId) {
+      emitObservabilityEvent('walrus', 'publish_missing_blob_id', 'error', {
+        latencyMs: Math.round(performance.now() - startedAt),
+      });
       throw new Error('Walrus publish succeeded but no blobId was found in response payload.');
     }
+
+    emitObservabilityEvent('walrus', 'publish_success', 'info', {
+      blobId,
+      latencyMs: Math.round(performance.now() - startedAt),
+    });
 
     return { blobId, raw: parsed };
   }
@@ -97,12 +215,23 @@ export class WalrusService {
       throw new Error('Blob ID is required.');
     }
 
+    const startedAt = performance.now();
     const response = await fetch(`${WALRUS_AGGREGATOR_URL}/v1/blobs/${blobId}`, { method: 'GET' });
     const text = await response.text();
 
     if (!response.ok) {
+      emitObservabilityEvent('walrus', 'read_failed', 'error', {
+        blobId,
+        status: response.status,
+        latencyMs: Math.round(performance.now() - startedAt),
+      });
       throw new Error(`Walrus read failed (${response.status}): ${text.slice(0, 240)}`);
     }
+
+    emitObservabilityEvent('walrus', 'read_success', 'info', {
+      blobId,
+      latencyMs: Math.round(performance.now() - startedAt),
+    });
 
     try {
       return JSON.parse(text);
