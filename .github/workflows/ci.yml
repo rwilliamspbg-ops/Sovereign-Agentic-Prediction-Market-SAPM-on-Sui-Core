@@ -92,3 +92,40 @@ jobs:
         run: |
           helm lint --strict production-deployment-manifests/helm/sapm-aggregator
           helm template sapm-aggregator production-deployment-manifests/helm/sapm-aggregator > /tmp/sapm-aggregator-rendered.yaml
+
+  resilience-tests:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ vars.RESILIENCE_GATING != 'true' }}
+    env:
+      REQUESTS: '120'
+      CONCURRENCY: '12'
+      CHAOS_REPORT_PATH: artifacts/ci-logs/chaos-report.json
+      LOAD_REPORT_PATH: artifacts/ci-logs/load-report.json
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run chaos scenarios
+        run: |
+          mkdir -p artifacts/ci-logs
+          npm run test:chaos 2>&1 | tee artifacts/ci-logs/chaos-tests.log
+      - name: Run load benchmark
+        run: |
+          mkdir -p artifacts/ci-logs
+          npm run test:load 2>&1 | tee artifacts/ci-logs/load-tests.log
+      - name: Upload resilience logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resilience-test-logs
+          path: |
+            artifacts/ci-logs/chaos-tests.log
+            artifacts/ci-logs/load-tests.log
+            artifacts/ci-logs/chaos-report.json
+            artifacts/ci-logs/load-report.json
+          if-no-files-found: warn

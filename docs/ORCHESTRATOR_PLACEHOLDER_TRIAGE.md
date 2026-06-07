@@ -22,3 +22,16 @@ Scope: Orchestrator placeholders requiring production implementation
 1. All placeholder code paths must reference their ORCH-ID in code comments.
 2. Any missed due date requires adding a new date and rationale in this file.
 3. A placeholder is closed only after tests are added and linked in the PR description.
+
+## 2026-06-07 Hardening Update
+
+- ORCH-001 and ORCH-009 now use derived key material tied to attestation digest and peer key context (no static placeholder key bytes).
+- ORCH-002 now enforces key-derivation proof verification with timing-safe comparison.
+- ORCH-003 now supports signed peer-key retrieval and fail-closed validation when signature mode is enabled.
+- ORCH-005 chain validation now includes issuer/signature checks and optional revocation denylist enforcement.
+
+Remaining for milestone closure:
+
+1. Replace the deterministic derivation fallback with full audited x25519-mlkem768 runtime integration.
+2. Add deterministic integration tests for signed key retrieval and proof-verification failure modes.
+3. Add hardware-backed attestation evidence tests in staging.

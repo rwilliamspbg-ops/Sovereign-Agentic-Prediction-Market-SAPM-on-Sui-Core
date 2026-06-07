@@ -9,6 +9,8 @@ import json
 from typing import List, Dict, Any
 import sys
 import os
+import asyncio
+from functools import wraps
 
 # Add parent directory to path so we can import agents
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -28,6 +30,22 @@ except ImportError:
 
 # Create MCP server
 server = Server("sapm-agents")
+
+
+class RateLimitedHandler:
+    def __init__(self, max_concurrent: int = 3):
+        self.semaphore = asyncio.Semaphore(max_concurrent)
+
+    def wrap_async(self, func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            async with self.semaphore:
+                return await func(*args, **kwargs)
+
+        return wrapper
+
+
+rate_limiter = RateLimitedHandler(max_concurrent=int(os.getenv("MCP_MAX_CONCURRENT", "3")))
 
 @server.tool()
 def get_agent_forecast(
@@ -58,6 +76,7 @@ def get_agent_forecast(
         )
 
 @server.resource("agents/market-data/{market_id}")
+@rate_limiter.wrap_async
 async def get_market_data(market_id: str) -> TextContent:
     """Stream live market data to UI"""
     try:
