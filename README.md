@@ -6,310 +6,230 @@
 [![Lean Rust Runner](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/lean-rust-runner-image.yml?branch=main&style=for-the-badge&logo=rust&logoColor=white&label=Lean%20Rust%20Runner)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/lean-rust-runner-image.yml)
 [![Phase2 Hardening](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/phase2-hardening-ci.yml?branch=main&style=for-the-badge&logo=shield&logoColor=white&label=Phase2%20Hardening)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/phase2-hardening-ci.yml)
 [![Node >=18](https://img.shields.io/badge/Node-%3E%3D18-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](package.json)
-[![Sui](https://img.shields.io/badge/Sui-Testnet-6fbcf0?style=for-the-badge&logo=sui&logoColor=0b1f3a)](https://docs.sui.io)
-[![Contributors](https://img.shields.io/github/contributors/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/graphs/contributors)
-[![Last Commit](https://img.shields.io/github/last-commit/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/commits/main)
-[![Open Issues](https://img.shields.io/github/issues/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/issues)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-D22128?style=for-the-badge&logo=apache&logoColor=white)](LICENSE.md)
+[![Sui Testnet](https://img.shields.io/badge/Sui-Testnet-6fbcf0?style=for-the-badge&logo=sui&logoColor=0b1f3a)](https://docs.sui.io)
+[![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-D22128?style=for-the-badge&logo=apache&logoColor=white)](LICENSE.md)
 
-## What is SAPM?
+SAPM is a Sui-based prediction market stack that combines autonomous agents, market aggregation, risk controls, and a polished Next.js frontend for live demo and judge workflows. The repository is organized as a monorepo with agent services, smart-contract sources, a frontend app, formal verification artifacts, and deployment/ops material.
 
-SAPM demonstrates how autonomous AI agents can participate in prediction markets. Agents forecast outcomes, aggregate consensus, and generate trading decisions—turning swarm intelligence into market actions.
+**Current status:** feature-complete for the current demo scope, with release-gate validation green in this workspace and production-readiness hardening still in progress.
 
-**Current Status:** ✅ Phase 1 (Core Pipeline Implemented) | ✅ Phase 2 (Frontend + Risk Components Present) | ⚠️ Validation/Stabilization In Progress
+See [docs/INDEX.md](docs/INDEX.md) for the full documentation index.
 
----
+## What SAPM Does
 
-## 🚀 Quick Start (5 minutes)
+SAPM demonstrates a full prediction-market workflow:
 
-```bash
-# Start the full stack
-docker compose up
+1. Market discovery and board-style scanning.
+2. Agent forecasting and consensus building.
+3. Trade planning and Sui transaction execution.
+4. Snapshot archiving to Walrus.
+5. On-chain object and package inspection for verification.
 
-# In your browser:
-# Frontend: http://localhost:3000
-# Aggregator: http://localhost:4000
-# Sui RPC: http://localhost:9000
-```
+The UI now includes Judge Mode, wallet-aware trade execution, Walrus archive/preview flows, DeepBook/Walrus status panels, and a production-oriented loading/error fallback layer.
 
-See [docs/INDEX.md](docs/INDEX.md) for setup and subsystem documentation.
+## Current Capabilities
 
----
+| Area | Status | Notes |
+| --- | --- | --- |
+| Frontend market UI | Implemented | Next.js App Router, board/cursor views, market cards, filtering, and resource hub |
+| Wallet integration | Implemented | Wallet-standard connect flow with Sui-aware trade execution and session syncing |
+| Judge Mode | Implemented | Guided flow for connect, on-chain read, micro trade, Walrus archive, preview |
+| DeepBook integration | Present | Status checks and linkouts are wired into the UI |
+| Walrus integration | Present | Snapshot publish/read flows are available from the frontend |
+| Agent pipeline | Implemented | Forecast, aggregation, and trade decision logic are present |
+| Risk controls | Implemented | Trade preflight, notional caps, idempotency, and retry logic |
+| Move contracts | Source present | Registry/incentives sources are present; deployment/runtime verification depends on environment |
+| Formal verification | Present | Lean artifacts and scripts are included in the repo |
+| Release validation | Green in this workspace | `npm run release:check` passes after clean bootstrap |
 
-## 📊 Current Capabilities
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| **Market Discovery UI** | ✅ Implemented | Filters, sorting, responsive design, and multi-page frontend routes are present |
-| **Agent Decision Pipeline** | ✅ Validated (Dry-Run) | Forecast → Aggregate → Trade pipeline executes in demo/test flows |
-| **Docker Environment** | ✅ Validated | Local multi-service stack is configured and exercised by validation workflows |
-| **Move Contracts** | 🟡 Source Complete | Registry/incentives Move modules are present; live deployment verification remains external |
-| **Sui Integration** | 🟡 Partial | Sui SDK/PTB logic exists; end-to-end chain execution still depends on runtime network setup |
-| **Formal Verification** | 🟡 Scaffolding | Formal verification assets and workflow are present; full proof coverage is not claimed |
-| **CI/CD Workflows** | ✅ Active | Release gate, stack validation, lean verification, hardening, and runner-image workflows are configured |
-
-**See [docs/PRODUCTION_STATUS.md](docs/PRODUCTION_STATUS.md) for detailed component status.**
-
----
-
-## 🎯 What This Demo Shows
-
-```
-✅ IMPLEMENTED IN REPO:
-   Forecast Input → Aggregator → Trade Decision → PTB Plan modules
-   Multi-page frontend app (markets, portfolio, governance, docs, risk)
-   Risk controls module skeleton (position limits + circuit breakers)
-   Move registry/incentives contract sources
-
-✅ VALIDATED VIA CANONICAL GATE:
-   Root dependency bootstrap now installs root + agent packages
-   Root test pipeline executes through trader + aggregator suites
-   Root e2e suite executes via jest at repository root
-```
-
-**All demo output is labeled `[DEMO]` to indicate dry-run status, not real execution.**
-
----
-
-## 📚 Documentation
-
-- **[docs/INDEX.md](docs/INDEX.md)** ← Primary documentation index (start here)
-- [docs/PRODUCTION_STATUS.md](docs/PRODUCTION_STATUS.md) - Current component status
-- [docs/PRODUCTION_READINESS_CHECKLIST.md](docs/PRODUCTION_READINESS_CHECKLIST.md) - Validation checklist
-- [docs/OPERATIONS_RUNBOOK.md](docs/OPERATIONS_RUNBOOK.md) - Operational procedures
-- [docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md](docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md) - Placeholder owner/milestone ledger
-- [docs/root-archive/PERFORMANCE_OPTIMIZATION_GUIDE.md](docs/root-archive/PERFORMANCE_OPTIMIZATION_GUIDE.md) - Historical performance design notes
-- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guide
-
----
-
-## 🏗️ Architecture
-
-```
-SAPM = Agents + Markets + Blockchain
-          ↓         ↓         ↓
-    [Orchestrator] [Market UI] [Sui]
-    [Aggregator]   [Filters]   [Contracts]
-    [Trader]       [Stats]     [Transactions]
-```
-
-**Phase 1 (Implemented):** Agent logic, aggregator, and trader modules
-**Phase 2 (Implemented):** Frontend expansion and risk-control scaffolding
-**Phase 3 (Current Focus):** Validation hardening and production-readiness gates
-
----
-
-## 📂 Repository Structure
-
-```
-agents/               # Autonomous agent system
-├── orchestrator/     # Coordination and task sequencing
-├── aggregator/       # Forecast aggregation with Byzantine logic
-├── trader/           # Trade decision and PTB generation
-└── onchain-registry/ # Move smart contracts
-
-frontend/             # Next.js market discovery UI
-├── src/app/          # Pages and routes
-├── src/components/   # React components
-└── public/           # Static assets
-
-docker/               # Multi-service development setup
-docs/                 # Complete documentation
-test/                 # Integration and E2E tests
-```
-
----
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-npm run test:all
-
-# Trader tests only
-npm run test:trader
-
-# Aggregator tests only
-npm run test:aggregator
-
-# E2E integration test
-npm run test:e2e
-
-# Lint check
-npm run lint
-
-# Canonical production-readiness gate
-npm run release:check
-```
-
-As of the 2026-06-06 stabilization pass:
-- `npm run release:check` passes from a fresh dependency bootstrap path.
-- `npm run test:all` passes (trader + aggregator).
-- `npm run test:e2e` passes from root.
-- `npm run lint` passes with warnings and no errors.
-
-Release gate policy:
-- `npm run release:check` is the canonical readiness gate for local validation and CI.
-- It installs required root and agent dependencies, then runs lint + test suites.
-
-## Performance
-
-Measured on the current branch in this workspace (2026-06-06):
-
-- `npm run bench:aggregator` (64 updates x 512 dims):
-   - `avg`: ~0.032 ms/op
-   - `trimmed`: ~0.995 ms/op
-   - `multikrum`: ~1.075 ms/op
-   - `multikrum_reputation`: ~1.244 ms/op
-- Rust datapath benchmark:
-   - `~/.cargo/bin/cargo run --manifest-path rust-datapath/Cargo.toml -- bench --iterations 1000000`
-   - Latest run: `processed=1000000`, `dropped=0`, `elapsed_ms=143`
-- End-to-end validation runtime:
-   - `./scripts/phase2_go_nogo.sh`: ~3.6s
-   - `bash scripts/orchestrator_hardening_check.sh`: ~0.11s
-
-See [docs/root-archive/PERFORMANCE_OPTIMIZATION_GUIDE.md](docs/root-archive/PERFORMANCE_OPTIMIZATION_GUIDE.md) for background details.
-
----
-
-## 🚀 Phase Roadmap
-
-### Phase 1: Decision Pipeline ✅ COMPLETE
-
-**Delivered:**
-- Market discovery UI
-- Agent decision logic
-- Aggregator framework
-- Complete demo
-
-### Phase 2: Integration & Frontend Expansion ✅ IMPLEMENTED (Code-Level)
-
-**Current Focus:**
-- Dependency and environment alignment across subpackages
-- Green test pipeline from repository root
-- End-to-end execution verification against configured Sui network
-
-### Phase 3: Production Hardening 🔄 NEXT
-
-**Planned:**
-- Formal verification (Lean proofs)
-- Quantum-resistant cryptography
-- AF_XDP kernel-bypass datapath
-- Kubernetes orchestration
-
----
-
-## 💻 Development
+## Quick Start
 
 ### Prerequisites
 
-- Node.js >= 18 (v24 recommended)
-- npm or pnpm
-- Docker + Docker Compose
-- Optional: Sui CLI for Move development
+- Node.js 18 or newer
+- npm
+- Docker and Docker Compose
+- Optional: Sui CLI for contract work
 
-### Local Development
+### Install
 
 ```bash
-# Install dependencies
 npm install
-
-# Start dev environment
-docker compose up
-
-# In another terminal, run tests
-npm run test:all
-
-# Lint and fix
-npm run lint:fix
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+If you want all package-level dependencies bootstrapped in one shot:
 
----
+```bash
+npm run install:all
+```
 
-## 🔗 Key Files
+### Run the stack
 
-**Frontend Entry Points:**
-- `frontend/src/app/page.tsx` - Market discovery home page
-- `frontend/src/app/layout.tsx` - Global layout with header/footer
-- `frontend/src/app/portfolio/page.tsx` - User portfolio
+```bash
+docker compose up
+```
 
-**Agent Logic:**
-- `agents/trader/forecast_to_trade.js` - Forecast to trade conversion
-- `agents/aggregator/aggregation.js` - Byzantine aggregation
-- `agents/orchestrator/core/index.js` - Orchestration framework
+Frontend: http://localhost:3000
 
-**Move Contracts:**
-- `agents/onchain-registry/sources/registry.move` - Registry module
-- `agents/onchain-registry/sources/incentives.move` - Incentives module
+### Run the frontend locally
 
-**Demo:**
-- `demo/demo_trading.js` - End-to-end demo
-- `agents/trader/index.js` - Trader CLI
+```bash
+cd frontend
+npm run dev -- -p 3000
+```
 
----
+The frontend dev script is configured to avoid filesystem-cache issues in this workspace.
 
-## 🎓 Getting Started
+## Validation and Scripts
 
-### For Judges/Evaluators
+Root-level scripts:
 
-1. **Start the demo:** `docker compose up`
-2. **Open frontend:** http://localhost:3000
-3. **See the pipeline:** Read [docs/PRODUCTION_STATUS.md](docs/PRODUCTION_STATUS.md)
-4. **Run tests:** `npm run test:all`
-5. **Check code:** Focus on `agents/trader` and `agents/aggregator`
+```bash
+npm run test:trader
+npm run test:aggregator
+npm run test:all
+npm run test:e2e
+npm run check:frontend:prod
+npm run bench:aggregator
+npm run lint
+npm run release:check
+```
 
-### For Contributors
+Current canonical gate:
 
-1. Read [CONTRIBUTING.md](CONTRIBUTING.md)
-2. Check [docs/INDEX.md](docs/INDEX.md)
-3. Pick an issue or feature
-4. Create feature branch
-5. Submit PR
+```bash
+npm run release:check
+```
 
-### For Developers
+What it does:
 
-1. Review [docs/INDEX.md](docs/INDEX.md)
-2. Study code structure above
-3. Explore `frontend/src/app` for UI
-4. Explore `agents/` for logic
+1. Installs required dependencies.
+2. Runs repository linting.
+3. Runs trader and aggregator tests.
+4. Verifies the root e2e suite.
 
----
+Frontend production gate:
 
-## 🤝 Contributing
+```bash
+npm run check:frontend:prod
+```
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
-- Development setup
-- Code standards
-- Testing requirements
-- PR process
+That gate performs a clean frontend type-check and production build.
 
----
+## Frontend Overview
 
-## 📄 License
+The frontend is a Next.js 14 App Router app with:
 
-Apache 2.0 - See [LICENSE.md](LICENSE.md)
+- market discovery and board views
+- resource hub and documentation routes
+- wallet-aware trade execution
+- Judge Mode for demo/judge proof flows
+- Walrus snapshot archive and preview
+- DeepBook/Walrus status panels
+- branded loading and error fallbacks to avoid blank white pages
 
----
+Key entry points:
 
-## 🙏 Acknowledgments
+- [frontend/src/app/page.tsx](frontend/src/app/page.tsx)
+- [frontend/src/app/markets/page.tsx](frontend/src/app/markets/page.tsx)
+- [frontend/src/app/layout.tsx](frontend/src/app/layout.tsx)
+- [frontend/src/components/TradeExecution.tsx](frontend/src/components/TradeExecution.tsx)
+- [frontend/src/services/sui/wallet-standard.ts](frontend/src/services/sui/wallet-standard.ts)
 
-- Built for Sui blockchain ecosystem
-- Inspired by autonomous trading and prediction markets
-- Community feedback and contributions
+## Repository Layout
 
----
+```text
+agents/                    Agent, aggregator, trader, and registry code
+ai-agents/                 Consensus/reasoning/memory helpers
+attestation/               TPM and attestation utilities
+cmd/                       CLI entry points
+crypto/                    PQC/KEX code and tests
+demo/                      Demo scripts and HTML dashboard
+docker/                    Docker Compose and Nginx assets
+docs/                      Canonical documentation set
+formal_verification/       Lean proof artifacts and scripts
+frontend/                  Next.js frontend
+k8s/                       Kubernetes monitoring assets
+market-data/               DeepBook/market data helpers
+performance_optimization/  Performance notes and tuning docs
+production-deployment-manifests/  Helm and Kubernetes manifests
+risk-management/           Risk-control controls and notes
+rust-datapath/             Rust datapath experiment
+scripts/                   Repo automation and validation scripts
+test/                      End-to-end tests
+```
 
-## 📞 Questions?
+## Architecture Snapshot
 
-- 📖 Check [docs/PRODUCTION_STATUS.md](docs/PRODUCTION_STATUS.md) for status
-- 💬 See [CONTRIBUTING.md](CONTRIBUTING.md) for support
-- 🐛 Open an issue on GitHub
-- 💡 Start a discussion for ideas
+SAPM is built around a simple flow:
 
----
+```mermaid
+flowchart LR
+  A[Market Data] --> B[Aggregator]
+  B --> C[Trader / PTB Planner]
+  C --> D[Sui Transaction]
+  D --> E[Walrus Snapshot]
+  E --> F[Judge / Verification UI]
+```
 
-**Current Version:** 1.0.0 (Stabilization Update, Phase 4 In Progress)
-**Last Updated:** 2026-06-06  
-**Current Focus:** Phase 4 Production Integration & Multi-Market Expansion  
+At a high level:
+
+- Agents produce forecasts and consensus.
+- The trader converts that output into execution intent.
+- The frontend exposes the live workflow and verification surfaces.
+- The contract and deployment layers provide the on-chain target.
+
+## Deployment and Status Notes
+
+The repo contains the current hardening and production-readiness workstream, but not every deploy path has been exercised end-to-end in every environment. The most accurate status source is:
+
+- [docs/PRODUCTION_STATUS.md](docs/PRODUCTION_STATUS.md)
+
+For operational steps, see:
+
+- [docs/OPERATIONS_RUNBOOK.md](docs/OPERATIONS_RUNBOOK.md)
+
+For contribution workflow, see:
+
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## Getting Started For Different Roles
+
+### Judges / Demo Reviewers
+
+1. Start the stack with `docker compose up`.
+2. Open the frontend at http://localhost:3000.
+3. Use Judge Mode to walk through connect, on-chain read, micro trade, archive, and preview.
+4. Review the latest status in [docs/PRODUCTION_STATUS.md](docs/PRODUCTION_STATUS.md).
+
+### Contributors
+
+1. Read [docs/INDEX.md](docs/INDEX.md).
+2. Read [CONTRIBUTING.md](CONTRIBUTING.md).
+3. Run `npm run release:check` before opening a PR.
+4. Keep changes aligned with the current status docs and root scripts.
+
+### Developers
+
+1. Explore `frontend/src/app` for the UI.
+2. Explore `agents/` for the pipeline.
+3. Use `scripts/frontend_production_gate.sh` and `scripts/release_check.sh` for validation.
+
+## Notes On Current Validation
+
+In this workspace, the canonical release gate passes after a clean bootstrap. The frontend has also been hardened with wallet/session validation, loading/error fallbacks, and production build checks.
+
+For the live status snapshot, prefer [docs/PRODUCTION_STATUS.md](docs/PRODUCTION_STATUS.md) over this README.
+
+## Contributing
+
+Contributions are welcome. Please keep README and status docs consistent with the current codebase, especially when changing:
+
+- frontend routes and wallet integration
+- release or validation scripts
+- contract sources and deployment assumptions
+- operations or environment setup
+
+## License
+
+Apache 2.0. See [LICENSE.md](LICENSE.md).
