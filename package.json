@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "install:all": "npm ci && npm --prefix agents/trader ci && npm --prefix agents/aggregator ci && npm --prefix agents/orchestrator ci",
+    "install:all": "npm ci && npm --prefix agents/trader ci && npm --prefix agents/aggregator ci && npm --prefix agents/orchestrator ci && npm --prefix frontend ci",
     "test:trader": "npm --prefix agents/trader test",
     "test:aggregator": "npm --prefix agents/aggregator test",
     "test:orchestrator:experimental": "npm --prefix agents/orchestrator test 2>/dev/null || echo '⚠️  Orchestrator tests in progress'",
