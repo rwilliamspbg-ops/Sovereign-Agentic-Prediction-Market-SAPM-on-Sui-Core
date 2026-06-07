@@ -371,5 +371,12 @@ class NetworkHandler {
   }
 }
 
-// Export for module use
+// Named exports for internal use
 module.exports = { Orchestrator, STATE, EXIT_CODES };
+
+// Default export: test-compatible Orchestrator façade
+const OrchestratorManager = require('./orchestrator-manager');
+module.exports = OrchestratorManager;
+module.exports.Orchestrator = Orchestrator;
+module.exports.STATE = STATE;
+module.exports.EXIT_CODES = EXIT_CODES;
