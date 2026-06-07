@@ -9,8 +9,8 @@
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "test": "jest",
-    "test:unit": "jest --testPathPattern=src/__tests__",
-    "test:e2e": "playwright test"
+    "test:unit": "jest tests/unit",
+    "test:e2e": "npm run build && playwright test"
   },
   "dependencies": {
     "@copilotkit/react-core": "^1.0.0",
