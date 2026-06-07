@@ -7,6 +7,7 @@ import { walrusService } from '@/services/sui/walrus-service';
 import { DEEPBOOK_SANDBOX_URL, SUI_PACKAGE_ID, SUISCAN_PACKAGE_URL, WALRUS_AGGREGATOR_URL } from '@/lib/sui-config';
 import { marketDataService } from '@/services/sui/market-data-service';
 import { getCompatibleWallets } from '@/services/sui/wallet-standard';
+import { emitObservabilityEvent } from '@/lib/observability';
 
 interface MarketData {
   id: string;
@@ -61,7 +62,14 @@ type ObservabilityEntry = {
   details?: Record<string, unknown>;
 };
 
+type CopilotActionRequest = {
+  id: string;
+  type: 'open-market' | 'load-onchain-markets' | 'run-judge-mode' | 'archive-snapshot' | 'refresh-integrations';
+  payload?: Record<string, unknown>;
+};
+
 const ACTIVE_MARKET_INSIGHT_KEY = 'sapm.activeMarketInsight';
+const INTEGRATION_STATUS_KEY = 'sapm.integrationStatus';
 const LOCAL_ONCHAIN_OBJECT_IDS_KEY = 'sapm.onchainObjectIds';
 const PAGE_BOOT_TIMEOUT_MS = 15000;
 const DEEPBOOK_DOCS_URL = 'https://docs.sui.io/standards/deepbookv3';
@@ -798,6 +806,120 @@ export default function MarketDiscovery() {
   };
 
   useEffect(() => {
+    const onCopilotActionRequest = async (event: Event) => {
+      const detail = (event as CustomEvent<CopilotActionRequest>).detail;
+      if (!detail?.id || !detail?.type) {
+        return;
+      }
+
+      const respond = (ok: boolean, message: string, data?: Record<string, unknown>) => {
+        window.dispatchEvent(new CustomEvent('sapm:copilot-action-result', {
+          detail: {
+            id: detail.id,
+            ok,
+            message,
+            data,
+          },
+        }));
+      };
+
+      try {
+        emitObservabilityEvent('frontend', 'copilot_action_received', 'info', {
+          actionId: detail.id,
+          actionType: detail.type,
+        });
+
+        if (detail.type === 'open-market') {
+          const preferredId = typeof detail.payload?.marketId === 'string' ? detail.payload.marketId : null;
+          const candidate = preferredId && filteredAndSortedMarkets.some((market) => market.id === preferredId)
+            ? preferredId
+            : filteredAndSortedMarkets[0]?.id;
+
+          if (!candidate) {
+            respond(false, 'No available market to select.');
+            return;
+          }
+
+          setBoardTicketMarketId(candidate);
+          respond(true, `Focused market ${candidate.slice(0, 12)}...`, { marketId: candidate });
+          return;
+        }
+
+        if (detail.type === 'load-onchain-markets') {
+          const rawInput = typeof detail.payload?.objectIds === 'string'
+            ? detail.payload.objectIds
+            : manualOnchainObjectIds;
+
+          const loaded = await loadOnchainMarketsFromInput(rawInput, true);
+          if (loaded.length === 0) {
+            respond(false, 'No on-chain markets loaded. Provide valid object IDs.');
+            return;
+          }
+
+          respond(true, `Loaded ${loaded.length} on-chain market(s).`, { count: loaded.length });
+          return;
+        }
+
+        if (detail.type === 'run-judge-mode') {
+          await runJudgeMode();
+          respond(true, 'Judge mode execution finished.');
+          return;
+        }
+
+        if (detail.type === 'archive-snapshot') {
+          await archiveSelectedMarketToWalrus();
+          respond(true, 'Walrus snapshot archive attempted. Check status panel for blob output.');
+          return;
+        }
+
+        if (detail.type === 'refresh-integrations') {
+          const [deepbook, walrus] = await Promise.all([
+            deepbookService.getStatus(),
+            walrusService.getStatus(),
+          ]);
+
+          setIntegrationStatus({
+            deepbook: {
+              ready: deepbook.rpcReachable && (deepbook.packageConfigured ? deepbook.packageReachable : true),
+              message: deepbook.packageConfigured
+                ? deepbook.packageReachable
+                  ? `Connected to DeepBook package ${deepbook.packageId.slice(0, 8)}...${deepbook.packageId.slice(-6)}`
+                  : deepbook.error || 'DeepBook package configured but not reachable'
+                : `RPC connected. Package checks default to ${SUI_PACKAGE_ID.slice(0, 8)}...${SUI_PACKAGE_ID.slice(-6)}.`,
+            },
+            walrus: {
+              ready: walrus.aggregatorReachable && walrus.publisherReachable,
+              message: walrus.error || 'Aggregator and publisher endpoints reachable',
+            },
+          });
+
+          respond(true, 'Integration checks refreshed.', {
+            deepbookReady: deepbook.rpcReachable,
+            walrusReady: walrus.aggregatorReachable && walrus.publisherReachable,
+          });
+          return;
+        }
+
+        respond(false, `Unsupported Copilot action type: ${detail.type}`);
+      } catch (error) {
+        respond(false, error instanceof Error ? error.message : 'Copilot action failed');
+      }
+    };
+
+    window.addEventListener('sapm:copilot-action-request', onCopilotActionRequest as EventListener);
+
+    return () => {
+      window.removeEventListener('sapm:copilot-action-request', onCopilotActionRequest as EventListener);
+    };
+  }, [
+    archiveSelectedMarketToWalrus,
+    filteredAndSortedMarkets,
+    loadOnchainMarketsFromInput,
+    manualOnchainObjectIds,
+    runJudgeMode,
+  ]);
+
+  useEffect(() => {
     if (filteredAndSortedMarkets.length === 0) {
       setBoardTicketMarketId(null);
       return;
@@ -841,6 +963,21 @@ export default function MarketDiscovery() {
       console.warn('Unable to persist active market insight context', err);
     }
   }, [boardTicketMarket]);
+
+  useEffect(() => {
+    const payload = {
+      deepbookReady: integrationStatus.deepbook.ready,
+      walrusReady: integrationStatus.walrus.ready,
+      updatedAt: Date.now(),
+    };
+
+    try {
+      localStorage.setItem(INTEGRATION_STATUS_KEY, JSON.stringify(payload));
+      window.dispatchEvent(new CustomEvent('sapm:integration-status', { detail: payload }));
+    } catch (err) {
+      console.warn('Unable to persist integration status context', err);
+    }
+  }, [integrationStatus]);
 
   if (loading) {
     return (
