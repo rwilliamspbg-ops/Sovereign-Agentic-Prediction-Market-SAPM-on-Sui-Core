@@ -28,7 +28,7 @@ jobs:
           docker compose ps
           echo "All services running:"
           docker compose ps
-      
+
       - name: Validate aggregator endpoints
         run: |
           for attempt in $(seq 1 30); do
@@ -45,6 +45,11 @@ jobs:
           docker compose -f docker/docker-compose.yml ps
           exit 1
 
+      - name: Tear down local stack
+        if: always()
+        working-directory: docker
+        run: docker compose down -v
+
   run-phase2-tests:
     name: Run Phase 2 Tests
     runs-on: ubuntu-latest
@@ -60,7 +65,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd agents/aggregator
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           
       - name: Run Phase 2 simulations
         run: |
@@ -84,7 +89,7 @@ jobs:
       - name: Install dependencies for security scan
         run: |
           cd agents/aggregator
-          npm install
+          npm ci --no-audit --no-fund
       
       - name: Run npm audit
         run: |

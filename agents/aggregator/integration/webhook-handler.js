@@ -4,7 +4,6 @@
  */
 
 const express = require('express');
-const bodyParser = require('body-parser');
 const fs = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
@@ -14,13 +13,10 @@ const router = express.Router();
 // Configuration
 const AGG_TOKEN = process.env.AGG_TOKEN || null;
 const MODEL_DIR = process.env.MODEL_DIR || '/data';
-const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || 'sapm-trading-webhook';
 
 // Load current model state
-let modelState = null;
 let rounds = new Map();
 let updates = [];
-let updateCount = 0;
 
 /**
  * Handle trading adapter callback - receives finalized forecast metadata
@@ -108,7 +104,6 @@ router.post('/portfolio-rebalance', async (req, res) => {
       }
     }
 
-    const rebalanceRequest = req.body;
     console.log(`[Aggregator] Portfolio rebalance requested`);
 
     // Compute new aggregated model with rebalancing signal
@@ -158,7 +153,7 @@ async function extractForecastMetadata(callback) {
     
     // Load model and metadata
     const txt = await fs.readFile(modelFile, 'utf8');
-    const model = JSON.parse(txt);
+    JSON.parse(txt);
     
     const metaTxt = await fs.readFile(metaFile, 'utf8');
     const meta = JSON.parse(metaTxt);

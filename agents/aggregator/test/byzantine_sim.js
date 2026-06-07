@@ -34,7 +34,7 @@ async function waitForHealth(timeoutMs = 15000) {
     try {
       const res = await fetch(`${BASE}/health`);
       if (res.ok) return;
-    } catch (e) {
+    } catch {
       // retry
     }
     await sleep(250);
@@ -50,7 +50,7 @@ async function postJson(path, body) {
   });
   const txt = await res.text();
   let json = null;
-  try { json = JSON.parse(txt); } catch (e) {}
+  try { json = JSON.parse(txt); } catch {}
   return { ok: res.ok, status: res.status, json, txt };
 }
 
@@ -192,7 +192,7 @@ run().catch(async (e) => {
   try {
     const out = await writeReport(failed);
     console.error(`Simulation failed; report written to ${out}`);
-  } catch (_) {
+  } catch {
     // ignore
   }
   process.exit(1);

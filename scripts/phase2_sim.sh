@@ -6,7 +6,15 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR/agents/aggregator"
 
 echo "[phase2-sim] installing aggregator deps"
-npm install
+if [[ "${CI:-}" == "true" ]] || [[ ! -d node_modules ]]; then
+	if [[ -f package-lock.json ]]; then
+		npm ci
+	else
+		npm install
+	fi
+else
+	echo "[phase2-sim] using existing node_modules"
+fi
 
 echo "[phase2-sim] running unit tests"
 npm test

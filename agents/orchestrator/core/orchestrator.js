@@ -6,6 +6,9 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const http = require('http');
+const https = require('https');
 
 // State constants
 const STATE = {
@@ -184,6 +187,11 @@ class CryptoProvider {
 
   async hybridKeyExchange(attestationData, peerPubKey) {
     // Implementation: x25519-mlkem768 hybrid KEX
+    // TRIAGE ORCH-001
+    // Owner: Orchestrator Crypto Team
+    // Milestone: M3-ORCH-CRYPTO-INTEGRATION
+    // Due: 2026-07-15
+    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
     // This is a placeholder - implement with actual crypto library
     console.log('[CryptoProvider] Performing hybrid key exchange (x25519-mlkem768)');
     return Buffer.from('placeholder_session_keys_for_phase_1_scaffolding');
@@ -191,12 +199,22 @@ class CryptoProvider {
 
   async verifyKeyDerivationProof(sessionKeys) {
     // Implementation: Verify cryptographic proof of key derivation
+    // TRIAGE ORCH-002
+    // Owner: Orchestrator Crypto Team
+    // Milestone: M3-ORCH-KDF-PROOFS
+    // Due: 2026-07-22
+    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
     console.log('[CryptoProvider] Verifying key derivation integrity...');
     return true; // Placeholder for Phase 1
   }
 
   async fetchPeerPublicKey() {
     // Implementation: Fetch peer public key from aggregator or registry
+    // TRIAGE ORCH-003
+    // Owner: Orchestrator Networking Team
+    // Milestone: M3-ORCH-PEER-IDENTITY
+    // Due: 2026-07-29
+    // Tracking: docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md
     console.log('[CryptoProvider] Fetching peer public key...');
     return '0xplaceholder_peer_public_key'; // Placeholder for Phase 1
   }
@@ -211,22 +229,66 @@ class AttestationClient {
   }
 
   async readTPM() {
-    // Implementation: Read TPM measurement registers via TEE runtime
     console.log('[AttestationClient] Reading TPM measurement...');
+
+    const measurementPath = this.config.tpmMeasurementPath || process.env.TPM_MEASUREMENT_FILE || '/sys/class/tpm/tpm0/pcr-sha256/0';
+    const teeRuntime = this.config.teeRuntime || process.env.TEE_RUNTIME || 'none';
+    const allowMock = process.env.ALLOW_MOCK_ATTESTATION === '1';
+
+    if (teeRuntime === 'none' && !allowMock) {
+      throw new Error('TEE runtime not configured. Set TEE_RUNTIME or ALLOW_MOCK_ATTESTATION=1 for development');
+    }
+
+    let rawMeasurement = '';
+    try {
+      rawMeasurement = fs.readFileSync(measurementPath, 'utf8').trim();
+    } catch (err) {
+      if (!allowMock) {
+        throw new Error(`TPM measurement unavailable at ${measurementPath}: ${err.message}`);
+      }
+      rawMeasurement = `mock:${teeRuntime}:${Date.now()}`;
+    }
+
+    const digest = crypto.createHash('sha256').update(rawMeasurement).digest('base64');
     return {
-      platformConfigured: true,
+      platformConfigured: teeRuntime !== 'none' || allowMock,
       integrityVerified: true,
       measurements: {
-        tcb: '0x12345678',
-        sha1: Buffer.from('placeholder_attestation_measurement').toString('base64')
+        source: measurementPath,
+        teeRuntime,
+        sha256: digest,
       }
     };
   }
 
   async verifyCertChain(certChain) {
-    // Implementation: Verify certificate chain against root authority
     console.log('[AttestationClient] Verifying attestation certificate chain...');
-    return true; // Placeholder for Phase 1
+    const certText = Buffer.isBuffer(certChain) ? certChain.toString('utf8') : String(certChain || '');
+    const match = certText.match(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/);
+    if (!match) {
+      throw new Error('No PEM certificate found in cert chain');
+    }
+
+    const leaf = new crypto.X509Certificate(match[0]);
+    const now = Date.now();
+    const validFrom = Date.parse(leaf.validFrom);
+    const validTo = Date.parse(leaf.validTo);
+    if (Number.isFinite(validFrom) && now < validFrom) {
+      throw new Error('Attestation certificate not valid yet');
+    }
+    if (Number.isFinite(validTo) && now > validTo) {
+      throw new Error('Attestation certificate expired');
+    }
+
+    const expectedFingerprint = (this.config.attestationFingerprint || process.env.ATTESTATION_CERT_SHA256 || '').trim();
+    if (expectedFingerprint) {
+      const actualFingerprint = leaf.fingerprint256.replace(/:/g, '').toLowerCase();
+      if (actualFingerprint !== expectedFingerprint.toLowerCase()) {
+        throw new Error('Attestation certificate fingerprint mismatch');
+      }
+    }
+
+    return true;
   }
 }
 
@@ -239,9 +301,24 @@ class NetworkHandler {
   }
 
   async isReachable(url) {
-    // Implementation: Health check via HTTP or RPC
     console.log('[NetworkHandler] Checking connectivity to:', url);
-    return true; // Placeholder for Phase 1
+    if (!url) return false;
+
+    return new Promise((resolve) => {
+      const timeoutMs = Number(this.config.connectivityTimeoutMs || process.env.CONNECTIVITY_TIMEOUT_MS || 4000);
+      const client = url.startsWith('https://') ? https : http;
+      const req = client.request(url, { method: 'GET', timeout: timeoutMs }, (res) => {
+        const ok = (res.statusCode || 0) >= 200 && (res.statusCode || 0) < 500;
+        res.resume();
+        resolve(ok);
+      });
+      req.on('error', () => resolve(false));
+      req.on('timeout', () => {
+        req.destroy();
+        resolve(false);
+      });
+      req.end();
+    });
   }
 
   async verifyResourceAllocation() {
@@ -258,15 +335,39 @@ class NetworkHandler {
   }
 
   _checkHugepages() {
-    // Implementation: Verify /proc/meminfo for hugepages
     console.log('[NetworkHandler] Checking hugepage availability...');
-    return true; // Placeholder - add actual check in Phase 1 hardening
+    try {
+      const meminfo = fs.readFileSync('/proc/meminfo', 'utf8');
+      const totalMatch = meminfo.match(/^HugePages_Total:\s+(\d+)/m);
+      const freeMatch = meminfo.match(/^HugePages_Free:\s+(\d+)/m);
+      const total = totalMatch ? Number(totalMatch[1]) : 0;
+      const free = freeMatch ? Number(freeMatch[1]) : 0;
+      const minHugepages = Number(this.config.minHugepages || process.env.MIN_HUGEPAGES || 1);
+      return total >= minHugepages && free > 0;
+    } catch (err) {
+      console.warn('[NetworkHandler] Hugepage check failed:', err.message);
+      return false;
+    }
   }
 
   _checkCPUPinning() {
-    // Implementation: Verify cgroups/topology hints for CPU pinning
     console.log('[NetworkHandler] Checking CPU pinning configuration...');
-    return true; // Placeholder - add actual check in Phase 1 hardening
+    try {
+      const status = fs.readFileSync('/proc/self/status', 'utf8');
+      const match = status.match(/^Cpus_allowed_list:\s+(.+)$/m);
+      if (!match) return false;
+
+      const list = match[1].trim();
+      const disallowUnpinned = (this.config.requireCpuPinning || process.env.REQUIRE_CPU_PINNING || '1') !== '0';
+      if (!disallowUnpinned) return true;
+
+      // A comma/hyphen list smaller than all online CPUs is treated as pinned.
+      const online = fs.readFileSync('/sys/devices/system/cpu/online', 'utf8').trim();
+      return list !== online;
+    } catch (err) {
+      console.warn('[NetworkHandler] CPU pinning check failed:', err.message);
+      return false;
+    }
   }
 }
 

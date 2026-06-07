@@ -34,6 +34,19 @@ class ReputationTracker {
   }
 
   /**
+   * Adjust reputation directly for consensus-stage feedback loops.
+   */
+  adjustReputation(agentId, delta) {
+    if (!this.agentScores.has(agentId)) {
+      this.registerAgent(agentId);
+    }
+    const current = this.agentScores.get(agentId);
+    const next = Math.max(0, Math.min(this.MAX_REPUTATION, current + Number(delta || 0)));
+    this.agentScores.set(agentId, next);
+    return next;
+  }
+
+  /**
    * Record a forecast report and update reputation
    */
   recordReport(agentId, forecast, actualOutcome, confidence) {
@@ -244,27 +257,37 @@ class ReputationTracker {
   getHealthReport() {
     const allAgents = Array.from(this.agentScores.entries());
     const totalAgents = allAgents.length;
-    
-    const byzantineAgents = allAgents.filter(([id]) => this.isByzantineAgent(id));
-    const healthyAgents = totalAgents - byzantineAgents.length;
-    
-    const avgReputation = allAgents.length > 0
-      ? allAgents.reduce((sum, [, rep]) => sum + rep, 0) / totalAgents
-      : 50;
 
-    const avgAccuracy = Array.from(this.agentStats.values())
-      .filter(stat => stat.totalReports > 0)
-      .reduce((sum, stat) => sum + (stat.correctReports / stat.totalReports), 0) / 
-        Math.max(1, Array.from(this.agentStats.values()).filter(s => s.totalReports > 0).length) * 100;
+    let byzantineCount = 0;
+    let reputationSum = 0;
+    let accuracySum = 0;
+    let agentsWithReports = 0;
+
+    for (const [agentId, reputation] of allAgents) {
+      reputationSum += reputation;
+      const stats = this.agentStats.get(agentId);
+      if (stats && stats.totalReports > 0) {
+        const accuracy = (stats.correctReports / stats.totalReports) * 100;
+        accuracySum += accuracy;
+        agentsWithReports++;
+        if (accuracy < 40 || reputation < 20) byzantineCount++;
+      } else if (reputation < 20) {
+        byzantineCount++;
+      }
+    }
+
+    const healthyAgents = totalAgents - byzantineCount;
+    const avgReputation = totalAgents > 0 ? reputationSum / totalAgents : 50;
+    const avgAccuracy = agentsWithReports > 0 ? (accuracySum / agentsWithReports) : 0;
 
     return {
       timestamp: new Date().toISOString(),
       totalAgents,
       healthyAgents,
-      byzantineAgents: byzantineAgents.length,
+      byzantineAgents: byzantineCount,
       avgReputation: avgReputation.toFixed(1),
       avgAccuracy: avgAccuracy.toFixed(1),
-      systemHealth: healthyAgents / totalAgents > 0.67 ? 'HEALTHY' : 'AT_RISK',
+      systemHealth: totalAgents > 0 && (healthyAgents / totalAgents) > 0.67 ? 'HEALTHY' : 'AT_RISK',
     };
   }
 }

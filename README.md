@@ -1,15 +1,22 @@
 # SAPM - Sovereign Agentic Prediction Market on Sui
 
-[![CI](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=CI)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci.yml)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-D22128?style=for-the-badge&logo=apache&logoColor=white)](LICENSE.md)
-[![Sui](https://img.shields.io/badge/Sui-Testnet-6fbcf0?style=for-the-badge&logo=sui&logoColor=0b1f3a)](https://docs.sui.io)
+[![Release Gate](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=Release%20Gate)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci.yml)
+[![Stack Validation](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci_validation.yml?branch=main&style=for-the-badge&logo=docker&logoColor=white&label=Stack%20Validation)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci_validation.yml)
+[![Lean Verification](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/lean-verification.yml?branch=main&style=for-the-badge&logo=leanpub&logoColor=white&label=Lean%20Verification)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/lean-verification.yml)
+[![Lean Rust Runner](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/lean-rust-runner-image.yml?branch=main&style=for-the-badge&logo=rust&logoColor=white&label=Lean%20Rust%20Runner)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/lean-rust-runner-image.yml)
+[![Phase2 Hardening](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/phase2-hardening-ci.yml?branch=main&style=for-the-badge&logo=shield&logoColor=white&label=Phase2%20Hardening)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/phase2-hardening-ci.yml)
 [![Node >=18](https://img.shields.io/badge/Node-%3E%3D18-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](package.json)
+[![Sui](https://img.shields.io/badge/Sui-Testnet-6fbcf0?style=for-the-badge&logo=sui&logoColor=0b1f3a)](https://docs.sui.io)
+[![Contributors](https://img.shields.io/github/contributors/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/graphs/contributors)
+[![Last Commit](https://img.shields.io/github/last-commit/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/commits/main)
+[![Open Issues](https://img.shields.io/github/issues/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/issues)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-D22128?style=for-the-badge&logo=apache&logoColor=white)](LICENSE.md)
 
 ## What is SAPM?
 
 SAPM demonstrates how autonomous AI agents can participate in prediction markets. Agents forecast outcomes, aggregate consensus, and generate trading decisions—turning swarm intelligence into market actions.
 
-**Current Status:** ✅ Phase 1 (Decision Pipeline) | 🔄 Phase 2 (Sui Integration) | ⏳ Phase 3 (Production)
+**Current Status:** ✅ Phase 1 (Core Pipeline Implemented) | ✅ Phase 2 (Frontend + Risk Components Present) | ⚠️ Validation/Stabilization In Progress
 
 ---
 
@@ -25,7 +32,7 @@ docker compose up
 # Sui RPC: http://localhost:9000
 ```
 
-See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed setup.
+See [docs/INDEX.md](docs/INDEX.md) for setup and subsystem documentation.
 
 ---
 
@@ -33,12 +40,13 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed setup.
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| **Market Discovery UI** | ✅ Production | Filters, sorting, responsive design |
-| **Agent Decision Pipeline** | ✅ Working | Forecast → Aggregate → Trade (dry-run) |
-| **Docker Environment** | ✅ Working | Full local dev setup |
-| **Move Contracts** | 🟡 Framework | Logic defined, deployment in Phase 2 |
-| **Sui Integration** | 🔄 Coming | Phase 2 focus |
-| **Formal Verification** | ⏳ Future | Phase 3 feature |
+| **Market Discovery UI** | ✅ Implemented | Filters, sorting, responsive design, and multi-page frontend routes are present |
+| **Agent Decision Pipeline** | ✅ Validated (Dry-Run) | Forecast → Aggregate → Trade pipeline executes in demo/test flows |
+| **Docker Environment** | ✅ Validated | Local multi-service stack is configured and exercised by validation workflows |
+| **Move Contracts** | 🟡 Source Complete | Registry/incentives Move modules are present; live deployment verification remains external |
+| **Sui Integration** | 🟡 Partial | Sui SDK/PTB logic exists; end-to-end chain execution still depends on runtime network setup |
+| **Formal Verification** | 🟡 Scaffolding | Formal verification assets and workflow are present; full proof coverage is not claimed |
+| **CI/CD Workflows** | ✅ Active | Release gate, stack validation, lean verification, hardening, and runner-image workflows are configured |
 
 **See [docs/PRODUCTION_STATUS.md](docs/PRODUCTION_STATUS.md) for detailed component status.**
 
@@ -47,17 +55,16 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed setup.
 ## 🎯 What This Demo Shows
 
 ```
-✅ WORKS:
-   Forecast Input → Aggregator → Trade Decision → PTB Plan (Dry-run)
-   Beautiful market discovery UI with live filtering
-   Professional dark theme with Sui branding
-   Full local development environment
+✅ IMPLEMENTED IN REPO:
+   Forecast Input → Aggregator → Trade Decision → PTB Plan modules
+   Multi-page frontend app (markets, portfolio, governance, docs, risk)
+   Risk controls module skeleton (position limits + circuit breakers)
+   Move registry/incentives contract sources
 
-❌ DOESN'T WORK YET:
-   Real Sui market integration (Phase 2)
-   Transaction submission to blockchain (Phase 2)
-   Wallet signing (Phase 2)
-   On-chain registry (Phase 2)
+✅ VALIDATED VIA CANONICAL GATE:
+   Root dependency bootstrap now installs root + agent packages
+   Root test pipeline executes through trader + aggregator suites
+   Root e2e suite executes via jest at repository root
 ```
 
 **All demo output is labeled `[DEMO]` to indicate dry-run status, not real execution.**
@@ -66,12 +73,13 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed setup.
 
 ## 📚 Documentation
 
-- **[PRODUCTION_STATUS.md](docs/PRODUCTION_STATUS.md)** ← Start here for component status
-- [QUICKSTART.md](docs/QUICKSTART.md) - Setup instructions
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md) - System design
-- [FRONTEND.md](docs/FRONTEND.md) - UI/UX guide
-- [WALLET.md](docs/WALLET.md) - Wallet integration
-- [CONTRIBUTING.md](CONTRIBUTING.md) - How to contribute
+- **[docs/INDEX.md](docs/INDEX.md)** ← Primary documentation index (start here)
+- [docs/PRODUCTION_STATUS.md](docs/PRODUCTION_STATUS.md) - Current component status
+- [docs/PRODUCTION_READINESS_CHECKLIST.md](docs/PRODUCTION_READINESS_CHECKLIST.md) - Validation checklist
+- [docs/OPERATIONS_RUNBOOK.md](docs/OPERATIONS_RUNBOOK.md) - Operational procedures
+- [docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md](docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md) - Placeholder owner/milestone ledger
+- [docs/root-archive/PERFORMANCE_OPTIMIZATION_GUIDE.md](docs/root-archive/PERFORMANCE_OPTIMIZATION_GUIDE.md) - Historical performance design notes
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guide
 
 ---
 
@@ -85,9 +93,9 @@ SAPM = Agents + Markets + Blockchain
     [Trader]       [Stats]     [Transactions]
 ```
 
-**Phase 1 (Current):** Agents + Markets (local, dry-run)  
-**Phase 2 (Coming):** + Blockchain (testnet integration)  
-**Phase 3 (Future):** + Formal Verification + Quantum Crypto
+**Phase 1 (Implemented):** Agent logic, aggregator, and trader modules
+**Phase 2 (Implemented):** Frontend expansion and risk-control scaffolding
+**Phase 3 (Current Focus):** Validation hardening and production-readiness gates
 
 ---
 
@@ -129,9 +137,38 @@ npm run test:e2e
 
 # Lint check
 npm run lint
+
+# Canonical production-readiness gate
+npm run release:check
 ```
 
-All tests passing. No silent failures.
+As of the 2026-06-06 stabilization pass:
+- `npm run release:check` passes from a fresh dependency bootstrap path.
+- `npm run test:all` passes (trader + aggregator).
+- `npm run test:e2e` passes from root.
+- `npm run lint` passes with warnings and no errors.
+
+Release gate policy:
+- `npm run release:check` is the canonical readiness gate for local validation and CI.
+- It installs required root and agent dependencies, then runs lint + test suites.
+
+## Performance
+
+Measured on the current branch in this workspace (2026-06-06):
+
+- `npm run bench:aggregator` (64 updates x 512 dims):
+   - `avg`: ~0.032 ms/op
+   - `trimmed`: ~0.995 ms/op
+   - `multikrum`: ~1.075 ms/op
+   - `multikrum_reputation`: ~1.244 ms/op
+- Rust datapath benchmark:
+   - `~/.cargo/bin/cargo run --manifest-path rust-datapath/Cargo.toml -- bench --iterations 1000000`
+   - Latest run: `processed=1000000`, `dropped=0`, `elapsed_ms=143`
+- End-to-end validation runtime:
+   - `./scripts/phase2_go_nogo.sh`: ~3.6s
+   - `bash scripts/orchestrator_hardening_check.sh`: ~0.11s
+
+See [docs/root-archive/PERFORMANCE_OPTIMIZATION_GUIDE.md](docs/root-archive/PERFORMANCE_OPTIMIZATION_GUIDE.md) for background details.
 
 ---
 
@@ -145,16 +182,14 @@ All tests passing. No silent failures.
 - Aggregator framework
 - Complete demo
 
-### Phase 2: Sui Testnet Integration 🔄 IN PROGRESS
+### Phase 2: Integration & Frontend Expansion ✅ IMPLEMENTED (Code-Level)
 
-**Coming Soon:**
-- Real market object fetching
-- Transaction building and signing
-- Wallet integration
-- Testnet trade execution
-- On-chain registry deployment
+**Current Focus:**
+- Dependency and environment alignment across subpackages
+- Green test pipeline from repository root
+- End-to-end execution verification against configured Sui network
 
-### Phase 3: Production Hardening ⏳ FUTURE
+### Phase 3: Production Hardening 🔄 NEXT
 
 **Planned:**
 - Formal verification (Lean proofs)
@@ -228,14 +263,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
 ### For Contributors
 
 1. Read [CONTRIBUTING.md](CONTRIBUTING.md)
-2. Check [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+2. Check [docs/INDEX.md](docs/INDEX.md)
 3. Pick an issue or feature
 4. Create feature branch
 5. Submit PR
 
 ### For Developers
 
-1. Review [docs/QUICKSTART.md](docs/QUICKSTART.md)
+1. Review [docs/INDEX.md](docs/INDEX.md)
 2. Study code structure above
 3. Explore `frontend/src/app` for UI
 4. Explore `agents/` for logic
@@ -275,7 +310,6 @@ Apache 2.0 - See [LICENSE.md](LICENSE.md)
 
 ---
 
-**Current Version:** 1.0.0 (Phase 3 Complete, Phase 4 In Progress)  
+**Current Version:** 1.0.0 (Stabilization Update, Phase 4 In Progress)
 **Last Updated:** 2026-06-06  
 **Current Focus:** Phase 4 Production Integration & Multi-Market Expansion  
-

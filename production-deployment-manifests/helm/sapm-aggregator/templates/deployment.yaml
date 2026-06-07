@@ -1,13 +1,14 @@
 ---
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
   name: {{ .Values.deployment.nameOverride | default "sapm-aggregator" }}
-  namespace: {{ .Values.deployment.namespaceOverride | default "default" }}
+  namespace: {{ .Values.deployment.namespaceOverride | default .Release.Namespace }}
   labels:
     app: sapm-aggregator
-    version: {{ .Values.global.imageTag }}
+    version: {{ .Values.global.imageTag | quote }}
 spec:
+  replicas: {{ .Values.replicaCount | default 3 }}
   selector:
     matchLabels:
       app: sapm-aggregator
@@ -15,121 +16,126 @@ spec:
     metadata:
       labels:
         app: sapm-aggregator
-        version: {{ .Values.global.imageTag }}
+        version: {{ .Values.global.imageTag | quote }}
 {{- with .Values.deployment.labels }}
-{{ toYaml . }}
+{{ toYaml . | indent 8 }}
 {{- end }}
     spec:
-{{- if .Values.replicaCount }}
-{{- $affinity := (lookup "v1" "PodAffinity" (index .Release.Namespace "") "").status | default dict }}
-      affinity:
-{{- with $affinity }}
-{{ toYaml . }}
+      containers:
+        - name: aggregator
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.aggregator.image.repository }}:{{ .Values.global.imageTag }}"
+          imagePullPolicy: {{ .Values.aggregator.image.pullPolicy }}
+          command:
+            - /usr/local/bin/aggregator
+          args:
+            - "--network-interface={{ .Values.aggregator.xdp.networkInterface | default "eth0,eth1" }}"
+            - "--ring-buffer-size={{ .Values.aggregator.xdp.ringBufferSize | default 262144 }}"
+{{- if .Values.aggregator.cpuAffinity }}
+            - "--cpu-affinity={{ .Values.aggregator.cpuAffinity }}"
 {{- end }}
+{{- if .Values.aggregator.hugepages.enabled }}
+            - "--hugepages-dir={{ .Values.aggregator.hugepages.mountPath | default "/dev/hugepages" }}"
 {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort | default 8080 }}
+            - name: metrics
+              containerPort: {{ .Values.metrics.port | default 9090 }}
+          resources:
+            limits:
+              cpu: {{ .Values.aggregator.resources.limits.cpu }}
+              memory: {{ .Values.aggregator.resources.limits.memory }}
+            requests:
+              cpu: {{ .Values.aggregator.resources.requests.cpu }}
+              memory: {{ .Values.aggregator.resources.requests.memory }}
+          securityContext:
+            privileged: {{ .Values.securityContext.privileged }}
+            readOnlyRootFilesystem: {{ .Values.securityContext.readOnlyRootFilesystem }}
+            allowPrivilegeEscalation: {{ .Values.securityContext.allowPrivilegeEscalation }}
+            capabilities:
+              add:
+{{- range .Values.securityContext.capabilities.add }}
+                - {{ . }}
+{{- end }}
+{{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - {{ .Values.livenessProbe.execCommand | quote }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+{{- end }}
+{{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - {{ .Values.readinessProbe.execCommand | quote }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+{{- end }}
+          volumeMounts:
+{{- if .Values.aggregator.hugepages.enabled }}
+            - name: hugepages-2mi
+              mountPath: {{ .Values.aggregator.hugepages.mountPath | default "/dev/hugepages" }}
+{{- end }}
+            - name: xdp-config
+              mountPath: /etc/sapm/xdp
+              readOnly: true
       topologySpreadConstraints:
 {{- if .Values.deployment.topologySpreadConstraints }}
-{{ toYaml .Values.deployment.topologySpreadConstraints | indent 6 }}
+{{ toYaml (list .Values.deployment.topologySpreadConstraints) | indent 8 }}
+{{- else }}
+        []
 {{- end }}
-      containers:
-      - name: aggregator
-        image: "{{ .Values.global.imageRegistry | default "" }}/{{ .Values.aggregator.image.repository }}:{{ .Values.global.imageTag }}"
-        imagePullPolicy: {{ .Values.aggregator.image.pullPolicy }}
-        resources:
-          limits:
-            cpu: {{ .Values.aggregator.resources.limits.cpu }}
-            memory: {{ .Values.aggregator.resources.limits.memory }}
-          requests:
-            cpu: {{ .Values.aggregator.resources.requests.cpu }}
-            memory: {{ .Values.aggregator.resources.requests.memory }}
-        securityContext:
-{{- if .Values.securityContext.privileged }}
-          privileged: true
-{{- end }}
-          capabilities:
-            add:
-              - NET_ADMIN
-              - SYS_ADMIN
-{{- if not .Values.securityContext.readOnlyRootFilesystem }}
-          readOnlyRootFilesystem: false
-{{- end }}
-{{- if .Values.securityContext.allowPrivilegeEscalation }}
-          allowPrivilegeEscalation: true
-{{- end }}
-{{- with .Values.aggregator.xdp }}
-{{ if .enabled }}
-        volumeMounts:
-        - name: hugepages-2Mi
-          mountPath: {{ .hugepages.mountPath | default "/dev/hugepages" }}
-          readOnly: true
-        - name: proc
-          mountPath: /proc
-          readOnly: true
-{{- end }}
-{{- end }}
-        command:
-        - /usr/local/bin/aggregator
-        args:
-        - "--network-interface={{ .Values.aggregator.xdp.networkInterface | default "eth0,eth1" }}"
-        - "--ring-buffer-size={{ .Values.aggregator.xdp.ringBufferSize | default 262144 }}"
-{{- if .Values.aggregator.cpuAffinity }}
-        - "--cpu-affinity={{ .Values.aggregator.cpuAffinity }}"
-{{- end }}
-{{- with .Values.aggregator.hugepages }}
-{{ if .enabled }}
-        - "--hugepages-dir={{ .mountPath | default "/dev/hugepages" }}"
-{{- end }}
-{{- end }}
-        
-        livenessProbe:
-{{- with .Values.livenessProbe }}
-          exec:
-            command:
-              - {{ .execCommand | quote }}
-          initialDelaySeconds: {{ .initialDelaySeconds }}
-          periodSeconds: {{ .periodSeconds }}
-          timeoutSeconds: {{ .timeoutSeconds }}
-{{- end }}
-        
-        readinessProbe:
-{{- with .Values.readinessProbe }}
-          exec:
-            command:
-              - {{ .execCommand | quote }}
-          initialDelaySeconds: {{ .initialDelaySeconds }}
-          periodSeconds: {{ .periodSeconds }}
-{{- end }}
-          
       volumes:
 {{- if .Values.aggregator.hugepages.enabled }}
-      - name: hugepages-2Mi
-        hostPath:
-          path: {{ .Values.aggregator.hugepages.mountPath | default "/dev/hugepages" }}
-          type: DirectoryOrCreate
+        - name: hugepages-2mi
+          hostPath:
+            path: {{ .Values.aggregator.hugepages.mountPath | default "/dev/hugepages" }}
+            type: DirectoryOrCreate
 {{- end }}
-          
-      - name: proc
-        hostPath:
-          path: /proc
-          type: Directory
-            
-      - name: xdp-config
-        configMap:
-          name: {{ .Values.deployment.nameOverride | default "sapm-aggregator" }}-xdp-config
-          defaultMode: 0644
+        - name: xdp-config
+          configMap:
+            name: {{ .Values.deployment.nameOverride | default "sapm-aggregator" }}-xdp-config
+            defaultMode: 0644
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.deployment.nameOverride | default "sapm-aggregator" }}
+  namespace: {{ .Values.deployment.namespaceOverride | default .Release.Namespace }}
+  labels:
+    app: sapm-aggregator
+spec:
+  type: {{ .Values.service.type | default "ClusterIP" }}
+  selector:
+    app: sapm-aggregator
+  ports:
+    - name: http
+      port: {{ .Values.service.port | default 8080 }}
+      targetPort: {{ .Values.service.targetPort | default 8080 }}
+    - name: metrics
+      port: {{ .Values.metrics.port | default 9090 }}
+      targetPort: {{ .Values.metrics.port | default 9090 }}
 
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Values.deployment.nameOverride | default "sapm-aggregator" }}-xdp-config
-  namespace: {{ .Values.deployment.namespaceOverride | default "default" }}
+  namespace: {{ .Values.deployment.namespaceOverride | default .Release.Namespace }}
 data:
 {{- if .Values.aggregator.xdp.enabled }}
   xdp-program.conf: |
     interface={{ .Values.aggregator.xdp.networkInterface | default "eth0,eth1" }}
     ring-buffer-size={{ .Values.aggregator.xdp.ringBufferSize | default 262144 }}
-    packet-max-size=9516
+    packet-max-size={{ .Values.aggregator.xdp.packetMaxSize | default 9516 }}
     xdp-action=pass
 {{- end }}
   sysctl-optimizations.conf: |
@@ -146,7 +152,7 @@ apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: {{ .Values.deployment.nameOverride | default "sapm-aggregator" }}-quota
-  namespace: {{ .Values.deployment.namespaceOverride | default "default" }}
+  namespace: {{ .Values.deployment.namespaceOverride | default .Release.Namespace }}
 spec:
   hard:
     requests.cpu: {{ .Values.resourceQuota.requestsCpu | default "32" }}
@@ -160,21 +166,21 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ .Values.deployment.nameOverride | default "sapm-aggregator" }}-hpa
-  namespace: {{ .Values.deployment.namespaceOverride | default "default" }}
+  namespace: {{ .Values.deployment.namespaceOverride | default .Release.Namespace }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
-    kind: DaemonSet
+    kind: Deployment
     name: {{ .Values.deployment.nameOverride | default "sapm-aggregator" }}
   minReplicas: {{ .Values.autoscaling.minReplicas | default 3 }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas | default 9 }}
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage | default 70 }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage | default 70 }}
 {{- end }}
 
 ---
@@ -183,21 +189,26 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: {{ .Values.deployment.nameOverride | default "sapm-aggregator" }}-isolation
-  namespace: {{ .Values.deployment.namespaceOverride | default "default" }}
+  namespace: {{ .Values.deployment.namespaceOverride | default .Release.Namespace }}
 spec:
   podSelector:
     matchLabels:
       app: sapm-aggregator
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-{{- with .Values.networkPolicy.ingressRules }}
-{{ toYaml . | indent 2 }}
-{{- end }}
-  
+    - from:
+        - podSelector:
+            matchLabels:
+              app: sapm-aggregator
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.targetPort | default 8080 }}
   egress:
-{{- with .Values.networkPolicy.egressRules }}
-{{ toYaml . | indent 2 }}
-{{- end }}
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
 {{- end }}

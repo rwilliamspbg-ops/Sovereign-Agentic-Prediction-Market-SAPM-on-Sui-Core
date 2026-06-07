@@ -10,7 +10,7 @@ async function requestSimpleRpcVersion(client) {
   try {
     const info = await client.request({ method: 'sui_getProtocolVersion', params: [] });
     return info;
-  } catch (e) {
+  } catch {
     return null;
   }
 }

@@ -3,13 +3,16 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
+    "install:all": "npm ci && npm --prefix agents/trader ci && npm --prefix agents/aggregator ci && npm --prefix agents/orchestrator ci",
     "test:trader": "npm --prefix agents/trader test",
     "test:aggregator": "npm --prefix agents/aggregator test",
     "test:orchestrator:experimental": "npm --prefix agents/orchestrator test 2>/dev/null || echo '⚠️  Orchestrator tests in progress'",
     "test:all": "npm run test:trader && npm run test:aggregator",
     "test:e2e": "jest test/e2e --testTimeout=10000",
-    "lint": "npx eslint agents --ext .js",
-    "lint:fix": "npx eslint agents --ext .js --fix",
+    "bench:aggregator": "node scripts/benchmark_aggregator.js",
+    "lint": "eslint agents --ext .js",
+    "lint:fix": "eslint agents --ext .js --fix",
+    "release:check": "bash scripts/release_check.sh",
     "prepare": "husky install",
     "audit": "(cd agents/trader && npm audit) || true"
   },
@@ -25,6 +28,7 @@
   "devDependencies": {
     "eslint": "^10.4.1",
     "husky": "^8.0.0",
+    "jest": "^30.4.2",
     "lint-staged": "^17.0.7"
   }
 }
