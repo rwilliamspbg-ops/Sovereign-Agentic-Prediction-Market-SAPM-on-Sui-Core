@@ -3,6 +3,7 @@
 import React, { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CopilotKit } from '@copilotkit/react-core';
 import { getWallets } from '@wallet-standard/app';
 import { SUI_MAINNET_CHAIN, SUI_TESTNET_CHAIN } from '@mysten/wallet-standard';
 import "./globals.css";
@@ -46,6 +47,7 @@ export default function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const copilotRuntimeUrl = process.env.NEXT_PUBLIC_COPILOTKIT_RUNTIME_URL || '/api/copilotkit';
   const pathname = usePathname();
   const [walletConnected, setWalletConnected] = React.useState(false);
   const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
@@ -321,8 +323,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body style={{ margin: 0, padding: 0, backgroundColor: '#0f172a', fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
-        {/* Main Application Content */}
-        <div style={{ position: 'relative' }}>
+        <CopilotKit runtimeUrl={copilotRuntimeUrl}>
+          {/* Main Application Content */}
+          <div style={{ position: 'relative' }}>
             
             {/* Header Navigation */}
             <header style={{
@@ -810,7 +813,8 @@ export default function RootLayout({
                 <p style={{ margin: 0, color: '#64748b' }}>© 2025 SAPM on Sui. All rights reserved. | Built with ⚡ on Sui Blockchain</p>
               </div>
             </footer>
-        </div>
+          </div>
+        </CopilotKit>
       </body>
     </html>
   );
