@@ -24,6 +24,14 @@ function hasConnectFeature(wallet: WalletLike): boolean {
   return typeof (wallet.features?.['standard:connect'] as { connect?: unknown } | undefined)?.connect === 'function';
 }
 
+function hasSuiChain(wallet: WalletLike): boolean {
+  if (!Array.isArray(wallet.chains)) {
+    return false;
+  }
+
+  return wallet.chains.includes(SUI_TESTNET_CHAIN) || wallet.chains.includes(SUI_MAINNET_CHAIN);
+}
+
 function hasSignAndExecuteFeature(wallet: WalletLike): boolean {
   const modern = typeof (wallet.features?.['sui:signAndExecuteTransaction'] as { signAndExecuteTransaction?: unknown } | undefined)?.signAndExecuteTransaction === 'function';
   const legacy = typeof (wallet.features?.['sui:signAndExecuteTransactionBlock'] as { signAndExecuteTransactionBlock?: unknown } | undefined)?.signAndExecuteTransactionBlock === 'function';
@@ -33,13 +41,13 @@ function hasSignAndExecuteFeature(wallet: WalletLike): boolean {
 export function getCompatibleWallets(): WalletLike[] {
   return getWallets()
     .get()
-    .filter((wallet) => hasConnectFeature(wallet));
+    .filter((wallet) => hasConnectFeature(wallet) && hasSuiChain(wallet));
 }
 
 export async function getConnectedWalletContext(preferredWalletId?: string): Promise<WalletExecutionContext> {
-  const walletCandidates = getWallets().get().filter((wallet) => hasConnectFeature(wallet));
+  const walletCandidates = getWallets().get().filter((wallet) => hasConnectFeature(wallet) && hasSuiChain(wallet));
   if (walletCandidates.length === 0) {
-    throw new Error('No wallet found that supports connect. Install or enable a wallet extension first.');
+    throw new Error('No compatible Sui wallet found. Install or enable a Sui wallet with testnet/mainnet support.');
   }
 
   const savedWalletId = localStorage.getItem(LAST_WALLET_ID_KEY);
