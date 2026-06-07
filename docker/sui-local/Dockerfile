@@ -21,6 +21,6 @@ EXPOSE 9000 9001 9184
 HEALTHCHECK --interval=10s --timeout=3s --retries=5 CMD curl -f http://localhost:9000/ || exit 1
 
 COPY entrypoint.sh /opt/sui/entrypoint.sh
-RUN chmod +x /opt/sui/entrypoint.sh
+RUN sed -i 's/\r$//' /opt/sui/entrypoint.sh && chmod +x /opt/sui/entrypoint.sh
 
 CMD ["/bin/sh", "/opt/sui/entrypoint.sh"]

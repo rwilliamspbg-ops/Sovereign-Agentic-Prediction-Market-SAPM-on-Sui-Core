@@ -9,6 +9,7 @@ services:
       context: ./sui-local
       dockerfile: Dockerfile
     container_name: sui-local
+    entrypoint: ["/bin/sh", "/opt/sui/entrypoint.sh"]
     restart: unless-stopped
     ports:
       - "9000:9000"   # RPC
@@ -75,6 +76,7 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
     container_name: aggregator-proxy
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
     depends_on:
       - aggregator
     ports:

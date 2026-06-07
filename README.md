@@ -73,10 +73,21 @@ npm run install:all
 ### Run the stack
 
 ```bash
-docker compose up
+cd docker
+docker compose up --build
 ```
 
-Frontend: http://localhost:3000
+Frontend: [http://localhost:3000](http://localhost:3000)
+
+If you hit Docker Desktop cache or stale-image issues, run a clean restart:
+
+```bash
+cd docker
+docker compose down -v --remove-orphans
+docker compose build --no-cache sui-local aggregator-proxy
+docker compose up -d
+docker compose ps
+```
 
 ### Run the frontend locally
 
@@ -143,6 +154,34 @@ Key entry points:
 - [frontend/src/components/TradeExecution.tsx](frontend/src/components/TradeExecution.tsx)
 - [frontend/src/services/sui/wallet-standard.ts](frontend/src/services/sui/wallet-standard.ts)
 
+## Performance
+
+SAPM includes both application-level and datapath-focused performance work.
+
+Current repo performance highlights:
+
+- Aggregator benchmarking is available through root scripts.
+- Datapath optimization notes and AF_XDP tuning guidance are included.
+- Production-readiness and benchmark context are documented under performance_optimization.
+
+Run the aggregator benchmark:
+
+```bash
+npm run bench:aggregator
+```
+
+Explore performance docs:
+
+- [performance_optimization/README.md](performance_optimization/README.md)
+- [performance_optimization/AF_XDP_Optimizations.md](performance_optimization/AF_XDP_Optimizations.md)
+- [performance_optimization/xdp_tuning.md](performance_optimization/xdp_tuning.md)
+- [performance_optimization/rust_datapath_spec.md](performance_optimization/rust_datapath_spec.md)
+
+Performance validation in release flow:
+
+- Use [scripts/release_check.sh](scripts/release_check.sh) for the canonical gate.
+- Use [scripts/benchmark_aggregator.js](scripts/benchmark_aggregator.js) for focused aggregator throughput checks.
+
 ## Repository Layout
 
 ```text
@@ -204,8 +243,8 @@ For contribution workflow, see:
 
 ### Judges / Demo Reviewers
 
-1. Start the stack with `docker compose up`.
-2. Open the frontend at http://localhost:3000.
+1. Start from [docker/docker-compose.yml](docker/docker-compose.yml) using `cd docker && docker compose up --build`.
+2. Open the frontend at [http://localhost:3000](http://localhost:3000).
 3. Use Judge Mode to walk through connect, on-chain read, micro trade, archive, and preview.
 4. Review the latest status in [docs/PRODUCTION_STATUS.md](docs/PRODUCTION_STATUS.md).
 
@@ -221,6 +260,7 @@ For contribution workflow, see:
 1. Explore `frontend/src/app` for the UI.
 2. Explore `agents/` for the pipeline.
 3. Use `scripts/frontend_production_gate.sh` and `scripts/release_check.sh` for validation.
+4. Use `npm run bench:aggregator` and the performance docs for optimization work.
 
 ## Notes On Current Validation
 
