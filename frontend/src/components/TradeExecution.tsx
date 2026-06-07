@@ -40,9 +40,14 @@ const BASE_RETRY_DELAY_MS = 500;
 const MAX_NOTIONAL_SUI = 100_000;
 const CONFIGURED_TRADE_TARGET = process.env.NEXT_PUBLIC_SUI_TRADE_TARGET || `${SUI_PACKAGE_ID}::registry::add_key`;
 const CONFIGURED_REGISTRY_OBJECT_ID = process.env.NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID || '';
+const CONFIGURED_MARKET_OBJECT_IDS = (process.env.NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS || '')
+  .split(',')
+  .map((id) => id.trim())
+  .filter((id) => id.length > 0);
 const CONFIGURED_DEEPBOOK_POOL_OBJECT_ID = process.env.NEXT_PUBLIC_DEEPBOOK_POOL_OBJECT_ID || '';
 const CONFIGURED_DEEPBOOK_BALANCE_MANAGER_OBJECT_ID = process.env.NEXT_PUBLIC_DEEPBOOK_BALANCE_MANAGER_OBJECT_ID || '';
 const CONFIGURED_SUI_CLOCK_OBJECT_ID = process.env.NEXT_PUBLIC_SUI_CLOCK_OBJECT_ID || '0x6';
+const LOCAL_ONCHAIN_OBJECT_IDS_KEY = 'sapm.onchainObjectIds';
 
 export type ParsedTarget = {
   packageId: string;
@@ -61,7 +66,7 @@ type TargetIntrospectionState = {
   message?: string;
 };
 
-function isValidSuiHexAddress(value: string | null | undefined): boolean {
+function isValidSuiHexAddress(value: string | null | undefined): value is string {
   if (!value) {
     return false;
   }
@@ -176,6 +181,35 @@ function buildRegistryPayload(trade: TradeRequest, walletAddress: string): numbe
   });
 
   return Array.from(new TextEncoder().encode(payload));
+}
+
+function getPersistedOnchainObjectIds(): string[] {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
+  const raw = window.localStorage.getItem(LOCAL_ONCHAIN_OBJECT_IDS_KEY) || '';
+  return raw
+    .split(/[\s,]+/g)
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0);
+}
+
+function resolveRegistryObjectId(candidateMarketId?: string): string | null {
+  const candidates = [
+    CONFIGURED_REGISTRY_OBJECT_ID,
+    candidateMarketId || '',
+    ...CONFIGURED_MARKET_OBJECT_IDS,
+    ...getPersistedOnchainObjectIds(),
+  ];
+
+  for (const candidate of candidates) {
+    if (isValidSuiHexAddress(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
 }
 
 export type TradeArgumentPreview = {
@@ -302,9 +336,9 @@ export function getTradePreflightIssues(marketId: string): string[] {
   }
 
   if (parsed.moduleName === 'registry' && parsed.functionName === 'add_key') {
-    const registryObjectId = CONFIGURED_REGISTRY_OBJECT_ID || marketId;
+    const registryObjectId = resolveRegistryObjectId(marketId);
     if (!isValidSuiHexAddress(registryObjectId)) {
-      issues.push('registry::add_key requires NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID or a 0x... market ID.');
+      issues.push('registry::add_key requires a valid registry object ID from NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID, NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS, persisted on-chain IDs, or a 0x... market ID.');
     }
   }
 
@@ -417,14 +451,15 @@ export function useTradeExecution() {
         // Exact encoding for the currently deployed package signature:
         // registry::add_key(&mut PubkeyRegistry, vector<u8>)
         if (parsedTarget.moduleName === 'registry' && parsedTarget.functionName === 'add_key') {
-          const registryObjectId = CONFIGURED_REGISTRY_OBJECT_ID || trade.marketId;
+          const registryObjectId = resolveRegistryObjectId(trade.marketId);
           if (!isValidSuiHexAddress(registryObjectId)) {
-            throw new Error(`registry::add_key requires a valid registry object ID. Set NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID or pass a 0x... market ID.`);
+            throw new Error('registry::add_key requires a valid registry object ID. Set NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID, NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS, load/persist on-chain IDs, or pass a 0x... market ID.');
           }
+          const validatedRegistryObjectId = registryObjectId;
 
           const keyBytes = buildRegistryPayload(trade, context.account.address);
           args = [
-            tx.object(registryObjectId),
+            tx.object(validatedRegistryObjectId),
             tx.pure.vector('u8', keyBytes),
           ];
         } else if (parsedTarget.moduleName === 'pool' && parsedTarget.functionName === 'place_limit_order') {

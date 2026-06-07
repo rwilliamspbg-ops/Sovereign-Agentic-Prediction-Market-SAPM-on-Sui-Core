@@ -1,9 +1,12 @@
 import { getWallets } from '@wallet-standard/app';
 import { SUI_MAINNET_CHAIN, SUI_TESTNET_CHAIN, signAndExecuteTransaction } from '@mysten/wallet-standard';
+import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 import type { Transaction } from '@mysten/sui/transactions';
 
 const LAST_WALLET_ID_KEY = 'walletId';
 const LAST_WALLET_ADDRESS_KEY = 'walletAddress';
+const CONNECT_TIMEOUT_MS = 15000;
+const SIGN_TIMEOUT_MS = 30000;
 
 type WalletLike = ReturnType<ReturnType<typeof getWallets>['get']>[number];
 type WalletAccount = WalletLike['accounts'][number];
@@ -13,6 +16,39 @@ function isValidSuiHexAddress(value: string | null | undefined): boolean {
     return false;
   }
   return /^0x[0-9a-fA-F]{1,64}$/.test(value);
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(`Wallet ${label} timed out after ${timeoutMs}ms. Check extension popup and retry.`));
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        clearTimeout(timeoutId);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
+
+function normalizeConnectError(error: unknown): Error {
+  const message = error instanceof Error ? error.message : String(error);
+  const lower = message.toLowerCase();
+
+  if (lower.includes('json-rpc: method call timeout') || (lower.includes('timeout') && lower.includes('connect'))) {
+    return new Error('Wallet connect timed out. Unlock/approve in your wallet extension and retry.');
+  }
+
+  if (lower.includes('reject') || lower.includes('denied') || lower.includes('cancel')) {
+    return new Error('Wallet connection request was canceled. Please approve the request to continue.');
+  }
+
+  return error instanceof Error ? error : new Error(message);
 }
 
 export type WalletExecutionContext = {
@@ -81,11 +117,15 @@ export async function getConnectedWalletContext(preferredWalletId?: string): Pro
   });
   let account = validWalletAccounts.find((item) => item.address === savedAddress) || validWalletAccounts[0];
   if (!account) {
-    const output = await connectFeature.connect({ silent: false });
-    const connectedAddress = output.accounts?.[0]?.address;
-    account = validWalletAccounts.find((item) => item.address === connectedAddress)
-      || wallet.accounts.find((item) => item.address === connectedAddress && isValidSuiHexAddress(item.address))
-      || validWalletAccounts[0];
+    try {
+      const output = await withTimeout(connectFeature.connect({ silent: false }), CONNECT_TIMEOUT_MS, 'connect');
+      const connectedAddress = output.accounts?.[0]?.address;
+      account = validWalletAccounts.find((item) => item.address === connectedAddress)
+        || wallet.accounts.find((item) => item.address === connectedAddress && isValidSuiHexAddress(item.address))
+        || validWalletAccounts[0];
+    } catch (error) {
+      throw normalizeConnectError(error);
+    }
   }
 
   if (!account) {
@@ -103,6 +143,15 @@ export async function getConnectedWalletContext(preferredWalletId?: string): Pro
 export async function signAndExecuteWalletTransaction(context: WalletExecutionContext, tx: Transaction, chain: 'testnet' | 'mainnet' = 'testnet') {
   const targetChain = chain === 'mainnet' ? SUI_MAINNET_CHAIN : SUI_TESTNET_CHAIN;
   let result: { digest?: string } | null = null;
+  let lastExecutionError: unknown = null;
+
+  if (Array.isArray(context.account.chains) && context.account.chains.length > 0) {
+    const supportsTargetChain = context.account.chains.includes(targetChain)
+      || context.account.chains.some((value) => value.startsWith('sui:'));
+    if (!supportsTargetChain) {
+      throw new Error(`Connected wallet account is on ${context.account.chains.join(', ')}. Switch wallet network/account to ${chain} and retry.`);
+    }
+  }
 
   const modernFeature = context.wallet.features['sui:signAndExecuteTransaction'] as
     | { signAndExecuteTransaction?: (input: { account: WalletAccount; chain: string; transaction: Transaction }) => Promise<{ digest?: string }> }
@@ -110,24 +159,34 @@ export async function signAndExecuteWalletTransaction(context: WalletExecutionCo
 
   if (typeof modernFeature?.signAndExecuteTransaction === 'function') {
     try {
-      result = await modernFeature.signAndExecuteTransaction({
-        account: context.account,
-        chain: targetChain,
-        transaction: tx,
-      });
-    } catch {
+      result = await withTimeout(
+        modernFeature.signAndExecuteTransaction({
+          account: context.account,
+          chain: targetChain,
+          transaction: tx,
+        }),
+        SIGN_TIMEOUT_MS,
+        'signAndExecuteTransaction'
+      );
+    } catch (error) {
+      lastExecutionError = error;
       result = null;
     }
   }
 
   if (!result) {
     try {
-      result = await signAndExecuteTransaction(context.wallet, {
-        account: context.account,
-        chain: targetChain,
-        transaction: tx,
-      });
-    } catch {
+      result = await withTimeout(
+        signAndExecuteTransaction(context.wallet, {
+          account: context.account,
+          chain: targetChain,
+          transaction: tx,
+        }),
+        SIGN_TIMEOUT_MS,
+        'wallet-standard signAndExecuteTransaction'
+      );
+    } catch (error) {
+      lastExecutionError = error;
       result = null;
     }
   }
@@ -138,17 +197,77 @@ export async function signAndExecuteWalletTransaction(context: WalletExecutionCo
       | undefined;
 
     if (typeof legacyFeature?.signAndExecuteTransactionBlock === 'function') {
-      result = await legacyFeature.signAndExecuteTransactionBlock({
-        account: context.account,
-        chain: targetChain,
-        transactionBlock: tx,
-      });
+      try {
+        result = await withTimeout(
+          legacyFeature.signAndExecuteTransactionBlock({
+            account: context.account,
+            chain: targetChain,
+            transactionBlock: tx,
+          }),
+          SIGN_TIMEOUT_MS,
+          'signAndExecuteTransactionBlock'
+        );
+      } catch (error) {
+        lastExecutionError = error;
+        result = null;
+      }
+    }
+  }
+
+  if (!result) {
+    const signFeature = context.wallet.features['sui:signTransaction'] as
+      | {
+          signTransaction?: (input: { account: WalletAccount; chain: string; transaction: Transaction }) => Promise<{
+            bytes?: string;
+            transactionBlockBytes?: string;
+            signature?: string;
+            signatures?: string[];
+          }>;
+        }
+      | undefined;
+
+    if (typeof signFeature?.signTransaction === 'function') {
+      try {
+        const signed = await withTimeout(
+          signFeature.signTransaction({
+            account: context.account,
+            chain: targetChain,
+            transaction: tx,
+          }),
+          SIGN_TIMEOUT_MS,
+          'signTransaction'
+        );
+
+        const transactionBytes = signed.bytes || signed.transactionBlockBytes;
+        const signatures = signed.signatures || (signed.signature ? [signed.signature] : []);
+
+        if (!transactionBytes || signatures.length === 0) {
+          throw new Error('Wallet signTransaction did not return transaction bytes/signature.');
+        }
+
+        const client = new SuiClient({ url: getFullnodeUrl(chain) });
+        const execution = await withTimeout(
+          client.executeTransactionBlock({
+            transactionBlock: transactionBytes,
+            signature: signatures.length === 1 ? signatures[0] : signatures,
+            options: { showEffects: true },
+          }),
+          SIGN_TIMEOUT_MS,
+          'executeTransactionBlock'
+        );
+
+        result = { digest: execution.digest };
+      } catch (error) {
+        lastExecutionError = error;
+        result = null;
+      }
     }
   }
 
   if (!result?.digest) {
     const featureList = Object.keys(context.wallet.features || {}).join(', ');
-    throw new Error(`Wallet execution failed. Ensure wallet supports sign-and-execute for Sui. Available features: ${featureList || 'none'}`);
+    const detail = lastExecutionError instanceof Error ? ` Last error: ${lastExecutionError.message}` : '';
+    throw new Error(`Wallet execution failed. Unlock/foreground your wallet extension and approve the request. Ensure wallet supports sign-and-execute for Sui. Available features: ${featureList || 'none'}.${detail}`);
   }
 
   return result;

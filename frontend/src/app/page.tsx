@@ -736,12 +736,15 @@ export default function MarketDiscovery() {
         }
       }
 
-      updateStep(1, marketSource === 'onchain' || judgeMarkets.length > 0 ? 'done' : 'failed', judgeMarkets.length > 0 ? 'Using on-chain data' : 'Paste valid on-chain object IDs first');
-      if (judgeMarkets.length === 0) {
+      const onchainMarkets = judgeMarkets.filter((market) => isValidSuiHexAddress(market.id));
+      updateStep(1, onchainMarkets.length > 0 ? 'done' : 'failed', onchainMarkets.length > 0 ? 'Using on-chain data' : 'Paste valid 0x... on-chain object IDs first');
+      if (onchainMarkets.length === 0) {
         throw new Error('On-chain market is required for Judge Mode. Paste market object IDs and click Load On-chain Markets.');
       }
 
-      const activeMarket = boardTicketMarket || judgeMarkets[0];
+      const activeMarket = (boardTicketMarket && isValidSuiHexAddress(boardTicketMarket.id)
+        ? boardTicketMarket
+        : onchainMarkets[0]);
       if (!activeMarket) {
         throw new Error('No active market available.');
       }

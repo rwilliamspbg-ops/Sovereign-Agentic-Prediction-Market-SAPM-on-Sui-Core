@@ -26,6 +26,7 @@ type ActiveMarketInsight = {
 const ACTIVE_MARKET_INSIGHT_KEY = 'sapm.activeMarketInsight';
 const LAST_WALLET_ID_KEY = 'walletId';
 const LAST_WALLET_ADDRESS_KEY = 'walletAddress';
+const CONNECT_TIMEOUT_MS = 15000;
 
 function isValidSuiHexAddress(value: string | null | undefined): boolean {
   if (!value) {
@@ -59,6 +60,25 @@ function hasConnectFeature(wallet: { features?: Record<string, unknown> | undefi
   return typeof (wallet.features?.['standard:connect'] as { connect?: unknown } | undefined)?.connect === 'function';
 }
 
+function formatDetectedWallets(wallets: readonly {
+  name?: string;
+  chains?: readonly string[];
+  accounts?: readonly { chains?: readonly string[] }[];
+}[]): string {
+  if (!wallets.length) {
+    return 'none';
+  }
+
+  return wallets.map((wallet) => {
+    const walletName = wallet.name || 'Unknown wallet';
+    const topChains = (wallet.chains || []).join('|') || 'none';
+    const accountChains = (wallet.accounts || [])
+      .flatMap((account) => account.chains || [])
+      .join('|') || 'none';
+    return `${walletName} [chains=${topChains}; accountChains=${accountChains}]`;
+  }).join('; ');
+}
+
 function getFirstSuiHexAddress(accounts?: readonly { address: string }[]): string | null {
   if (!accounts || accounts.length === 0) {
     return null;
@@ -81,6 +101,35 @@ function formatWalletDiagnostics(wallet: {
   return `Selected wallet: ${walletName}. Chains: ${chains}. Accounts: ${accounts}. Features: ${features}.`;
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        clearTimeout(timeoutId);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
+
+function normalizeWalletConnectError(error: unknown): Error {
+  const message = error instanceof Error ? error.message : String(error);
+  const lower = message.toLowerCase();
+
+  if (lower.includes('json-rpc: method call timeout') || (lower.includes('timeout') && lower.includes('connect'))) {
+    return new Error('Wallet connect timed out. Open/unlock your wallet extension and approve the request, then retry.');
+  }
+
+  return error instanceof Error ? error : new Error(message);
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -99,6 +148,7 @@ export default function RootLayout({
   const [availableWallets, setAvailableWallets] = React.useState<ReturnType<ReturnType<typeof getWallets>['get']>>([]);
   const [selectedWalletId, setSelectedWalletId] = React.useState<string>('');
   const [walletError, setWalletError] = React.useState<string | null>(null);
+  const [isNarrowScreen, setIsNarrowScreen] = React.useState(false);
 
   const NETWORKS = {
     testnet: { label: 'Sui Testnet', color: '#fbbf24', bg: '#78350f', badge: 'TESTNET' },
@@ -120,12 +170,13 @@ export default function RootLayout({
       }
 
       if (compatibleWallets.length === 0) {
-        const detected = connectableWallets.map((wallet) => wallet.name).join(', ') || 'none';
-        throw new Error(`No Sui-compatible wallet found. Detected wallets: ${detected}. Install or enable a Sui wallet account on testnet/mainnet.`);
+        const detected = formatDetectedWallets(connectableWallets);
+        throw new Error(`No Sui-compatible wallet account detected. Found wallet-standard providers: ${detected}. Install or enable a Sui wallet/account on testnet or mainnet.`);
       }
 
-      const savedWalletId = localStorage.getItem(LAST_WALLET_ID_KEY);
       const candidateWallets = compatibleWallets;
+
+      const savedWalletId = localStorage.getItem(LAST_WALLET_ID_KEY);
       const wallet = candidateWallets.find((item) => (item.id || item.name) === selectedWalletId)
         || candidateWallets.find((item) => (item.id || item.name) === savedWalletId)
         || candidateWallets[0];
@@ -140,9 +191,13 @@ export default function RootLayout({
 
       let output: { accounts: readonly { address: string }[] };
       try {
-        output = await connectFeature.connect();
+        output = await withTimeout(connectFeature.connect(), CONNECT_TIMEOUT_MS, 'Wallet connect');
       } catch {
-        output = await connectFeature.connect({ silent: false });
+        try {
+          output = await withTimeout(connectFeature.connect({ silent: false }), CONNECT_TIMEOUT_MS, 'Wallet connect');
+        } catch (error) {
+          throw normalizeWalletConnectError(error);
+        }
       }
       const accountAddress = getFirstSuiHexAddress(output.accounts)
         || getFirstSuiHexAddress(wallet.accounts as readonly { address: string }[] | undefined);
@@ -200,11 +255,6 @@ export default function RootLayout({
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
-  // Check if link is active
-  const isActive = (path: string) => {
-    return pathname === path ? '#0ea5e9' : '#cbd5e1';
-  };
-
   // Load wallet and network on mount if previously connected
   React.useEffect(() => {
     const registry = getWallets();
@@ -245,9 +295,7 @@ export default function RootLayout({
       }
 
       const wallet = registry.get().find((item) => (item.id || item.name) === savedWalletId);
-      if (!wallet
-        || !hasConnectFeature(wallet)
-        || !(hasSuiChain(wallet) || hasSuiAccountChain(wallet) || hasSuiFeature(wallet))) {
+      if (!wallet || !hasConnectFeature(wallet)) {
         localStorage.removeItem(LAST_WALLET_ID_KEY);
         localStorage.removeItem(LAST_WALLET_ADDRESS_KEY);
         return;
@@ -265,9 +313,9 @@ export default function RootLayout({
         setIsConnecting(true);
         let output: { accounts: readonly { address: string }[] };
         try {
-          output = await connectFeature.connect({ silent: true });
+          output = await withTimeout(connectFeature.connect({ silent: true }), CONNECT_TIMEOUT_MS, 'Wallet reconnect');
         } catch {
-          output = await connectFeature.connect();
+          output = await withTimeout(connectFeature.connect(), CONNECT_TIMEOUT_MS, 'Wallet reconnect');
         }
         const accountAddress = getFirstSuiHexAddress(output.accounts)
           || getFirstSuiHexAddress(wallet.accounts as readonly { address: string }[] | undefined)
@@ -304,6 +352,19 @@ export default function RootLayout({
   }, []);
 
   React.useEffect(() => {
+    const updateScreenMode = () => {
+      setIsNarrowScreen(window.innerWidth < 980);
+    };
+
+    updateScreenMode();
+    window.addEventListener('resize', updateScreenMode);
+
+    return () => {
+      window.removeEventListener('resize', updateScreenMode);
+    };
+  }, []);
+
+  React.useEffect(() => {
     const connectableWallets = availableWallets.filter((wallet) => hasConnectFeature(wallet));
     const compatibleWallets = availableWallets.filter((wallet) => hasConnectFeature(wallet)
       && (hasSuiChain(wallet) || hasSuiAccountChain(wallet) || hasSuiFeature(wallet)));
@@ -313,12 +374,12 @@ export default function RootLayout({
       return;
     }
 
+    const savedWalletId = localStorage.getItem(LAST_WALLET_ID_KEY) || '';
     if (compatibleWallets.length === 0) {
       setSelectedWalletId('');
       return;
     }
 
-    const savedWalletId = localStorage.getItem(LAST_WALLET_ID_KEY) || '';
     const candidateWallets = compatibleWallets;
     const nextSelected = candidateWallets.find((item) => (item.id || item.name) === savedWalletId)
       || candidateWallets.find((item) => (item.id || item.name) === selectedWalletId)
@@ -446,61 +507,10 @@ export default function RootLayout({
                 </Link>
 
                 {/* Navigation Links */}
-                <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-                  <CommandPalette />
+                <div style={{ display: 'flex', gap: '0.9rem', alignItems: 'center' }}>
+                  {!isNarrowScreen && <CommandPalette />}
 
                   <AgentInsightButton onClick={() => setShowInsightModal(true)} />
-
-                  <Link href="/markets" style={{
-                    color: isActive('/markets'),
-                    textDecoration: 'none',
-                    fontWeight: '500',
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    transition: 'color 0.2s',
-                  }}>
-                    Markets
-                  </Link>
-                  <Link href="/portfolio" style={{
-                    color: isActive('/portfolio'),
-                    textDecoration: 'none',
-                    fontWeight: '500',
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    transition: 'color 0.2s',
-                  }}>
-                    Portfolio
-                  </Link>
-                  <Link href="/leaderboard" style={{
-                    color: isActive('/leaderboard'),
-                    textDecoration: 'none',
-                    fontWeight: '500',
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    transition: 'color 0.2s',
-                  }}>
-                    Leaderboard
-                  </Link>
-                  <Link href="/help" style={{
-                    color: isActive('/help'),
-                    textDecoration: 'none',
-                    fontWeight: '500',
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    transition: 'color 0.2s',
-                  }}>
-                    Help
-                  </Link>
-                  <Link href="/resource-hub" style={{
-                    color: isActive('/resource-hub'),
-                    textDecoration: 'none',
-                    fontWeight: '500',
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    transition: 'color 0.2s',
-                  }}>
-                    Resource Hub
-                  </Link>
 
                   {/* Network Switcher */}
                   <div style={{ position: 'relative' }}>
@@ -602,7 +612,7 @@ export default function RootLayout({
 
                   {/* Wallet Button or Connected State */}
                   {!walletConnected ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '240px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: isNarrowScreen ? '190px' : '240px' }}>
                       {(suiConnectWallets.length > 1 || (suiConnectWallets.length === 0 && connectableWallets.length > 1)) && (
                         <select
                           value={selectedWalletId}
@@ -628,28 +638,33 @@ export default function RootLayout({
                         </select>
                       )}
 
-                      <button
-                        onClick={handleConnectWallet}
-                        disabled={isConnecting}
-                        title={connectableWallets.length === 0
-                          ? 'No wallet-standard wallet detected. Install/unlock wallet extension and click again.'
-                          : 'Connect wallet'}
-                        style={{
-                          padding: '0.6rem 1.5rem',
-                          background: 'linear-gradient(135deg, #0ea5e9, #06b6d4)',
-                          color: 'white',
-                          borderRadius: '0.375rem',
-                          border: 'none',
-                          fontWeight: '600',
-                          cursor: isConnecting ? 'not-allowed' : 'pointer',
-                          fontSize: '0.9rem',
-                          transition: 'all 0.2s',
-                          boxShadow: '0 4px 15px rgba(6, 182, 212, 0.2)',
-                          opacity: isConnecting ? 0.7 : 1,
-                        }}
-                      >
-                        {isConnecting ? '🔗 Connecting...' : connectableWallets.length === 0 ? 'Install Wallet' : '💼 Connect Wallet'}
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.42rem', alignItems: 'center' }}>
+                        <button
+                          onClick={handleConnectWallet}
+                          disabled={isConnecting}
+                          title={connectableWallets.length === 0
+                            ? 'No wallet-standard wallet detected. Install/unlock wallet extension and click again.'
+                            : 'Connect wallet'}
+                          style={{
+                            padding: '0.6rem 1.5rem',
+                            background: 'linear-gradient(135deg, #0ea5e9, #06b6d4)',
+                            color: 'white',
+                            borderRadius: '0.375rem',
+                            border: 'none',
+                            fontWeight: '600',
+                            cursor: isConnecting ? 'not-allowed' : 'pointer',
+                            fontSize: '0.9rem',
+                            transition: 'all 0.2s',
+                            boxShadow: '0 4px 15px rgba(6, 182, 212, 0.2)',
+                            opacity: isConnecting ? 0.7 : 1,
+                            flex: isNarrowScreen ? 1 : undefined,
+                          }}
+                        >
+                          {isConnecting ? '🔗 Connecting...' : connectableWallets.length === 0 ? 'Install Wallet' : '💼 Connect Wallet'}
+                        </button>
+
+                        {isNarrowScreen && <CommandPalette compact />}
+                      </div>
 
                       {walletError && (
                         <div style={{ fontSize: '0.75rem', color: '#fca5a5', backgroundColor: '#7f1d1d33', border: '1px solid #7f1d1d', borderRadius: '0.375rem', padding: '0.4rem 0.55rem' }}>
@@ -658,7 +673,9 @@ export default function RootLayout({
                       )}
                     </div>
                   ) : (
-                    <div style={{ position: 'relative' }}>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.42rem' }}>
+                      {isNarrowScreen && <CommandPalette compact />}
+
                       <button
                         onClick={() => setShowWalletMenu(!showWalletMenu)}
                         style={{
@@ -782,6 +799,7 @@ export default function RootLayout({
                   )}
                 </div>
               </nav>
+
             </header>
 
             {/* Main Content */}

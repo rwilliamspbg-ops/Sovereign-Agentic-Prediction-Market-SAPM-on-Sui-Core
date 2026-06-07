@@ -16,6 +16,7 @@ type PaletteAction = {
 
 interface CommandPaletteProps {
   actions?: PaletteAction[];
+  compact?: boolean;
 }
 
 type RankedAction = { action: PaletteAction; score: number };
@@ -205,7 +206,7 @@ const createDefaultActions = (
   return base;
 };
 
-export function CommandPalette({ actions }: CommandPaletteProps) {
+export function CommandPalette({ actions, compact = false }: CommandPaletteProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
@@ -373,25 +374,36 @@ export function CommandPalette({ actions }: CommandPaletteProps) {
         type="button"
         onClick={() => setIsOpen(true)}
         style={{
-          minHeight: '44px',
-          padding: '0.45rem 0.8rem',
+          minHeight: compact ? '40px' : '44px',
+          minWidth: compact ? '40px' : undefined,
+          padding: compact ? '0.42rem 0.6rem' : '0.48rem 0.95rem',
           borderRadius: '0.5rem',
-          border: '1px solid #334155',
-          backgroundColor: '#111827',
-          color: '#94a3b8',
+          border: '1px solid #0ea5e9',
+          background: 'linear-gradient(135deg, rgba(14,165,233,0.16), rgba(6,182,212,0.12))',
+          color: '#dbeafe',
           cursor: 'pointer',
-          fontSize: '0.8rem',
+          fontSize: compact ? '0.78rem' : '0.82rem',
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
           letterSpacing: '0.02em',
+          boxShadow: '0 0 0 1px rgba(14, 165, 233, 0.18), 0 8px 22px rgba(14, 165, 233, 0.18)',
+          fontWeight: 700,
         }}
         title="Open command palette"
       >
-        <span style={{ fontSize: '0.72rem', border: '1px solid #334155', borderRadius: '0.25rem', padding: '0.1rem 0.3rem' }}>
-          ⌘K
-        </span>
-        <span>Commands</span>
+        {compact ? (
+          <span style={{ fontSize: '0.74rem', color: '#7dd3fc', fontWeight: 800, letterSpacing: '0.04em' }}>
+            K
+          </span>
+        ) : (
+          <>
+            <span style={{ fontSize: '0.72rem', border: '1px solid #0ea5e9', borderRadius: '0.25rem', padding: '0.1rem 0.3rem', color: '#7dd3fc' }}>
+              Ctrl/Cmd K
+            </span>
+            <span>Open Commands</span>
+          </>
+        )}
       </button>
 
       {isOpen && (
