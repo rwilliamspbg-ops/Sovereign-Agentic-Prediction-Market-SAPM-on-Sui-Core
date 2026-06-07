@@ -9,6 +9,8 @@
     "test:orchestrator:experimental": "npm --prefix agents/orchestrator test 2>/dev/null || echo '⚠️  Orchestrator tests in progress'",
     "test:all": "npm run test:trader && npm run test:aggregator",
     "test:e2e": "jest test/e2e --testTimeout=10000",
+    "test:chaos": "node scripts/chaos_trading_scenarios.js",
+    "test:load": "node scripts/load_test_trading.js",
     "check:frontend:prod": "bash scripts/frontend_production_gate.sh",
     "bench:aggregator": "node scripts/benchmark_aggregator.js",
     "lint": "eslint agents --ext .js",
