@@ -13,7 +13,7 @@ module 0x0::registry {
 
     /// Create and publish a shared `PubkeyRegistry` object. Returns nothing;
     /// the published object will be visible on-chain and can be queried by object id.
-    public entry fun init_registry(ctx: &mut TxContext) {
+    public fun init_registry(ctx: &mut TxContext) {
         let id = object::new(ctx);
         let v: vector<vector<u8>> = vector[];
         transfer::share_object(PubkeyRegistry { id, pubkeys: v });

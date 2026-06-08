@@ -57,7 +57,7 @@ module 0x0::incentives {
     }
 
     /// Initialize reputation registry
-    public entry fun init_reputation_registry(ctx: &mut TxContext) {
+    public fun init_reputation_registry(ctx: &mut TxContext) {
         let registry = ReputationRegistry {
             id: object::new(ctx),
             total_agents: 0,
@@ -69,7 +69,7 @@ module 0x0::incentives {
 
     /// Agent stakes SUI to become a predictor
     /// Minimum stake: 1 SUI (1_000_000_000 MIST)
-    public entry fun stake(
+    public fun stake(
         amount: Coin<SUI>,
         registry: &mut ReputationRegistry,
         ctx: &mut TxContext
@@ -92,7 +92,7 @@ module 0x0::incentives {
         event::emit(AgentStaked {
             agent: tx_context::sender(ctx),
             amount: amount_val,
-            timestamp: tx_context::epoch_timestamp(ctx),
+            timestamp: tx_context::epoch_timestamp_ms(ctx),
         });
 
         transfer::share_object(agent_stake);
@@ -138,13 +138,13 @@ module 0x0::incentives {
             agent: stake.agent,
             slash_amount,
             reason,
-            timestamp: tx_context::epoch_timestamp(ctx),
+            timestamp: tx_context::epoch_timestamp_ms(ctx),
         });
     }
 
     /// Reward an agent for honest reporting
     /// Adds to stake and increases reputation
-    public entry fun reward_honest_agent(
+    public fun reward_honest_agent(
         stake: &mut AgentStake,
         reward: Coin<SUI>,
         registry: &mut ReputationRegistry,
@@ -171,7 +171,7 @@ module 0x0::incentives {
             agent: stake.agent,
             reward_amount: reward_val,
             reputation_gained: reputation_gain,
-            timestamp: tx_context::epoch_timestamp(ctx),
+            timestamp: tx_context::epoch_timestamp_ms(ctx),
         });
     }
 
@@ -179,9 +179,10 @@ module 0x0::incentives {
     public fun record_report(
         stake: &mut AgentStake,
         was_correct: bool,
-        registry: &mut ReputationRegistry,
-        ctx: &mut TxContext
+        _registry: &mut ReputationRegistry,
+        _ctx: &mut TxContext
     ) {
+        let old_reputation = stake.reputation;
         stake.total_reports = stake.total_reports + 1;
         
         if (was_correct) {
@@ -194,6 +195,13 @@ module 0x0::incentives {
             } else {
                 stake.reputation + accuracy_bonus
             };
+
+            event::emit(ReputationUpdated {
+                agent: stake.agent,
+                old_reputation,
+                new_reputation: stake.reputation,
+                change_reason: b"accurate_report",
+            });
         } else {
             // Penalty for inaccuracy
             let accuracy_penalty = 5;
@@ -202,6 +210,13 @@ module 0x0::incentives {
             } else {
                 0
             };
+
+            event::emit(ReputationUpdated {
+                agent: stake.agent,
+                old_reputation,
+                new_reputation: stake.reputation,
+                change_reason: b"inaccurate_report",
+            });
         }
     }
 
@@ -234,7 +249,7 @@ module 0x0::incentives {
     }
 
     /// Unstake (requires minimum reputation of 50)
-    public entry fun unstake(
+    public fun unstake(
         stake: AgentStake,
         ctx: &mut TxContext
     ) {
