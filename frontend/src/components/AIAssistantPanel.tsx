@@ -1,18 +1,7 @@
 'use client';
 
 import React from 'react';
-import dynamic from 'next/dynamic';
 import { useAgentState, useMarketActions } from '@/hooks/useAgentState';
-
-const CopilotChat = dynamic(async () => {
-  try {
-    const mod = await import('@copilotkit/react-ui');
-    const Component = (mod as { CopilotChat?: React.ComponentType<Record<string, unknown>> }).CopilotChat;
-    return Component || (() => <div className="copilot-fallback">Copilot chat is unavailable in this build.</div>);
-  } catch {
-    return () => <div className="copilot-fallback">Copilot chat failed to load.</div>;
-  }
-}, { ssr: false });
 
 export default function AIAssistantPanel() {
   const { systemHealth, simulationResult, densityMode, advancedMetrics } = useAgentState('all');
@@ -23,7 +12,11 @@ export default function AIAssistantPanel() {
     <section className="assistant-panel">
       <h3>AI Co-Pilot Assistant</h3>
       <div className="chat-shell">
-        <CopilotChat />
+        <div className="copilot-fallback">
+          <strong>Copilot assistant shell</strong>
+          <p>Local dashboard mode is active. The live Copilot UI package is temporarily disabled in this stack because its transitive ESM dependency path fails Next.js compilation here.</p>
+          <p>System health, simulation, and rationale surfaces remain available for dashboard validation.</p>
+        </div>
       </div>
 
       <hr className="assistant-divider" />
