@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapm.sui/schemas/canonical-envelope.v1.schema.json",
+  "title": "SAPM Canonical Envelope V1",
+  "description": "Single source-of-truth envelope for all cross-layer SAPM payloads.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "payloadType",
+    "messageId",
+    "timestamp",
+    "source",
+    "correlationId",
+    "payload"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "payloadType": {
+      "type": "string",
+      "enum": [
+        "agent_intention",
+        "market_snapshot",
+        "execution_receipt",
+        "risk_signal"
+      ]
+    },
+    "messageId": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 128
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["service", "layer"],
+      "properties": {
+        "service": {
+          "type": "string",
+          "minLength": 1
+        },
+        "layer": {
+          "type": "string",
+          "enum": ["rust_datapath", "move_chain", "python_agent", "next_ui", "orchestrator"]
+        },
+        "instance": {
+          "type": "string"
+        }
+      }
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128
+    },
+    "signature": {
+      "type": "string",
+      "description": "Detached signature for authenticated envelopes (optional during local dev)."
+    },
+    "payload": {
+      "type": "object"
+    }
+  }
+}

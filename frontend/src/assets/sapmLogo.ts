@@ -1,0 +1,1 @@
+export const SAPM_LOGO = '/sapm-logo.svg';

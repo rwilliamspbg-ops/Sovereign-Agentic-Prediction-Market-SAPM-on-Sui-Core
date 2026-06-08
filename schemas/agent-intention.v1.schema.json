@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapm.sui/schemas/agent-intention.v1.schema.json",
+  "title": "SAPM Agent Intention Payload V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "intentId",
+    "marketId",
+    "intentType",
+    "confidence",
+    "constraints",
+    "proposedAction",
+    "explainability"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "intentId": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 128
+    },
+    "marketId": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{1,64}$"
+    },
+    "intentType": {
+      "type": "string",
+      "enum": ["forecast", "rebalance", "trade_plan", "risk_block"]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "confidenceInterval95": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lower", "upper"],
+      "properties": {
+        "lower": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "upper": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxNotionalSui", "requiresHumanApproval", "maxSlippageBps"],
+      "properties": {
+        "maxNotionalSui": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "requiresHumanApproval": {
+          "type": "boolean"
+        },
+        "maxSlippageBps": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        }
+      }
+    },
+    "proposedAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["side", "sizeSui", "limitPrice"],
+      "properties": {
+        "side": {
+          "type": "string",
+          "enum": ["yes", "no"]
+        },
+        "sizeSui": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "limitPrice": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "explainability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rationale", "toolTrace"],
+      "properties": {
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "toolTrace": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "maxItems": 64
+        }
+      }
+    }
+  }
+}

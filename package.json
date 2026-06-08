@@ -11,6 +11,7 @@
     "test:e2e": "jest test/e2e --testTimeout=10000",
     "test:chaos": "node scripts/chaos_trading_scenarios.js",
     "test:load": "node scripts/load_test_trading.js",
+    "check:schemas": "node scripts/validate_canonical_schemas.js",
     "check:frontend:prod": "bash scripts/frontend_production_gate.sh",
     "bench:aggregator": "node scripts/benchmark_aggregator.js",
     "lint": "eslint agents --ext .js",

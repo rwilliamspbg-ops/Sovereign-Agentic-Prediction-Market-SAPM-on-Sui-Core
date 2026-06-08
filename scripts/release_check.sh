@@ -31,6 +31,9 @@ npm run lint
 echo "[release-check] Running core tests..."
 npm run test:all
 
+echo "[release-check] Validating canonical schemas..."
+npm run check:schemas
+
 echo "[release-check] Running e2e tests..."
 npm run test:e2e
 

@@ -1,0 +1,1 @@
+export const SUI_LOGO = '/sui-logo.svg';

@@ -1,0 +1,7 @@
+<svg width="90" height="24" viewBox="0 0 90 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dbTitle dbDesc">
+  <title id="dbTitle">DeepBook Logo</title>
+  <desc id="dbDesc">DeepBook text logo</desc>
+  <rect x="1" y="3" width="18" height="18" rx="5" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+  <path d="M6 9h5a3 3 0 010 6H6V9z" fill="#7dd3fc"/>
+  <text x="24" y="16" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="11" font-weight="700" fill="#bae6fd">DEEPBOOK</text>
+</svg>
