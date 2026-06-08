@@ -1,6 +1,6 @@
 # SAPM Production Status
 
-Last updated: 2026-06-07
+Last updated: 2026-06-08
 Scope: repository-level code, frontend runtime behavior, and command verification
 
 ## Executive Summary
@@ -27,7 +27,7 @@ Overall readiness classification: IMPLEMENTED / RELEASE-GATE GREEN (WITH KNOWN W
 - npm run release:check
   - full gate passes end-to-end.
 - npm run test:all
-  - trader and aggregator suites pass.
+  - all five runners pass: trader (5), aggregator (33), orchestrator (109), logger (3), deepbook-bridge (9) — 159 tests total, 0 failures.
 - npm run test:e2e
   - root e2e suite passes.
 - npm run lint
@@ -45,16 +45,16 @@ Overall readiness classification: IMPLEMENTED / RELEASE-GATE GREEN (WITH KNOWN W
 | Frontend runtime and wallet flow | Beta+ | Wallet/session validation and loading/error fallbacks are present |
 | Trader pipeline | Beta+ | Logic implemented and validated in gate tests |
 | Aggregator and reputation | Beta+ | Aggregation and reputation tests pass in gate path |
-| Orchestrator | Alpha/Beta mix | Contains explicit placeholder security and attestation paths |
+| Orchestrator | Beta | Core tests pass (109 total); TEE attestation and security paths still have placeholder branches |
 | Risk controls | Alpha | File-level implementation present; end-to-end hardening pending |
 | Move contracts | Alpha/Beta mix | Source modules present; on-chain deployment not verified here |
-| Formal verification artifacts | Alpha | Artifacts present; production proof coverage not validated here |
+| Formal verification artifacts | Beta | 13 closed Lean 4 proofs (zero sorry); open obligations tracked in formal_verification/OBLIGATIONS.md |
 
 ## Key Risks
 
 1. Warning debt risk: lint warnings remain and can mask higher-signal issues over time.
 2. Placeholder risk: unresolved scaffold logic in security-sensitive orchestrator flows.
-3. Release confidence risk: orchestrator tests are still marked experimental/non-blocking.
+3. Release confidence risk: orchestrator tests are now fully gated (promoted from experimental in PR #37).
 4. Operational risk: deployment hardening and chain-level verification still need dedicated validation.
 5. Frontend integration risk: real wallet availability still depends on the browser extension environment, even though the UI now fails gracefully.
 

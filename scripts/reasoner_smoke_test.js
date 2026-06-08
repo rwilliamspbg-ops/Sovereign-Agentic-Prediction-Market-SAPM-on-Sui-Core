@@ -80,10 +80,10 @@ async function run() {
   await testMalformedResponseGuard();
   await testAccuracyStoragePath();
   await testRateLimiterThrottle();
-  console.log('Reasoner smoke checks passed.');
+  process.stdout.write(JSON.stringify({ts: new Date().toISOString(), level:'info', component:'reasoner-smoke', message:'Reasoner smoke checks passed.'}) + '\n');
 }
 
 run().catch((error) => {
-  console.error('Reasoner smoke checks failed:', error.message);
+  process.stderr.write(JSON.stringify({ts: new Date().toISOString(), level:'error', component:'reasoner-smoke', message:'Reasoner smoke checks failed.', data:{err: String(error.message)}}) + '\n');
   process.exit(1);
 });
