@@ -32,6 +32,22 @@ Every artifact is independently verifiable:
 - Transaction: `https://suiscan.xyz/testnet/tx/<digest>`
 - Walrus blob: `https://aggregator.walrus-testnet.walrus.space/v1/blobs/<blobId>`
 
+## Expected output examples
+
+Use these as format references when validating your run:
+
+```text
+Trade submitted: digest=E7x5C8wP1A6n7Lk9f2P3mV4rQ8zY1hJ6tU2dN5sK3bQ
+Explorer URL: https://suiscan.xyz/testnet/tx/E7x5C8wP1A6n7Lk9f2P3mV4rQ8zY1hJ6tU2dN5sK3bQ
+
+Walrus publish: blobId=9f4f3e65f8bd1d2c2e9f0ab4c0f7a8b9d3c4e5f6a7b8c9d0e1f2a3b4c5d6e7f
+Walrus readback: https://aggregator.walrus-testnet.walrus.space/v1/blobs/9f4f3e65f8bd1d2c2e9f0ab4c0f7a8b9d3c4e5f6a7b8c9d0e1f2a3b4c5d6e7f
+```
+
+If your values differ, that is expected. Verify shape and resolvability:
+- digest resolves on Sui explorer
+- blob ID resolves on Walrus aggregator endpoint
+
 ## Judge Script
 
 Click **Open Judge Script** in the app for a 3-minute timestamped speaking scaffold.
