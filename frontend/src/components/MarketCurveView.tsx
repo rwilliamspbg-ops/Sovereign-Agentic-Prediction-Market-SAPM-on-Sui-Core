@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useAgentState, useMarketActions } from '@/hooks/useAgentState';
-import { useTradeExecution, type TradeLifecycleStage } from '@/components/TradeExecution';
+import { getTradePreflightIssues, useTradeExecution, type TradeLifecycleStage } from '@/components/TradeExecution';
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -89,7 +89,7 @@ export default function MarketCurveView() {
     refreshMarketData,
     clearDivergenceAlert,
   } = useMarketActions();
-  const { executeTrade, lastTransactionDigest, lastTransactionNetwork } = useTradeExecution();
+  const { executeTrade, addToast, lastTransactionDigest, lastTransactionNetwork } = useTradeExecution();
   const [stakeAmount, setStakeAmount] = useState<number>(10);
   const [selectedOutcome, setSelectedOutcome] = useState<string>('Outcome A');
   const [hoveredOutcome, setHoveredOutcome] = useState<string | null>(null);
@@ -263,6 +263,17 @@ export default function MarketCurveView() {
                 const selected = marketData.outcomes.find((outcome) => outcome.name === selectedOutcome) || marketData.outcomes[0];
                 const impliedPrice = clamp(1 / Math.max(selected.odds, 1.01), 0.01, 0.99);
                 const tradeSide = selectedOutcome === marketData.outcomes[0]?.name ? 'yes' : 'no';
+                const preflightIssues = getTradePreflightIssues(marketData.id);
+
+                if (preflightIssues.length > 0) {
+                  addToast(preflightIssues[0], 'error');
+                  setTxPhase('failed');
+                  setIsStakeFlowActive(false);
+                  window.setTimeout(() => {
+                    setTxPhase('idle');
+                  }, 2200);
+                  return;
+                }
 
                 setTxPhase('approval');
                 setTxTimeline([{ phase: 'approval', ts: Date.now() }]);

@@ -111,7 +111,7 @@ services:
     command: sh -c "find .next -mindepth 1 -maxdepth 1 -exec rm -rf {} + || true; npm run dev"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost
-      - NEXT_PUBLIC_SUI_RPC=${SUI_RPC:-http://localhost:9000}
+      - NEXT_PUBLIC_SUI_RPC=${SUI_RPC:-https://fullnode.testnet.sui.io:443}
     restart: unless-stopped
 
 volumes:

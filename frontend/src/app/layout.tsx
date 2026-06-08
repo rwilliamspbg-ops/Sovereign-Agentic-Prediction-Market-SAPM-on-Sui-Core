@@ -10,7 +10,8 @@ import { CopilotOpsPanel } from '@/components/a2ui/CopilotOpsPanel';
 import { SUI_PACKAGE_ID, SUISCAN_PACKAGE_URL } from '@/lib/sui-config';
 const LAST_WALLET_ID_KEY = 'walletId';
 const LAST_WALLET_ADDRESS_KEY = 'walletAddress';
-const CONNECT_TIMEOUT_MS = 15000;
+const CONNECT_TIMEOUT_MS = 30000;
+const SILENT_CONNECT_TIMEOUT_MS = 5000;
 
 function isValidSuiHexAddress(value: string | null | undefined): boolean {
   if (!value) {
@@ -172,13 +173,9 @@ export default function RootLayout({
 
       let output: { accounts: readonly { address: string }[] };
       try {
-        output = await withTimeout(connectFeature.connect(), CONNECT_TIMEOUT_MS, 'Wallet connect');
-      } catch {
-        try {
-          output = await withTimeout(connectFeature.connect({ silent: false }), CONNECT_TIMEOUT_MS, 'Wallet connect');
-        } catch (error) {
-          throw normalizeWalletConnectError(error);
-        }
+        output = await withTimeout(connectFeature.connect({ silent: false }), CONNECT_TIMEOUT_MS, 'Wallet connect');
+      } catch (error) {
+        throw normalizeWalletConnectError(error);
       }
       const accountAddress = getFirstSuiHexAddress(output.accounts)
         || getFirstSuiHexAddress(wallet.accounts as readonly { address: string }[] | undefined);
@@ -274,13 +271,15 @@ export default function RootLayout({
 
       try {
         setIsConnecting(true);
-        let output: { accounts: readonly { address: string }[] };
+        let output: { accounts: readonly { address: string }[] } | null = null;
         try {
-          output = await withTimeout(connectFeature.connect({ silent: true }), CONNECT_TIMEOUT_MS, 'Wallet reconnect');
+          // Reconnect should never force an interactive approval prompt.
+          // If silent reconnect fails, keep state disconnected and wait for user click.
+          output = await withTimeout(connectFeature.connect({ silent: true }), SILENT_CONNECT_TIMEOUT_MS, 'Wallet reconnect');
         } catch {
-          output = await withTimeout(connectFeature.connect(), CONNECT_TIMEOUT_MS, 'Wallet reconnect');
+          output = null;
         }
-        const accountAddress = getFirstSuiHexAddress(output.accounts)
+        const accountAddress = getFirstSuiHexAddress(output?.accounts)
           || getFirstSuiHexAddress(wallet.accounts as readonly { address: string }[] | undefined)
           || (isValidSuiHexAddress(savedAddress) ? savedAddress : null);
         if (accountAddress && isValidSuiHexAddress(accountAddress)) {
