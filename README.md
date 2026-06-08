@@ -6,13 +6,13 @@
 [![Stack Validation](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci_validation.yml?branch=main&style=for-the-badge&logo=docker&logoColor=white&label=Stack%20Validation)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci_validation.yml)
 [![Lean Verification](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/lean-verification.yml?branch=main&style=for-the-badge&logo=leanpub&logoColor=white&label=Lean%20Verification)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/lean-verification.yml)
 
-**Platform**
+## Platform
 
 [![Node >=18](https://img.shields.io/badge/Node-%3E%3D18-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](package.json)
 [![Sui Testnet](https://img.shields.io/badge/Sui-Testnet-6fbcf0?style=for-the-badge&logo=sui&logoColor=0b1f3a)](https://docs.sui.io)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-D22128?style=for-the-badge&logo=apache&logoColor=white)](LICENSE.md)
 
-**Repository Health**
+## Repository Health
 
 [![Last Commit](https://img.shields.io/github/last-commit/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/commits/main)
 [![Contributors](https://img.shields.io/github/contributors/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/graphs/contributors)
@@ -21,6 +21,31 @@
 [![Open Issues](https://img.shields.io/github/issues/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/issues)
 [![Open PRs](https://img.shields.io/github/issues-pr/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/pulls)
 [![Repo Size](https://img.shields.io/github/repo-size/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core)
+[![Live Testnet Verified](https://img.shields.io/badge/Live%20Testnet-Verified-00A86B?style=for-the-badge&logo=sui&logoColor=white)](#verified-live-deployment-sui-testnet)
+
+## Verified Live Deployment (Sui Testnet)
+
+> **Verified live deployment on Sui testnet with full tx artifacts.**
+
+| Artifact | Value | Explorer |
+|---|---|---|
+| Faucet transfer digest | `6UiX2pc2kRPAY7e3nJ7o4wjK2QZJaQaAsJtEExgNuyfD` | https://suiexplorer.com/txblock/6UiX2pc2kRPAY7e3nJ7o4wjK2QZJaQaAsJtEExgNuyfD?network=testnet |
+| Publish digest | `EqyVmTFegJVTSkLmf2v2VMC8o1cz17dKSGtQKjTuBwak` | https://suiexplorer.com/txblock/EqyVmTFegJVTSkLmf2v2VMC8o1cz17dKSGtQKjTuBwak?network=testnet |
+| Package ID | `0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188` | https://suiexplorer.com/object/0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188?network=testnet |
+| init_registry digest | `AsXALc619zQEBmTc9sf9d1LbQnhDqEYozimnP6D1AwxL` | https://suiexplorer.com/txblock/AsXALc619zQEBmTc9sf9d1LbQnhDqEYozimnP6D1AwxL?network=testnet |
+| Shared registry object ID | `0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee` | https://suiexplorer.com/object/0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee?network=testnet |
+| add_key digest | `CKyf9c453r5t6asfGaabbgNCpCgUktW7rEgrNZjtzCwy` | https://suiexplorer.com/txblock/CKyf9c453r5t6asfGaabbgNCpCgUktW7rEgrNZjtzCwy?network=testnet |
+
+Post-mutation verification:
+- `pubkeys` includes `AQIDBA==` (bytes `[1,2,3,4]`) on testnet.
+
+Use these values in `frontend/.env.local`:
+
+```bash
+NEXT_PUBLIC_SUI_PACKAGE_ID=0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188
+NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS=0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee
+NEXT_PUBLIC_SUI_NETWORK=testnet
+```
 
 [![Video: Click thumbnail to play](https://img.youtube.com/vi/CEEmdBJklB0/hqdefault.jpg)](https://www.youtube.com/watch?v=CEEmdBJklB0)
 
@@ -214,6 +239,7 @@ Copy `.env.example` to `frontend/.env.local` and fill in:
 | `NEXT_PUBLIC_SUI_PACKAGE_ID` | Deployed Move package address |
 | `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` | Comma-separated on-chain market object IDs |
 | `NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID` | DeepBook Predict package ID (testnet) |
+| `NEXT_PUBLIC_ENABLE_BLIND_SIGNING_FALLBACK` | Optional: set `true` to allow `signTransaction` fallback for wallets requiring blind-signing mode |
 | `NEXT_PUBLIC_WALRUS_AGGREGATOR_URL` | Walrus aggregator endpoint |
 | `NEXT_PUBLIC_WALRUS_PUBLISHER_URL` | Walrus publisher endpoint |
 | `NEXT_PUBLIC_SUI_NETWORK` | `testnet` or `mainnet` |

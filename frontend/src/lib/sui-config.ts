@@ -1,9 +1,9 @@
-export const SUI_PACKAGE_ID = '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
-export const SUI_NETWORK = 'testnet';
+export const SUI_PACKAGE_ID = process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
+export const SUI_NETWORK = process.env.NEXT_PUBLIC_SUI_NETWORK || 'testnet';
 
 export const SUISCAN_PACKAGE_URL = `https://suiscan.xyz/${SUI_NETWORK}/object/${SUI_PACKAGE_ID}`;
 
-export const DEEPBOOK_PREDICT_PACKAGE_ID = process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID || SUI_PACKAGE_ID;
+export const DEEPBOOK_PREDICT_PACKAGE_ID = process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID || '';
 export const DEEPBOOK_SANDBOX_URL = 'https://github.com/MystenLabs/deepbook-sandbox';
 
 export const WALRUS_AGGREGATOR_URL = process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL || 'https://aggregator.walrus-testnet.walrus.space';
@@ -22,7 +22,7 @@ export const SUI_RESOURCE_HUB: ResourceCategory[] = [
     links: [
       { label: 'Founder Starter Pack', url: 'https://www.sui.io/founder-starter-pack' },
       { label: 'Sui Docs', url: 'https://docs.sui.io/' },
-      { label: 'Mysten TypeScript SDK', url: 'https://sdk.mystenlabs.com/' },
+      { label: 'Mysten TypeScript SDK', url: 'https://sdk.mystenlabs.com/sui' },
       { label: 'Awesome Sui', url: 'https://github.com/sui-foundation/awesome-sui' },
       { label: 'Sui Move Bootcamp', url: 'https://github.com/MystenLabs/sui-move-bootcamp' },
       { label: 'Sui Pilot', url: 'https://github.com/contract-hero/sui-pilot' },

@@ -8,6 +8,9 @@ const LAST_WALLET_ADDRESS_KEY = 'walletAddress';
 const CONNECT_TIMEOUT_MS = 30000;
 const SILENT_CONNECT_TIMEOUT_MS = 5000;
 const SIGN_TIMEOUT_MS = 60000;
+const ENABLE_BLIND_SIGNING_FALLBACK = ['1', 'true', 'yes'].includes(
+  String(process.env.NEXT_PUBLIC_ENABLE_BLIND_SIGNING_FALLBACK || '').toLowerCase()
+);
 
 type WalletLike = ReturnType<ReturnType<typeof getWallets>['get']>[number];
 type WalletAccount = WalletLike['accounts'][number];
@@ -232,7 +235,7 @@ export async function signAndExecuteWalletTransaction(context: WalletExecutionCo
     }
   }
 
-  if (!result) {
+  if (!result && ENABLE_BLIND_SIGNING_FALLBACK) {
     const signFeature = context.wallet.features['sui:signTransaction'] as
       | {
           signTransaction?: (input: { account: WalletAccount; chain: string; transaction: Transaction }) => Promise<{
@@ -282,10 +285,19 @@ export async function signAndExecuteWalletTransaction(context: WalletExecutionCo
     }
   }
 
+  if (!result && !ENABLE_BLIND_SIGNING_FALLBACK) {
+    const signFeature = context.wallet.features['sui:signTransaction'] as { signTransaction?: unknown } | undefined;
+    if (typeof signFeature?.signTransaction === 'function') {
+      lastExecutionError = new Error(
+        'Wallet exposes signTransaction but blind-signing fallback is disabled. Enable blind signing in wallet settings or set NEXT_PUBLIC_ENABLE_BLIND_SIGNING_FALLBACK=true to allow signTransaction + RPC execution fallback.'
+      );
+    }
+  }
+
   if (!result?.digest) {
     const featureList = Object.keys(context.wallet.features || {}).join(', ');
     const detail = lastExecutionError instanceof Error ? ` Last error: ${lastExecutionError.message}` : '';
-    throw new Error(`Wallet execution failed. Unlock/foreground your wallet extension and approve the request. Ensure wallet supports sign-and-execute for Sui. Available features: ${featureList || 'none'}.${detail}`);
+    throw new Error(`Wallet execution failed. Unlock/foreground your wallet extension and approve the request. Ensure wallet supports sui:signAndExecuteTransaction (or legacy sui:signAndExecuteTransactionBlock). If wallet only supports signTransaction, enable wallet blind signing and set NEXT_PUBLIC_ENABLE_BLIND_SIGNING_FALLBACK=true. Available features: ${featureList || 'none'}.${detail}`);
   }
 
   return result;
