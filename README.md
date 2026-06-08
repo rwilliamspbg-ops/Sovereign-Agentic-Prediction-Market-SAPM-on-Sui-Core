@@ -9,9 +9,47 @@
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=CEEmdBJklB0" target="_blank" rel="noopener noreferrer">
-    <img src="https://img.youtube.com/vi/CEEmdBJklB0/maxresdefault.jpg" alt="Watch SAPM demo video" width="800" />
+    <img src="https://img.youtube.com/vi/CEEmdBJklB0/hqdefault.jpg" alt="SAPM demo video thumbnail with play overlay" width="800" />
   </a>
 </p>
+
+<p align="center"><strong>Video:</strong> Click thumbnail to play</p>
+
+## Demo — Watch This First
+
+1. Open the app and connect a Sui wallet.
+2. Paste a market object ID and click **Run Judge Mode**.
+3. Verify outputs: Sui transaction digest + Walrus blob readback.
+
+## Architecture At A Glance
+
+| Layer | Responsibility | Primary Paths |
+|---|---|---|
+| Frontend | Wallet connect, judge flow, trade execution UI | `frontend/src/app/`, `frontend/src/components/` |
+| Agent Plane | Discovery, forecasting, orchestration, consensus | `agents/trader/`, `agents/aggregator/`, `agents/orchestrator/` |
+| On-chain Core | Registry, incentives, reputation, slashing | `agents/onchain-registry/` |
+| Market Data + Execution | DeepBook integration and PTB execution | `frontend/src/services/sui/deepbook-service.ts`, `frontend/src/components/trading/TradeExecution.tsx` |
+| Verifiable Storage | Snapshot archival and retrieval | `frontend/src/services/sui/walrus-service.ts` |
+| Formal Methods | Safety, liveness, aggregation, PQC proofs | `formal_verification/` |
+
+## Verification And Security Artifacts
+
+- [Security Audit Report](docs/SECURITY_AUDIT_REPORT.md)
+- [Threat Model](docs/THREAT_MODEL.md)
+- [Formal Verification README](formal_verification/README.md)
+- [Proof Obligations Tracker](formal_verification/OBLIGATIONS.md)
+
+## Judge Quickstart (Copy/Paste)
+
+```bash
+cd frontend
+npm ci
+cp ../.env.example .env.local
+# edit frontend/.env.local with deployed IDs
+npm run dev
+```
+
+Then open `http://localhost:3000`, connect wallet, paste market object ID, and run Judge Mode.
 
 ---
 
