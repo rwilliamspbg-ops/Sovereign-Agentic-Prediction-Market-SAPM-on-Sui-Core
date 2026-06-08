@@ -93,6 +93,18 @@ jobs:
           helm lint --strict production-deployment-manifests/helm/sapm-aggregator
           helm template sapm-aggregator production-deployment-manifests/helm/sapm-aggregator > /tmp/sapm-aggregator-rendered.yaml
 
+  move-api-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Block deprecated Sui Move timestamp API usage
+        run: |
+          if rg -n "tx_context::epoch_timestamp\(" agents/onchain-registry/sources/*.move; then
+            echo "Deprecated API found: use tx_context::epoch_timestamp_ms(ctx) instead."
+            exit 1
+          fi
+          echo "Move timestamp API lint passed."
+
   resilience-tests:
     runs-on: ubuntu-latest
     continue-on-error: ${{ vars.RESILIENCE_GATING != 'true' }}
