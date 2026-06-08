@@ -79,6 +79,7 @@ class ForecastReasoner extends EventEmitter {
     
     // Memory for historical accuracy tracking
     this.forecastHistory = new Map(); // marketId -> array of past forecasts
+    this.accuracyMetrics = new Map(); // marketId -> latest accuracy snapshot
     
     console.log(`[ForecastReasoner] Initialized with model: ${this.model}`);
   }
@@ -214,25 +215,30 @@ CONSTRAINTS:
    * Parse and score LLM response
    * @param {string} response - Raw LLM response
    * @param {string} marketId - Market identifier
-   * @returns {Object} Analysis result object
+   * @returns {ForecastAnalysis} Analysis result object
    */
   _parseAndScoreResponse(response, marketId) {
+    if (typeof response !== 'string' || response.trim().length === 0) {
+      throw new Error('LLM response must be a non-empty string');
+    }
+
     // Extract confidence from response (or estimate based on analysis quality)
     const confidenceMatch = response.match(/confidence[:\s]+(\d+)/i);
-    const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) : this.estimateConfidenceFromResponse(response);
+    const confidenceRaw = confidenceMatch ? parseInt(confidenceMatch[1], 10) : this.estimateConfidenceFromResponse(response);
+    const confidence = Math.min(Math.max(confidenceRaw, 0), 100);
     
     // Extract prediction/outcome
-    const predictionMatch = response.match(/forecast[:\s]+(.*?)$/im);
+    const predictionMatch = response.match(/prediction[:\s]+(.*?)$/im) || response.match(/forecast[:\s]+(.*?)$/im);
     const prediction = predictionMatch ? predictionMatch[1].trim() : 'neutral';
     
     // Calculate market edge (difference between forecast and implied probability)
     const impliedYes = 50; // Simplified - would use actual order book data
-    const impliedNo = 50;
-    
-    return {
+    const edge = Math.abs(confidence - impliedYes);
+
+    return new ForecastAnalysis(marketId, {
       confidence,
       prediction,
-      edge: Math.abs(confidence - 50), // Simplified edge calculation
+      edge,
       riskMetrics: {
         volatility: 'medium',
         liquidity: 'high',
@@ -241,7 +247,7 @@ CONSTRAINTS:
       explanation: response.substring(0, 500) + '...', // Truncate for storage
       supportingFactors: this._extractSupportingFactors(response),
       disclaimer: 'AI-generated forecast. Verify with multiple sources before trading.'
-    };
+    });
   }
 
   /**
@@ -372,7 +378,10 @@ CONSTRAINTS:
    * @param {Object} metrics - Accuracy metrics object
    */
   _setAccuracyMetric(marketId, metrics) {
-    this._setAccuracyMetricForMarket(marketId, metrics);
+    this.accuracyMetrics.set(marketId, {
+      ...metrics,
+      updatedAt: new Date().toISOString()
+    });
   }
 
   /**
@@ -391,13 +400,16 @@ CONSTRAINTS:
     const correctPredictions = history.filter(f => f.outcome && f.prediction === f.outcome).length;
     const accuracy = (correctPredictions / history.length) * 100;
 
+    const latest = this.accuracyMetrics.get(marketId);
+
     return {
       marketId,
       accuracy,
       totalForecasts: history.length,
       correctPredictions,
       averageConfidence: this._calculateAverageConfidence(marketId),
-      confidenceCalibration: this._estimateConfidenceCalibration(marketId)
+      confidenceCalibration: this._estimateConfidenceCalibration(marketId),
+      updatedAt: latest?.updatedAt || null
     };
   }
 
@@ -416,7 +428,7 @@ CONSTRAINTS:
     const confidences = history.filter(f => f.confidence).map(f => f.confidence);
     const avg = confidences.reduce((sum, c) => sum + c, 0) / confidences.length;
     
-    return avg.toFixed(1);
+    return Number(avg.toFixed(1));
   }
 
   /**
@@ -442,7 +454,7 @@ CONSTRAINTS:
     const correctHighConfidence = highConfidenceForecasts.filter(f => f.prediction === f.outcome).length;
     const calibration = (correctHighConfidence / highConfidenceForecasts.length) * 100;
 
-    return calibration.toFixed(1);
+    return Number(calibration.toFixed(1));
   }
 
   /**
@@ -470,7 +482,7 @@ class RateLimiter {
     this.lastUpdateTime = Date.now();
     
     // Token bucket algorithm
-    this._refillRate = (this.requestsPerMinute / 60) * 1000; // tokens per ms
+    this._tokensPerMs = this.requestsPerMinute / 60000; // tokens per ms
   }
 
   /**
@@ -482,7 +494,7 @@ class RateLimiter {
     
     // Refill tokens based on time elapsed
     const timeSinceLastUpdate = now - this.lastUpdateTime;
-    const tokensToAdd = (timeSinceLastUpdate / 1000) * this._refillRate;
+    const tokensToAdd = timeSinceLastUpdate * this._tokensPerMs;
     
     this.tokens = Math.min(this.burstSize, this.tokens + tokensToAdd);
     this.lastUpdateTime = now;
@@ -492,8 +504,9 @@ class RateLimiter {
       return Promise.resolve();
     } else {
       // Wait for next token to be available
-      const timeUntilNextToken = (1 - this.tokens) / this._refillRate * 1000;
-      return new Promise(resolve => setTimeout(resolve, timeUntilNextToken));
+      const timeUntilNextToken = (1 - this.tokens) / this._tokensPerMs;
+      await new Promise(resolve => setTimeout(resolve, timeUntilNextToken));
+      return this.acquire();
     }
   }
 }
@@ -504,5 +517,6 @@ class RateLimiter {
 module.exports = { 
   ForecastReasoner, 
   ForecastAnalysis,
+  RateLimiter,
   Config
 };

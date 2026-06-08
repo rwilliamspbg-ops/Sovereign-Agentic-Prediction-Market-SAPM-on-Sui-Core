@@ -16,12 +16,14 @@ npm run dev
 ```
 
 In the browser:
+
 1. Click **Connect Wallet** (top-right)
 2. Paste a Sui market object ID in the **Judge Mode** panel
 3. Click **Load On-chain Markets**
 4. Click **Run Judge Mode**
 
 Judge Mode will:
+
 - Confirm wallet connection
 - Load on-chain market state from Sui
 - Execute a micro trade (0.01 SUI) and produce a transaction digest
@@ -29,6 +31,7 @@ Judge Mode will:
 - Read the blob back and display a preview
 
 Every artifact is independently verifiable:
+
 - Transaction: `https://suiscan.xyz/testnet/tx/<digest>`
 - Walrus blob: `https://aggregator.walrus-testnet.walrus.space/v1/blobs/<blobId>`
 
@@ -45,6 +48,7 @@ Walrus readback: https://aggregator.walrus-testnet.walrus.space/v1/blobs/9f4f3e6
 ```
 
 If your values differ, that is expected. Verify shape and resolvability:
+
 - digest resolves on Sui explorer
 - blob ID resolves on Walrus aggregator endpoint
 
