@@ -13,6 +13,8 @@
   </a>
 </p>
 
+<p align="center"><strong>Video:</strong> Click image to play</p>
+
 ---
 
 ## Problem
