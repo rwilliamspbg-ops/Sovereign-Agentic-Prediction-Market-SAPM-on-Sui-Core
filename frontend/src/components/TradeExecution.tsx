@@ -19,7 +19,7 @@ export interface TradeRequest {
 interface TradeResult {
   id: string;
   status: 'pending' | 'success' | 'error';
-  stage: 'approval' | 'submitted' | 'confirmed' | 'failed';
+  stage: 'approval' | 'submitted' | 'confirmed' | 'finalized' | 'failed';
   marketId: string;
   side: 'yes' | 'no';
   amount: number;
@@ -34,6 +34,8 @@ interface TradeResult {
 interface TradeHistory {
   [marketId: string]: TradeResult[];
 }
+
+export type TradeLifecycleStage = 'approval' | 'submitted' | 'confirmed' | 'finalized' | 'failed';
 
 const SUI_MIST = 1_000_000_000;
 const TRADE_RETRY_ATTEMPTS = 2;
@@ -389,6 +391,28 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function waitForFinalization(digest: string, network: 'testnet' | 'mainnet'): Promise<boolean> {
+  const client = new SuiClient({ url: getFullnodeUrl(network) });
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      const tx = await client.getTransactionBlock({
+        digest,
+        options: { showEffects: true },
+      });
+
+      if (tx.effects?.status?.status) {
+        return true;
+      }
+    } catch {
+      // Retry below.
+    }
+    await delay(900 * (attempt + 1));
+  }
+
+  return false;
+}
+
 function getOptionalWalletAttestation(): AttestationData | undefined {
   const leafCertificateFingerprint = process.env.NEXT_PUBLIC_WALLET_ATTESTATION_FINGERPRINT || '';
   const nonce = process.env.NEXT_PUBLIC_WALLET_ATTESTATION_NONCE || '';
@@ -596,7 +620,10 @@ export function useTradeExecution() {
     throw lastError instanceof Error ? lastError : new Error('Transaction failed after retry policy exhausted.');
   };
 
-  const executeTrade = async (trade: TradeRequest): Promise<TradeResult> => {
+  const executeTrade = async (
+    trade: TradeRequest,
+    options?: { onStageChange?: (stage: TradeLifecycleStage, meta?: { digest?: string; network?: 'testnet' | 'mainnet' }) => void },
+  ): Promise<TradeResult> => {
     const totalCost = trade.amount * trade.executionPrice;
     if (totalCost > MAX_NOTIONAL_SUI) {
       return {
@@ -649,6 +676,7 @@ export function useTradeExecution() {
       ...prev,
       [trade.marketId]: [...(prev[trade.marketId] || []), result],
     }));
+    options?.onStageChange?.('approval');
 
     addToast('Awaiting wallet approval...', 'info');
 
@@ -670,6 +698,7 @@ export function useTradeExecution() {
       }));
 
       addToast(`Transaction failed: ${failedResult.error}`, 'error');
+      options?.onStageChange?.('failed');
       inFlightTradesRef.current.delete(idempotencyKey);
       return failedResult;
     }
@@ -687,6 +716,7 @@ export function useTradeExecution() {
       ...prev,
       [trade.marketId]: prev[trade.marketId].map(t => t.id === tradeId ? submittedResult : t),
     }));
+    options?.onStageChange?.('submitted', { digest: txOutcome.digest, network: txOutcome.network });
 
     addToast(`Transaction submitted: ${submittedResult.transactionHash}`, 'info');
 
@@ -701,6 +731,7 @@ export function useTradeExecution() {
       ...prev,
       [trade.marketId]: prev[trade.marketId].map(t => t.id === tradeId ? successResult : t),
     }));
+    options?.onStageChange?.('confirmed', { digest: txOutcome.digest, network: txOutcome.network });
 
     // Update positions only after confirmation
     setPositions(prev => ({
@@ -714,6 +745,22 @@ export function useTradeExecution() {
     // Show success toast
     addToast(`Transaction confirmed: ${trade.side.toUpperCase()} ${trade.amount.toFixed(2)} SUI`, 'success');
     addToast(`View on SuiScan: https://suiscan.xyz/${txOutcome.network}/tx/${submittedResult.transactionHash}`, 'info');
+
+    const finalized = await waitForFinalization(txOutcome.digest, txOutcome.network);
+    if (finalized) {
+      const finalizedResult: TradeResult = {
+        ...successResult,
+        stage: 'finalized',
+      };
+      setTradeHistory(prev => ({
+        ...prev,
+        [trade.marketId]: prev[trade.marketId].map(t => t.id === tradeId ? finalizedResult : t),
+      }));
+      options?.onStageChange?.('finalized', { digest: txOutcome.digest, network: txOutcome.network });
+      addToast('Transaction finalized on-chain checkpoint.', 'success');
+      inFlightTradesRef.current.delete(idempotencyKey);
+      return finalizedResult;
+    }
 
     inFlightTradesRef.current.delete(idempotencyKey);
 
@@ -768,7 +815,7 @@ export function TradeForm({
   const [amount, setAmount] = useState('10');
   const [side, setSide] = useState<'yes' | 'no'>(initialSide);
   const [isExecuting, setIsExecuting] = useState(false);
-  const [executionStage, setExecutionStage] = useState<'idle' | 'approval' | 'submitted' | 'confirmed' | 'failed'>('idle');
+  const [executionStage, setExecutionStage] = useState<'idle' | 'approval' | 'submitted' | 'confirmed' | 'finalized' | 'failed'>('idle');
   const [error, setError] = useState<string | null>(null);
   const preflightIssues = useMemo(() => getTradePreflightIssues(marketId), [marketId]);
   const [targetIntrospection, setTargetIntrospection] = useState<TargetIntrospectionState>(() => ({
@@ -904,7 +951,7 @@ export function TradeForm({
 
       if (result.status === 'success') {
         clearTimeout(pendingTimer);
-        setExecutionStage('confirmed');
+        setExecutionStage(result.stage === 'finalized' ? 'finalized' : 'confirmed');
         setAmount('');
         onTradeExecuted?.(result);
         setTimeout(() => setExecutionStage('idle'), 1200);
@@ -1083,6 +1130,12 @@ export function TradeForm({
       {!isExecuting && executionStage === 'confirmed' && (
         <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#064e3b', borderRadius: '0.375rem', border: '1px solid #34d399', color: '#6ee7b7', fontSize: '0.875rem' }}>
           ✅ Transaction confirmed on-chain.
+        </div>
+      )}
+
+      {!isExecuting && executionStage === 'finalized' && (
+        <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#064e3b', borderRadius: '0.375rem', border: '1px solid #10b981', color: '#a7f3d0', fontSize: '0.875rem' }}>
+          ✅ Transaction finalized in checkpoint.
         </div>
       )}
 

@@ -1,0 +1,13 @@
+<svg width="140" height="38" viewBox="0 0 140 38" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="sapmTitle sapmDesc">
+  <title id="sapmTitle">SAPM Logo</title>
+  <desc id="sapmDesc">Sovereign Agentic Prediction Market wordmark</desc>
+  <defs>
+    <linearGradient id="sapmGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#14b8a6"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="36" height="36" rx="10" fill="#062b35" stroke="url(#sapmGradient)" stroke-width="2"/>
+  <path d="M11 24.5V13.5h5.8c3 0 4.8 1.6 4.8 4.2 0 2.7-1.8 4.3-4.8 4.3h-2.8v2.5H11zm3-5h2.3c1.3 0 2.1-.6 2.1-1.8 0-1.1-.8-1.7-2.1-1.7H14v3.5z" fill="#ccfbf1"/>
+  <text x="45" y="24" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="16" font-weight="700" fill="#e2f7ff" letter-spacing="0.5">SAPM</text>
+</svg>

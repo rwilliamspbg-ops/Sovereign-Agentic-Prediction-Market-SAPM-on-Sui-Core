@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sapm.sui/schemas/market-snapshot.v1.schema.json",
+  "title": "SAPM Market Snapshot Payload V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "marketId",
+    "eventName",
+    "outcomes",
+    "liquidity",
+    "observedAt"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "marketId": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{1,64}$"
+    },
+    "eventName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "outcomes": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "probability", "odds", "volumeSui"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "probability": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "odds": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "volumeSui": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "liquidity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tvlSui", "depthScore"],
+      "properties": {
+        "tvlSui": {
+          "type": "number",
+          "minimum": 0
+        },
+        "depthScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "feeds": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "deepbook": {
+          "type": "boolean"
+        },
+        "walrus": {
+          "type": "boolean"
+        }
+      }
+    },
+    "observedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
