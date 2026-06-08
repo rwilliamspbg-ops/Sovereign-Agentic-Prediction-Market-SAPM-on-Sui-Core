@@ -65,7 +65,7 @@ jobs:
           path: artifacts/ci-logs/frontend-prod-gate.log
           if-no-files-found: warn
 
-  orchestrator-hardening-check:
+  orchestrator-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -77,6 +77,8 @@ jobs:
           cache-dependency-path: agents/orchestrator/package-lock.json
       - name: Install orchestrator dependencies
         run: npm --prefix agents/orchestrator ci --no-audit --no-fund
+      - name: Run orchestrator test suite
+        run: npm --prefix agents/orchestrator test
       - name: Run orchestrator hardening checks
         run: bash scripts/orchestrator_hardening_check.sh
 
@@ -106,6 +108,23 @@ jobs:
         run: |
           helm lint --strict production-deployment-manifests/helm/sapm-aggregator
           helm template sapm-aggregator production-deployment-manifests/helm/sapm-aggregator > /tmp/sapm-aggregator-rendered.yaml
+
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run logger unit tests
+        run: node --test agents/lib/logger.test.js
+      - name: Run DeepBook bridge unit tests
+        run: node --test market-data/adapters/prediction-market-deepbook-bridge.test.js
 
   move-api-lint:
     runs-on: ubuntu-latest

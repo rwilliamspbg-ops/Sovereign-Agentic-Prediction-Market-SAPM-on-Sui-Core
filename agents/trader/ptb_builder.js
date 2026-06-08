@@ -6,6 +6,7 @@
  */
 
 const { SuiClient } = require('@mysten/sui/client');
+const { Transaction } = require('@mysten/sui/transactions');
 let Ed25519Keypair = null;
 
 try {
@@ -19,7 +20,7 @@ class PTBBuilder {
     this.config = config || {};
     this.client = null;
     this.keypair = null;
-    this.gasBudget = config.gasBudget || 10000;
+    this.gasBudget = config.gasBudget || 5_000_000; // 0.005 SUI — safe floor for Move calls
     this.defaultGasObject = config.defaultGasObject || null;
   }
 

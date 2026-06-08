@@ -5,6 +5,7 @@
  */
 
 const ReputationTracker = require('./reputation-tracker');
+const logger = require('../lib/logger').create('IncentivesEngine');
 
 class IncentivesEngine {
   constructor() {
@@ -244,19 +245,19 @@ class IncentivesEngine {
    * Simulate market and track results
    */
   async simulateMarket(marketId, forecasts, actualPrice, confidences) {
-    console.log(`\n📊 Processing Market: ${marketId}`);
-    console.log(`Forecasts: ${forecasts.map(f => (f * 100).toFixed(1)).join('%, ')}%`);
-    console.log(`Actual Price: ${(actualPrice * 100).toFixed(1)}%`);
+    logger.info('Processing market', { marketId: marketId });
+    logger.debug(`Forecasts: ${forecasts.map(f => (f * 100).toFixed(1)).join('%, ')}%`);
+    logger.debug(`Actual Price: ${(actualPrice * 100).toFixed(1)}%`);
 
     const results = await this.processMarketOutcome(marketId, forecasts, actualPrice, confidences);
     
-    console.log(`\n✅ Market Results:`);
+    logger.info('Market results');
     results.agents.forEach(agent => {
-      console.log(`  ${agent.agentId}: ${agent.action} ${agent.amount} SUI (Rep: ${agent.newReputation})`);
+      logger.info('Agent result', { agentId: agent.agentId, action: agent.action, amount: agent.amount, rep: agent.newReputation });
     });
 
-    console.log(`\nTotal Rewards: ${results.totalRewardsDistributed.toFixed(2)} SUI`);
-    console.log(`Total Slashes: ${results.totalSlashesApplied.toFixed(2)} SUI`);
+    logger.debug(`\nTotal Rewards: ${results.totalRewardsDistributed.toFixed(2)} SUI`);
+    logger.debug(`Total Slashes: ${results.totalSlashesApplied.toFixed(2)} SUI`);
 
     return results;
   }
@@ -269,34 +270,34 @@ class IncentivesEngine {
     const stats = this.getSystemStats();
     const health = this.tracker.getHealthReport();
 
-    console.log('\n' + '='.repeat(70));
-    console.log('📈 SAPM INCENTIVES SYSTEM - FULL REPORT');
-    console.log('='.repeat(70));
+    logger.debug('='.repeat(70));
+    logger.info('SAPM incentives full report');
+    logger.debug('='.repeat(70));
 
-    console.log('\n🏥 System Health:');
-    console.log(`  Status: ${health.systemHealth}`);
-    console.log(`  Healthy Agents: ${health.healthyAgents}/${health.totalAgents}`);
-    console.log(`  Avg Reputation: ${health.avgReputation}`);
-    console.log(`  Avg Accuracy: ${health.avgAccuracy}%`);
+    logger.debug('System health');
+    logger.debug(`Status: ${health.systemHealth}`);
+    logger.debug(`Healthy agents: ${health.healthyAgents}/${health.totalAgents}`);
+    logger.debug(`Avg reputation: ${health.avgReputation}`);
+    logger.debug(`Avg accuracy: ${health.avgAccuracy}%`);
 
-    console.log('\n💰 Economics:');
-    console.log(`  Total Staked: ${stats.economicMetrics.totalStakeSui} SUI`);
-    console.log(`  Total Rewards: ${stats.economicMetrics.totalRewardsDistributedSui} SUI`);
-    console.log(`  Markets Processed: ${stats.economicMetrics.marketsProceed}`);
+    logger.debug('Economics');
+    logger.debug(`Total staked: ${stats.economicMetrics.totalStakeSui} SUI`);
+    logger.debug(`Total rewards: ${stats.economicMetrics.totalRewardsDistributedSui} SUI`);
+    logger.debug(`Markets processed: ${stats.economicMetrics.marketsProceed}`);
 
-    console.log('\n🎯 Agent Rankings:');
+    logger.debug('Agent rankings');
     standing.rankings.slice(0, 10).forEach(agent => {
       const status = agent.eligible ? '✅' : '❌';
-      console.log(`  ${status} ${agent.rank}. ${agent.agentId}: Rep=${agent.reputation}, Score=${agent.score}, Accuracy=${agent.stats.accuracy}%`);
+      logger.debug(`  ${status} ${agent.rank}. ${agent.agentId}: Rep=${agent.reputation}, Score=${agent.score}, Accuracy=${agent.stats.accuracy}%`);
     });
 
-    console.log('\n⚠️  Recommendations:');
+    logger.debug('Recommendations');
     stats.recommendations.forEach(rec => {
-      console.log(`  [${rec.level}] ${rec.message}`);
-      console.log(`       → ${rec.action}`);
+      logger.debug(`[${rec.level}] ${rec.message}`);
+      logger.debug(`  → ${rec.action}`);
     });
 
-    console.log('\n' + '='.repeat(70));
+    logger.debug('='.repeat(70));
   }
 }
 

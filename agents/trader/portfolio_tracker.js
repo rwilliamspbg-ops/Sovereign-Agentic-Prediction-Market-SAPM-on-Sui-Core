@@ -1,3 +1,4 @@
+const logger = require('../lib/logger').create('PortfolioTracker');
 /**
  * Portfolio & Risk Tracker - Phase 3 Implementation (COMPLETE)
  * Tracks per-agent and swarm-level exposure, limits, and risk metrics
@@ -56,7 +57,7 @@ class PortfolioTracker {
     };
 
     this.agentPortfolio.set(agentId, portfolio);
-    console.log(`[PortfolioTracker] Initialized portfolio for agent ${agentId}`);
+    logger.info(`Initialized portfolio for agent ${agentId}`);
     
     return portfolio;
   }
@@ -91,7 +92,7 @@ class PortfolioTracker {
     portfolio.totalExposure = (parseFloat(portfolio.totalExposure) + cost).toString();
     portfolio.lastUpdated = new Date().toISOString();
 
-    console.log(`[PortfolioTracker] Added position ${positionId} for agent ${agentId}: side=${side}, amount=${amount}`);
+    logger.info(`Added position ${positionId} for agent ${agentId}: side=${side}, amount=${amount}`);
     
     return { success: true, portfolio };
   }
@@ -135,7 +136,7 @@ class PortfolioTracker {
     // Update tracking state for drawdown calculations
     this._updateDrawdownMetrics(portfolio.agentId, -pnl);
 
-    console.log(`[PortfolioTracker] Exited position ${positionId} for agent ${agentId}: PnL=${pnl}`);
+    logger.info(`Exited position ${positionId} for agent ${agentId}: PnL=${pnl}`);
     
     return { success: true, pnl, position };
   }
@@ -305,7 +306,7 @@ class PortfolioTracker {
       totalExposure: initialExposure || '0',
       lastUpdated: new Date().toISOString()
     };
-    console.log('[PortfolioTracker] Initialized swarm portfolio');
+    logger.info('Initialized swarm portfolio');
   }
 
   /**
@@ -323,7 +324,7 @@ class PortfolioTracker {
       this.swarmPortfolio.lastUpdated = new Date().toISOString();
     }
 
-    console.log(`[PortfolioTracker] Updated swarm exposure: ${total}`);
+    logger.info(`Updated swarm exposure: ${total}`);
   }
 
   /**
@@ -352,7 +353,7 @@ class PortfolioTracker {
   resetDailyTracking() {
     this.trackingState.dailyLoss = 0;
     this.trackingState.lastDailyReset = new Date().toISOString();
-    console.log('[PortfolioTracker] Daily tracking reset');
+    logger.info('Daily tracking reset');
   }
 
   /**
@@ -367,7 +368,7 @@ class PortfolioTracker {
       peakEquity: null,
       currentDrawdown: 0
     };
-    console.log('[PortfolioTracker] All portfolios cleared');
+    logger.info('All portfolios cleared');
   }
 
   /**
