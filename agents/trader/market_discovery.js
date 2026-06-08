@@ -6,6 +6,7 @@
  */
 
 const { SuiClient } = require('@mysten/sui/client');
+const logger = require('../lib/logger').create('MarketDiscovery');
 
 class MarketDiscovery {
   constructor(config) {
@@ -21,7 +22,7 @@ class MarketDiscovery {
    */
   async initialize(rpcEndpoint) {
     this.client = new SuiClient({ url: rpcEndpoint });
-    console.log('[MarketDiscovery] Initialized with RPC:', rpcEndpoint);
+    logger.info('[MarketDiscovery] Initialized with RPC:', rpcEndpoint);
     return true;
   }
 
@@ -33,7 +34,7 @@ class MarketDiscovery {
       throw new Error('Client not initialized. Call initialize() first.');
     }
 
-    console.log('[MarketDiscovery] Fetching markets from package:', packageId);
+    logger.info('[MarketDiscovery] Fetching markets from package:', packageId);
     
     try {
       // Query for all market objects in the DeepBook Predict package
@@ -55,7 +56,7 @@ class MarketDiscovery {
 
       return [];
     } catch (error) {
-      console.error('[MarketDiscovery] Fetch markets failed:', error.message);
+      logger.error('Fetch markets failed:', { err: String(error.message) });
       throw error;
     }
   }
@@ -71,7 +72,7 @@ class MarketDiscovery {
     }
 
     // Deterministic selection: first market with matching event query or default
-    console.log(`[MarketDiscovery] Selected market for: ${eventQuery}`);
+    logger.info(`Selected market for: ${eventQuery}`);
     
     return {
       market: markets[0],
@@ -85,7 +86,7 @@ class MarketDiscovery {
    * Validate market object for dry-run with comprehensive checks
    */
   async validateMarket(marketObjectId, packageId) {
-    console.log(`[MarketDiscovery] Validating market object: ${marketObjectId}`);
+    logger.info(`Validating market object: ${marketObjectId}`);
     
     try {
       const response = await this.client.moveCall({
@@ -108,7 +109,7 @@ class MarketDiscovery {
         validationTimestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.error('[MarketDiscovery] Market validation failed:', error.message);
+      logger.error('Market validation failed:', { err: String(error.message) });
       throw new Error(`Invalid market object: ${error.message}`);
     }
   }
@@ -124,7 +125,7 @@ class MarketDiscovery {
       return cached.odds;
     }
 
-    console.log(`[MarketDiscovery] Fetching market odds for: ${marketObjectId}`);
+    logger.info(`Fetching market odds for: ${marketObjectId}`);
     
     try {
       const response = await this.client.moveCall({
@@ -151,7 +152,7 @@ class MarketDiscovery {
 
       return odds;
     } catch (error) {
-      console.error('[MarketDiscovery] Failed to fetch market odds:', error.message);
+      logger.error('Failed to fetch market odds:', { err: String(error.message) });
       throw error;
     }
   }
@@ -207,7 +208,7 @@ class MarketDiscovery {
    */
   clearCache() {
     this.marketCache.clear();
-    console.log('[MarketDiscovery] Market cache cleared');
+    logger.info('Market cache cleared');
   }
 
   /**
@@ -227,7 +228,7 @@ class MarketDiscovery {
    */
   async close() {
     if (this.client) {
-      console.log('[MarketDiscovery] Closing SuiClient connection');
+      logger.info('Closing SuiClient connection');
       this.client = null;
     }
   }

@@ -41,7 +41,11 @@ else
 	npm run check:frontend:prod
 fi
 
-echo "[release-check] Running orchestrator experimental checks (non-blocking)..."
-npm run test:orchestrator:experimental || true
+echo "[release-check] Running orchestrator test suite (gated)..."
+npm run test:orchestrator
+
+echo "[release-check] Running logger and bridge unit tests..."
+npm run test:logger
+npm run test:bridge
 
 echo "[release-check] PASS: canonical readiness gate succeeded."

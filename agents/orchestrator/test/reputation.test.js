@@ -267,3 +267,54 @@ describe('Reputation System', () => {
     });
   });
 });
+
+// ─── ReputationEngine (core engine, not manager wrapper) ─────────────────────
+const { ReputationEngine } = require('../reputation/engine');
+
+describe('ReputationEngine.recordPrediction (core)', () => {
+  let engine;
+
+  beforeEach(() => {
+    engine = new ReputationEngine({
+      slashingThreshold: 0.3,
+      historyWindow: 10,
+      decayFactor: 0.95,
+    });
+  });
+
+  test('accurate prediction increases reputation', () => {
+    const { id: agentId } = engine.registerAgent('0xabc123');
+
+    engine.recordPrediction(agentId, 'yes', 'yes', 90, new Date());
+    const after = engine.agents.get(agentId).reputation;
+
+    expect(after).toBeGreaterThan(0);
+  });
+
+  test('inaccurate prediction is recorded with accurate=false', () => {
+    const { id: agentId } = engine.registerAgent('0xdef456');
+
+    engine.recordPrediction(agentId, 'yes', 'no', 80, new Date());
+
+    const record = engine.history.find(r => r.agentId === agentId);
+    expect(record).toBeDefined();
+    expect(record.accurate).toBe(false);
+    expect(record.predictedOutcome).toBe('yes');
+    expect(record.actualOutcome).toBe('no');
+  });
+
+  test('correct prediction is recorded with accurate=true', () => {
+    const { id: agentId } = engine.registerAgent('0xdef789');
+
+    engine.recordPrediction(agentId, 'no', 'no', 75, new Date());
+
+    const record = engine.history.find(r => r.agentId === agentId);
+    expect(record.accurate).toBe(true);
+  });
+
+  test('throws for unknown agent', () => {
+    expect(() => {
+      engine.recordPrediction('unknown-agent', 'yes', 'yes', 80, new Date());
+    }).toThrow('not found');
+  });
+});

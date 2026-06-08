@@ -43,19 +43,22 @@ class ReputationEngine {
    * Record a prediction result and update reputation
    * Uses Multi-Krum style selection for Byzantine tolerance
    */
-  recordPrediction(agentId, actualOutcome, forecastConfidence, timestamp) {
+  recordPrediction(agentId, predictedOutcome, actualOutcome, forecastConfidence, timestamp) {
     const agent = this.agents.get(agentId);
     if (!agent) {
       throw new Error(`Agent ${agentId} not found in reputation registry`);
     }
 
-    // Record history
+    // Record history — compare prediction against ground truth
+    const normalizedPrediction = this._normalizeOutcome(predictedOutcome);
+    const normalizedActual = this._normalizeOutcome(actualOutcome);
     const predictionRecord = {
       round: timestamp.getTime(),
       agentId,
-      actualOutcome,
+      predictedOutcome: normalizedPrediction,
+      actualOutcome: normalizedActual,
       forecastConfidence,
-      accurate: actualOutcome === this._normalizeOutcome(actualOutcome)
+      accurate: normalizedPrediction === normalizedActual,
     };
 
     this.history.push(predictionRecord);
@@ -82,7 +85,7 @@ class ReputationEngine {
     agent.reputation = Math.min(1.0, Math.max(0.0, newReputation));
     agent.lastUpdateRound = timestamp.getTime();
     agent.totalContributions++;
-    if (accurate) {
+    if (predictionRecord.accurate) {
       agent.correctPredictions++;
     }
 

@@ -8,6 +8,7 @@
 const { MarketDiscovery } = require('./market_discovery');
 const { PTBBuilder } = require('./ptb_builder');
 const { PortfolioTracker } = require('./portfolio_tracker');
+const logger = require('../lib/logger').create('ForecastToTrade');
 
 class ForecastToTradeAdapter {
   constructor(config) {
@@ -32,7 +33,7 @@ class ForecastToTradeAdapter {
       await this.ptbBuilder.initialize(rpcEndpoint, keypairSecret);
     }
 
-    console.log('[ForecastToTrade] Adapter initialized');
+    logger.info('Adapter initialized');
     return true;
   }
 
@@ -42,7 +43,7 @@ class ForecastToTradeAdapter {
   async convertToTradePlan(forecastData, marketObjectId, packageId, options = {}) {
     const { dryRun = false, rpcEndpoint = this.config.rpcEndpoint } = options;
     
-    console.log('[ForecastToTrade] Converting forecast to trade plan...');
+    logger.info('Converting forecast to trade plan...');
     
     // Extract forecast metrics
     const { confidence, prediction, eventQuery } = forecastData;
@@ -52,7 +53,7 @@ class ForecastToTradeAdapter {
     }
 
     // Step 1: Market discovery and validation
-    console.log('[ForecastToTrade] Validating market object...');
+    logger.info('Validating market object...');
     
     try {
       let marketValidation = { valid: true };
@@ -82,7 +83,7 @@ class ForecastToTradeAdapter {
       // Calculate edge (our prob - market prob)
       const edge = actualProb - impliedProb;
       
-      console.log('[ForecastToTrade] Market analysis:', { 
+      logger.info('Market analysis:', { 
         impliedProb: (impliedProb * 100).toFixed(2),
         actualProb: (actualProb * 100).toFixed(2),
         edge: (edge * 100).toFixed(4)
@@ -91,7 +92,7 @@ class ForecastToTradeAdapter {
       // Step 3: Determine decision based on edge and confidence
       const decision = await this._determineDecision(edge, confidence);
       
-      console.log('[ForecastToTrade] Decision:', { 
+      logger.info('Decision:', { 
         decision, 
         confidence: confidence.toFixed(2),
         edge: (edge * 100).toFixed(4)
@@ -116,12 +117,12 @@ class ForecastToTradeAdapter {
         eventQuery
       };
 
-      console.log('[ForecastToTrade] Trade plan generated successfully');
+      logger.info('Trade plan generated successfully');
       
       return tradePlan;
 
     } catch (error) {
-      console.error('[ForecastToTrade] Conversion failed:', error.message);
+      logger.error('Conversion failed:', { err: String(error.message) });
       throw error;
     }
   }
@@ -134,7 +135,7 @@ class ForecastToTradeAdapter {
       throw new Error('PTB builder not initialized. Call initialize() first.');
     }
 
-    console.log('[ForecastToTrade] Executing trade plan...');
+    logger.info('Executing trade plan...');
     
     // Validate risk limits before execution
     const agentId = tradePlan.agentId || this.agentId;
@@ -152,7 +153,7 @@ class ForecastToTradeAdapter {
     );
 
     if (!riskCheck.allowed) {
-      console.log('[ForecastToTrade] Risk check failed:', riskCheck.reason);
+      logger.info('[ForecastToTrade] Risk check failed:', riskCheck.reason);
       return { executed: false, reason: riskCheck.reason };
     }
 
@@ -160,7 +161,7 @@ class ForecastToTradeAdapter {
     try {
       const ptbResult = await this.ptbBuilder.executeWithValidation(tradePlan, packageId, marketObjectId);
       
-      console.log('[ForecastToTrade] Trade executed:', { 
+      logger.info('Trade executed:', { 
         decision: tradePlan.decision,
         digest: ptbResult.digest || ptbResult.error,
         success: ptbResult.success || !ptbResult.dryRun
@@ -173,7 +174,7 @@ class ForecastToTradeAdapter {
       };
 
     } catch (error) {
-      console.error('[ForecastToTrade] Trade execution failed:', error.message);
+      logger.error('Trade execution failed:', { err: String(error.message) });
       throw error;
     }
   }
@@ -234,7 +235,7 @@ class ForecastToTradeAdapter {
     const availableBalance = this.portfolioTracker.getAvailableBalance(this.agentId);
     const stake = (availableBalance * fFractional).toString();
 
-    console.log('[ForecastToTrade] Calculated stake:', {
+    logger.info('Calculated stake:', {
       kellyFraction: fFractional.toFixed(4),
       availableBalance,
       calculatedStake: stake,
@@ -252,15 +253,14 @@ class ForecastToTradeAdapter {
     if (decision === 'hold') {
       if (confidence < 60) {
         return `Insufficient confidence (${confidence}%) to justify on-chain exposure. Waiting for higher-certainty signals.`;
-      } else if (edge < 0.02 && confidence < 85) {
+      } else if (edge < 0.02) {
         return `Edge too small (${(edge * 100).toFixed(2)}%) after transaction cost analysis. Not economically viable.`;
-      } else if (edge > 0.02 && confidence >= 85) {
-        return `High-confidence reversal trade with edge ${(edge * -100).toFixed(4)}%. Only taken at extreme confidence levels.`;
       }
+      return `Conditions do not meet trade criteria. Holding position.`;
     }
 
     if (decision === 'buy_no') {
-      return `High-confidence forecast (${confidence}%) indicates market overpricing "yes" outcome. Reversal trade with positive edge ${(edge * -100).toFixed(4)}%.`;
+      return `High-confidence forecast (${confidence}%) indicates market overpricing YES outcome. Buying NO with edge ${(Math.abs(edge) * 100).toFixed(4)}%.`;
     }
 
     return `High-confidence forecast (${confidence}%) with positive edge ${(edge * 100).toFixed(4)}%. Trade aligns with swarm consensus and risk limits.`;
@@ -282,7 +282,7 @@ class ForecastToTradeAdapter {
    */
   async shutdown() {
     await this.marketDiscovery.close();
-    console.log('[ForecastToTrade] Adapter shut down');
+    logger.info('Adapter shut down');
   }
 }
 
