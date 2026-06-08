@@ -49,13 +49,31 @@ export type DeepBookPreflightResult = {
   clockSkewMs?: number;
 };
 
+function resolveConfiguredNetwork(): 'testnet' | 'mainnet' {
+  const configured = String(process.env.NEXT_PUBLIC_SUI_NETWORK || '').toLowerCase();
+  return configured === 'mainnet' ? 'mainnet' : 'testnet';
+}
+
 export class DeepBookService {
-  private readonly client: SuiClient;
   private readonly network: 'testnet' | 'mainnet';
 
   constructor(network: 'testnet' | 'mainnet' = 'testnet') {
     this.network = network;
-    this.client = new SuiClient({ url: getFullnodeUrl(network) });
+  }
+
+  private resolveRuntimeNetwork(): 'testnet' | 'mainnet' {
+    if (typeof window !== 'undefined') {
+      const preferred = window.localStorage.getItem('preferredNetwork');
+      if (preferred === 'mainnet' || preferred === 'testnet') {
+        return preferred;
+      }
+    }
+
+    return this.network;
+  }
+
+  private getClient(network: 'testnet' | 'mainnet'): SuiClient {
+    return new SuiClient({ url: getFullnodeUrl(network) });
   }
 
   private get deepBookPackageId(): string {
@@ -67,6 +85,7 @@ export class DeepBookService {
       throw new Error('NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID is required to build DeepBook transactions.');
     }
 
+    const network = this.resolveRuntimeNetwork();
     const tx = new Transaction();
     tx.setGasBudget(5_000_000);
     tx.moveCall({
@@ -83,7 +102,7 @@ export class DeepBookService {
     });
 
     emitObservabilityEvent('deepbook', 'build_place_limit_order', 'info', {
-      network: this.network,
+      network,
       target: `${this.deepBookPackageId}::pool::place_limit_order`,
       clientOrderId: intent.clientOrderId,
     });
@@ -96,6 +115,7 @@ export class DeepBookService {
       throw new Error('NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID is required to build DeepBook transactions.');
     }
 
+    const network = this.resolveRuntimeNetwork();
     const tx = new Transaction();
     tx.setGasBudget(5_000_000);
     tx.moveCall({
@@ -109,7 +129,7 @@ export class DeepBookService {
     });
 
     emitObservabilityEvent('deepbook', 'build_cancel_order', 'info', {
-      network: this.network,
+      network,
       target: `${this.deepBookPackageId}::pool::cancel_order`,
       clientOrderId: intent.clientOrderId,
     });
@@ -122,6 +142,7 @@ export class DeepBookService {
       throw new Error('NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID is required to build DeepBook transactions.');
     }
 
+    const network = this.resolveRuntimeNetwork();
     const tx = new Transaction();
     tx.setGasBudget(8_000_000);
     tx.moveCall({
@@ -147,7 +168,7 @@ export class DeepBookService {
     });
 
     emitObservabilityEvent('deepbook', 'build_replace_order', 'info', {
-      network: this.network,
+      network,
       cancelClientOrderId: cancelIntent.clientOrderId,
       placeClientOrderId: placeIntent.clientOrderId,
     });
@@ -156,8 +177,10 @@ export class DeepBookService {
   }
 
   async getOpenOrders(owner: string): Promise<DeepBookOpenOrderSummary[]> {
+    const network = this.resolveRuntimeNetwork();
+    const client = this.getClient(network);
     const startedAt = performance.now();
-    const response = await this.client.getOwnedObjects({
+    const response = await client.getOwnedObjects({
       owner,
       options: { showType: true },
       filter: {
@@ -186,8 +209,10 @@ export class DeepBookService {
   }
 
   async reconcileTransactionDigest(digest: string): Promise<DeepBookReconciliation> {
+    const network = this.resolveRuntimeNetwork();
+    const client = this.getClient(network);
     const startedAt = performance.now();
-    const tx = await this.client.getTransactionBlock({
+    const tx = await client.getTransactionBlock({
       digest,
       options: { showEffects: true, showEvents: true },
     });
@@ -213,12 +238,15 @@ export class DeepBookService {
   }
 
   async getStatus(): Promise<DeepBookStatus> {
+    const network = this.resolveRuntimeNetwork();
+    const client = this.getClient(network);
     const startedAt = performance.now();
     try {
-      await this.client.getLatestSuiSystemState();
+      await client.getLatestSuiSystemState();
     } catch (error) {
       emitObservabilityEvent('deepbook', 'status_check', 'error', {
         rpcReachable: false,
+        network,
         latencyMs: Math.round(performance.now() - startedAt),
       });
       return {
@@ -234,6 +262,7 @@ export class DeepBookService {
       emitObservabilityEvent('deepbook', 'status_check', 'warn', {
         rpcReachable: true,
         packageConfigured: false,
+        network,
         latencyMs: Math.round(performance.now() - startedAt),
       });
       return {
@@ -246,7 +275,7 @@ export class DeepBookService {
     }
 
     try {
-      const pkg = await this.client.getObject({
+      const pkg = await client.getObject({
         id: DEEPBOOK_PREDICT_PACKAGE_ID,
         options: { showType: true },
       });
@@ -255,6 +284,7 @@ export class DeepBookService {
         rpcReachable: true,
         packageConfigured: true,
         packageReachable: Boolean(pkg.data),
+        network,
         latencyMs: Math.round(performance.now() - startedAt),
       });
 
@@ -269,6 +299,7 @@ export class DeepBookService {
         rpcReachable: true,
         packageConfigured: true,
         packageReachable: false,
+        network,
         latencyMs: Math.round(performance.now() - startedAt),
       });
       return {
@@ -288,12 +319,14 @@ export class DeepBookService {
     maxAllowedImpactPercent?: number;
     expectedPriceMist?: number;
   }): Promise<DeepBookPreflightResult> {
+    const network = this.resolveRuntimeNetwork();
+    const client = this.getClient(network);
     const maxImpact = params.maxAllowedImpactPercent ?? 5;
     const expectedPrice = params.expectedPriceMist ?? 1;
 
     let poolState: Record<string, unknown> | null = null;
     try {
-      const pool = await this.client.getObject({ id: params.poolId, options: { showContent: true } });
+      const pool = await client.getObject({ id: params.poolId, options: { showContent: true } });
       poolState = (pool.data?.content as Record<string, unknown>) || null;
     } catch {
       return { valid: false, reason: 'Pool is not reachable.' };
@@ -304,7 +337,7 @@ export class DeepBookService {
       return { valid: false, reason: `Pool is not active (${poolStatus}).` };
     }
 
-    const balance = await this.client.getBalance({ owner: params.ownerAddress, coinType: '0x2::sui::SUI' });
+    const balance = await client.getBalance({ owner: params.ownerAddress, coinType: '0x2::sui::SUI' });
     const availableMist = Number(balance.totalBalance || '0');
     if (!Number.isFinite(availableMist) || availableMist < params.amountMist) {
       return { valid: false, reason: 'Insufficient wallet balance for order.' };
@@ -319,9 +352,12 @@ export class DeepBookService {
       };
     }
 
-    const systemState = await this.client.getLatestSuiSystemState();
-    const epochStartMs = Number(systemState.epochStartTimestampMs || Date.now());
-    const clockSkewMs = Math.abs(Date.now() - epochStartMs);
+    const checkpointSeq = await client.getLatestCheckpointSequenceNumber();
+    const checkpoint = await client.getCheckpoint({
+      id: String(checkpointSeq),
+    });
+    const chainTimestampMs = Number(checkpoint.timestampMs || Date.now());
+    const clockSkewMs = Math.abs(Date.now() - chainTimestampMs);
     if (clockSkewMs > 5 * 60_000) {
       return {
         valid: false,
@@ -338,4 +374,4 @@ export class DeepBookService {
   }
 }
 
-export const deepbookService = new DeepBookService('testnet');
+export const deepbookService = new DeepBookService(resolveConfiguredNetwork());
