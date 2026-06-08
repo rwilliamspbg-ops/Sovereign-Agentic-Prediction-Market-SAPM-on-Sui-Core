@@ -9,6 +9,7 @@ import {
   type CopilotExecutionTranscript,
   type CopilotRunState,
 } from '@/services/copilot-bridge';
+import { registerCopilotActionHandler } from '@/services/copilot-action-handler';
 
 type CopilotOpsPanelProps = {
   open: boolean;
@@ -102,7 +103,7 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
 
     const boot = async () => {
       await copilotBridge.initialize({
-        actionTimeoutMs: 25_000,
+        actionTimeoutMs: 90_000,
       });
       if (!active) {
         return;
@@ -142,6 +143,10 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
     const offRunState = copilotBridge.subscribe('run_state', (data) => {
       setRunState(data as CopilotRunState);
     });
+    const offActionRequests = registerCopilotActionHandler({
+      getContext: () => copilotBridge.getContext(),
+      getTranscript: () => copilotBridge.getLastTranscript(),
+    });
 
     const onWalletUpdate = () => syncBridgeContextFromClient();
     const onMarketUpdate = () => syncBridgeContextFromClient();
@@ -159,6 +164,7 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
       offTranscript();
       offHistory();
       offRunState();
+      offActionRequests();
       window.removeEventListener('sapm:wallet-updated', onWalletUpdate as EventListener);
       window.removeEventListener('sapm:active-market-insight', onMarketUpdate as EventListener);
       window.removeEventListener('sapm:integration-status', onIntegrationUpdate as EventListener);

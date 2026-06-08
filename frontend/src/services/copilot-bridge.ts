@@ -134,7 +134,7 @@ async function initCopilotConnection(config?: CopilotBridgeConfig): Promise<{ co
 export class CopilotBridge {
   private connection: { connected: boolean; config?: CopilotBridgeConfig } | null = null;
   private config: Required<Pick<CopilotBridgeConfig, 'actionTimeoutMs' | 'maxRetries' | 'retryBaseDelayMs' | 'retryMaxDelayMs' | 'transcriptPostUrl' | 'persistLocalState' | 'maxTranscriptHistory'>> = {
-    actionTimeoutMs: 20_000,
+    actionTimeoutMs: 90_000,
     maxRetries: 2,
     retryBaseDelayMs: 500,
     retryMaxDelayMs: 3_500,
@@ -171,7 +171,7 @@ export class CopilotBridge {
   async initialize(config?: CopilotBridgeConfig): Promise<void> {
     this.connection = await initCopilotConnection(config);
     this.config = {
-      actionTimeoutMs: config?.actionTimeoutMs || 20_000,
+      actionTimeoutMs: config?.actionTimeoutMs ?? 90_000,
       maxRetries: config?.maxRetries ?? 2,
       retryBaseDelayMs: config?.retryBaseDelayMs ?? 500,
       retryMaxDelayMs: config?.retryMaxDelayMs ?? 3_500,

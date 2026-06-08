@@ -70,6 +70,29 @@ type TargetIntrospectionState = {
   message?: string;
 };
 
+function resolvePreferredNetwork(): 'testnet' | 'mainnet' {
+  if (typeof window === 'undefined') {
+    return 'testnet';
+  }
+  return window.localStorage.getItem('preferredNetwork') === 'mainnet' ? 'mainnet' : 'testnet';
+}
+
+function resolveRpcUrl(network: 'testnet' | 'mainnet'): string {
+  if (typeof window !== 'undefined') {
+    const saved = window.localStorage.getItem('rpcEndpoint')?.trim();
+    if (saved) {
+      return saved;
+    }
+  }
+
+  const configured = process.env.NEXT_PUBLIC_SUI_RPC?.trim();
+  if (configured) {
+    return configured;
+  }
+
+  return getFullnodeUrl(network);
+}
+
 function isValidSuiHexAddress(value: string | null | undefined): value is string {
   if (!value) {
     return false;
@@ -392,7 +415,7 @@ function delay(ms: number) {
 }
 
 async function waitForFinalization(digest: string, network: 'testnet' | 'mainnet'): Promise<boolean> {
-  const client = new SuiClient({ url: getFullnodeUrl(network) });
+  const client = new SuiClient({ url: resolveRpcUrl(network) });
 
   for (let attempt = 0; attempt < 4; attempt += 1) {
     try {
@@ -452,7 +475,8 @@ export function useTradeExecution() {
   const inFlightTradesRef = useRef<Set<string>>(new Set());
 
   const executeOnchainTransaction = async (trade: TradeRequest, totalCost: number) => {
-    const preferredNetwork: 'testnet' | 'mainnet' = localStorage.getItem('preferredNetwork') === 'mainnet' ? 'mainnet' : 'testnet';
+    const preferredNetwork = resolvePreferredNetwork();
+    const preferredRpcUrl = resolveRpcUrl(preferredNetwork);
     const context = await getConnectedWalletContext(localStorage.getItem('walletId') || undefined);
     const walletIsTrusted = await walletSecurityService.verifyWalletAuthenticity(context.account.address);
     if (!walletIsTrusted) {
@@ -460,16 +484,43 @@ export function useTradeExecution() {
     }
 
     const walletAttestation = getOptionalWalletAttestation();
-    const client = new SuiClient({ url: getFullnodeUrl(preferredNetwork) });
+    const client = new SuiClient({ url: preferredRpcUrl });
     const tradeTarget = resolveTradeTarget();
     const parsedTarget = parseTarget(tradeTarget);
 
-    const pkg = await client.getObject({
-      id: SUI_PACKAGE_ID,
-      options: { showType: true },
-    });
+    let pkg;
+    try {
+      pkg = await client.getObject({
+        id: SUI_PACKAGE_ID,
+        options: { showType: true },
+      });
+    } catch (error) {
+      throw new Error(
+        `Unable to query package on configured RPC (${preferredRpcUrl}). Review wallet/network configuration and ensure your RPC endpoint is reachable. ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
     if (!pkg.data) {
-      throw new Error(`Configured Sui package not found on ${preferredNetwork}: ${SUI_PACKAGE_ID}`);
+      const alternateNetwork: 'testnet' | 'mainnet' = preferredNetwork === 'testnet' ? 'mainnet' : 'testnet';
+      try {
+        const alternateClient = new SuiClient({ url: getFullnodeUrl(alternateNetwork) });
+        const alternatePkg = await alternateClient.getObject({
+          id: SUI_PACKAGE_ID,
+          options: { showType: true },
+        });
+        if (alternatePkg.data) {
+          throw new Error(
+            `Configured package is not deployed on ${preferredNetwork} (${preferredRpcUrl}) but exists on ${alternateNetwork}. Switch wallet network to ${alternateNetwork} and retry.`
+          );
+        }
+      } catch (alternateError) {
+        if (alternateError instanceof Error && alternateError.message.includes('Switch wallet network')) {
+          throw alternateError;
+        }
+      }
+
+      throw new Error(
+        `Configured Sui package not found on ${preferredNetwork} via ${preferredRpcUrl}: ${SUI_PACKAGE_ID}. Verify package ID and selected wallet/network.`
+      );
     }
 
     const requiredNotionalMist = Math.ceil(totalCost * SUI_MIST);
@@ -829,6 +880,7 @@ export function TradeForm({
 
     const inspectTarget = async () => {
       const preferredNetwork: 'testnet' | 'mainnet' = localStorage.getItem('preferredNetwork') === 'mainnet' ? 'mainnet' : 'testnet';
+      const preferredRpcUrl = resolveRpcUrl(preferredNetwork);
       const target = resolveTradeTarget();
 
       setTargetIntrospection({
@@ -840,7 +892,7 @@ export function TradeForm({
 
       try {
         const parsedTarget = parseTarget(target);
-        const client = new SuiClient({ url: getFullnodeUrl(preferredNetwork) });
+        const client = new SuiClient({ url: preferredRpcUrl });
         const normalizedModule = await client.getNormalizedMoveModule({
           package: parsedTarget.packageId,
           module: parsedTarget.moduleName,

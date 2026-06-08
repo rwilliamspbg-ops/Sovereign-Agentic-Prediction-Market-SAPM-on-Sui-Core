@@ -5,8 +5,9 @@ import type { Transaction } from '@mysten/sui/transactions';
 
 const LAST_WALLET_ID_KEY = 'walletId';
 const LAST_WALLET_ADDRESS_KEY = 'walletAddress';
-const CONNECT_TIMEOUT_MS = 15000;
-const SIGN_TIMEOUT_MS = 30000;
+const CONNECT_TIMEOUT_MS = 30000;
+const SILENT_CONNECT_TIMEOUT_MS = 5000;
+const SIGN_TIMEOUT_MS = 60000;
 
 type WalletLike = ReturnType<ReturnType<typeof getWallets>['get']>[number];
 type WalletAccount = WalletLike['accounts'][number];
@@ -109,19 +110,36 @@ export async function getConnectedWalletContext(preferredWalletId?: string): Pro
     throw new Error(`Wallet ${wallet.name} does not support connect.`);
   }
 
-  const validWalletAccounts = wallet.accounts.filter((item) => {
+  let validWalletAccounts = wallet.accounts.filter((item) => {
     const accountHasSuiChain = Array.isArray(item.chains)
       ? item.chains.some((chain) => chain === SUI_TESTNET_CHAIN || chain === SUI_MAINNET_CHAIN)
       : true;
     return accountHasSuiChain && isValidSuiHexAddress(item.address);
   });
+
   let account = validWalletAccounts.find((item) => item.address === savedAddress) || validWalletAccounts[0];
   if (!account) {
     try {
-      const output = await withTimeout(connectFeature.connect({ silent: false }), CONNECT_TIMEOUT_MS, 'connect');
+      // Always perform at least a silent connect handshake before signing.
+      // Some wallets (including Nightly on some builds) need this to surface approval correctly.
+      let output;
+      try {
+        output = await withTimeout(connectFeature.connect({ silent: true }), SILENT_CONNECT_TIMEOUT_MS, 'silent connect');
+      } catch {
+        output = await withTimeout(connectFeature.connect({ silent: false }), CONNECT_TIMEOUT_MS, 'connect');
+      }
+
+      validWalletAccounts = wallet.accounts.filter((item) => {
+        const accountHasSuiChain = Array.isArray(item.chains)
+          ? item.chains.some((chain) => chain === SUI_TESTNET_CHAIN || chain === SUI_MAINNET_CHAIN || chain.startsWith('sui:'))
+          : true;
+        return accountHasSuiChain && isValidSuiHexAddress(item.address);
+      });
+
       const connectedAddress = output.accounts?.[0]?.address;
       account = validWalletAccounts.find((item) => item.address === connectedAddress)
         || wallet.accounts.find((item) => item.address === connectedAddress && isValidSuiHexAddress(item.address))
+        || validWalletAccounts.find((item) => item.address === savedAddress)
         || validWalletAccounts[0];
     } catch (error) {
       throw normalizeConnectError(error);
