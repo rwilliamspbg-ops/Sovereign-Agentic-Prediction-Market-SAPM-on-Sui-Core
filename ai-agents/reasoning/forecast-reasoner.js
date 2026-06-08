@@ -118,7 +118,7 @@ class ForecastReasoner extends EventEmitter {
       return analysis;
       
     } catch (error) {
-      logger.error(`Analysis failed for ${marketId}:`, { err: String(error.message)) });
+      logger.error(`Analysis failed for ${marketId}:`, { err: String(error.message) });
       
       // Emit error event
       this.emit('analysis_error', {
