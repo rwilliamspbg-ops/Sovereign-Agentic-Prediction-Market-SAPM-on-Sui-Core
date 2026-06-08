@@ -1,10 +1,14 @@
 [package]
 name = "sapm_registry"
-version = "0.1.0"
-authors = ["sapm"]
+version = "0.2.0"
+authors = ["Sovereign Mohawk Proto LLC"]
 edition = "2024"
 
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
+
 [addresses]
+sapm_registry = "0x0"
 
 [environments]
 testnet = { rpc = "https://fullnode.testnet.sui.io:443" }
