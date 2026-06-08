@@ -80,6 +80,20 @@ jobs:
       - name: Run orchestrator hardening checks
         run: bash scripts/orchestrator_hardening_check.sh
 
+  reasoner-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run reasoner smoke checks
+        run: npm run test:reasoner-smoke
+
   deployment-lint:
     runs-on: ubuntu-latest
     steps:

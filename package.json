@@ -9,6 +9,7 @@
     "test:orchestrator:experimental": "npm --prefix agents/orchestrator test 2>/dev/null || echo '⚠️  Orchestrator tests in progress'",
     "test:all": "npm run test:trader && npm run test:aggregator",
     "test:e2e": "jest test/e2e --testTimeout=10000",
+    "test:reasoner-smoke": "node scripts/reasoner_smoke_test.js",
     "test:chaos": "node scripts/chaos_trading_scenarios.js",
     "test:load": "node scripts/load_test_trading.js",
     "check:schemas": "node scripts/validate_canonical_schemas.js",
