@@ -8,20 +8,9 @@
 [![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-D22128?style=for-the-badge&logo=apache&logoColor=white)](LICENSE.md)
 
 <p align="center">
-  <iframe
-    width="800"
-    height="450"
-    src="https://www.youtube.com/embed/CEEmdBJklB0"
-    title="SAPM Demo Video"
-    frameborder="0"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    referrerpolicy="strict-origin-when-cross-origin"
-    allowfullscreen>
-  </iframe>
-</p>
-
-<p align="center">
-  <a href="https://www.youtube.com/watch?v=CEEmdBJklB0">Watch the SAPM demo on YouTube</a>
+  <a href="https://www.youtube.com/watch?v=CEEmdBJklB0" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.youtube.com/vi/CEEmdBJklB0/maxresdefault.jpg" alt="Watch SAPM demo video" width="800" />
+  </a>
 </p>
 
 ---
