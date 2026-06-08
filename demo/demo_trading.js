@@ -6,27 +6,56 @@
  * Package ID: 0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8
  */
 
-const { SuiClient, SuiObjectTypes } = require('@mysten/sui');
-
 class SAPMTradingDemo {
   constructor(config) {
     this.config = config || {};
     this.client = null;
-    this.packageId = '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
+    this.rpcEndpoint = this.config.rpcEndpoint || 'https://fullnode.testnet.sui.io:443';
+    this.packageId = this.config.packageId || '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
+    this.walletAddress = this.config.walletAddress || process.env.SUI_WALLET || '';
+    this.marketObjectIds = this.config.marketObjectIds || [];
   }
 
   /**
    * Initialize Sui client with testnet RPC
    */
-  async initialize(rpcEndpoint = 'https://fullnode.testnet.sui.io:443') {
+  async initialize(rpcEndpoint = this.config.rpcEndpoint || 'https://fullnode.testnet.sui.io:443') {
     console.log('🔗 Initializing SAPM Trading Demo');
     console.log(`   RPC Endpoint: ${rpcEndpoint}`);
     console.log(`   Package ID: ${this.packageId}`);
     
-    this.client = new SuiClient({ url: rpcEndpoint });
+    this.rpcEndpoint = rpcEndpoint;
+    this.client = { url: rpcEndpoint };
     console.log('✅ Client initialized successfully\n');
     
     return true;
+  }
+
+  /**
+   * Execute Sui JSON-RPC request.
+   */
+  async _rpcCall(method, params) {
+    const response = await fetch(this.rpcEndpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method,
+        params
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`RPC request failed: ${response.status} ${response.statusText}`);
+    }
+
+    const json = await response.json();
+    if (json.error) {
+      throw new Error(json.error.message || 'Unknown RPC error');
+    }
+
+    return json.result;
   }
 
   /**
@@ -35,27 +64,44 @@ class SAPMTradingDemo {
   async getLatestCoin() {
     try {
       console.log('💰 Fetching latest SUI coin for demo...');
+
+      if (!this.walletAddress) {
+        console.log('⚠️ SUI_WALLET is not set. Skipping coin lookup.');
+        return null;
+      }
       
-      const response = await this.client.objects({
-        options: { 
-          showEffects: true, 
-          showContent: true,
-          showOwner: false
-        }
+      const response = await this._rpcCall('suix_getOwnedObjects', [
+        this.walletAddress,
+        {
+          filter: { StructType: '0x2::coin::Coin<0x2::sui::SUI>' },
+          options: {
+            showType: true,
+            showContent: true
+          }
+        },
+        null,
+        100
+      ]);
+
+      // Find a SUI coin (coin type 0x2::sui::SUI) and pick the largest by balance
+      const suiCoins = (response?.data || []).filter(obj => {
+        const type = obj?.data?.type || '';
+        return type.includes('0x2::coin::Coin<0x2::sui::SUI>');
       });
 
-      // Find a SUI coin (type starts with 0x2::sui::SUI)
-      const suiCoin = response.data.find(obj => 
-        obj.data && obj.data.type?.includes('::sui::SUI')
-      );
+      const suiCoin = suiCoins.sort((a, b) => {
+        const aBal = Number(a?.data?.content?.fields?.balance || 0);
+        const bBal = Number(b?.data?.content?.fields?.balance || 0);
+        return bBal - aBal;
+      })[0];
 
       if (suiCoin) {
-        console.log('✅ Found SUI coin:', suiCoin.objectId);
-        return suiCoin.objectId;
+        const coinId = suiCoin?.data?.objectId || suiCoin?.objectId || null;
+        console.log('✅ Found SUI coin:', coinId);
+        return coinId;
       } else {
-        console.log('⚠️ No SUI coin found in first 100 objects');
-        // Return any coin for demo purposes
-        return response.data[0]?.objectId || null;
+        console.log('⚠️ No SUI coin found in first 100 owned objects');
+        return null;
       }
     } catch (error) {
       console.error('❌ Error fetching coins:', error.message);
@@ -73,37 +119,17 @@ class SAPMTradingDemo {
 
     console.log('\n🔍 Discovering DeepBook Predict Markets...');
     
-    try {
-      // Query markets from your deployed package
-      const response = await this.client.moveCall({
-        target: `${this.packageId}::deepbook::get_markets`,
-        arguments: []
-      });
-
-      if (Array.isArray(response) && response.length > 0) {
-        console.log(`✅ Found ${response.length} markets\n`);
-        
-        // Display top 3 markets
-        response.slice(0, 3).forEach((market, idx) => {
-          console.log(`${idx + 1}. Event ID: ${market.objectId || market}`);
-        });
-
-        return response;
-      } else {
-        console.log('⚠️ No markets found yet');
-        console.log('   This is expected if package is newly deployed.');
-        console.log('   Markets will appear as creators call create_market().\n');
-        
-        return [];
-      }
-    } catch (error) {
-      // Handle case where market discovery method might not exist yet
-      console.log('⚠️ Market discovery needs implementation:');
-      console.log(`   Target: ${this.packageId}::deepbook::get_markets`);
-      console.log('   Next: Add this function to your deepbook module\n');
-      
+    if (!Array.isArray(this.marketObjectIds) || this.marketObjectIds.length === 0) {
+      console.log('⚠️ No market IDs configured. Set SUI_MARKET_OBJECT_IDS=id1,id2,... to enable discovery.\n');
       return [];
     }
+
+    console.log(`✅ Found ${this.marketObjectIds.length} configured market IDs\n`);
+    this.marketObjectIds.slice(0, 3).forEach((market, idx) => {
+      console.log(`${idx + 1}. Event ID: ${market}`);
+    });
+
+    return this.marketObjectIds;
   }
 
   /**
@@ -116,40 +142,23 @@ class SAPMTradingDemo {
 
     console.log(`\n📊 Fetching market state for: ${marketObjectId}`);
     
-    try {
-      const response = await this.client.moveCall({
-        target: `${this.packageId}::deepbook::get_market`,
-        arguments: [marketObjectId]
-      });
-
-      return {
-        valid: true,
-        eventId: response.eventId || marketObjectId,
-        yesPrice: response.yesPrice || null,
-        noPrice: response.noPrice || null,
-        totalLiquidity: response.liquidityAmount || null
-      };
-    } catch (error) {
-      console.error('⚠️ Market fetch failed:', error.message);
-      
-      // Try alternative method
-      try {
-        const stateResponse = await this.client.moveCall({
-          target: `${this.packageId}::deepbook::get_market_state`,
-          arguments: [marketObjectId]
-        });
-
-        return {
-          valid: true,
-          yesPrice: stateResponse.yesPrice || null,
-          noPrice: stateResponse.noPrice || null,
-          totalLiquidity: stateResponse.liquidityAmount || null
-        };
-      } catch (err) {
-        console.log('   Alternative method also failed');
-        throw err;
+    const response = await this._rpcCall('sui_getObject', [
+      marketObjectId,
+      {
+        showType: true,
+        showContent: true
       }
-    }
+    ]);
+
+    const fields = response?.data?.content?.fields || {};
+
+    return {
+      valid: Boolean(response?.data),
+      eventId: marketObjectId,
+      yesPrice: fields.yes_price || fields.yesPrice || null,
+      noPrice: fields.no_price || fields.noPrice || null,
+      totalLiquidity: fields.liquidity_amount || fields.liquidityAmount || null
+    };
   }
 
   /**
@@ -190,10 +199,10 @@ class SAPMTradingDemo {
     await this.initialize();
 
     // Show performance metrics
-    console.log('\n⚡ Performance Metrics (AF_XDP):');
-    console.log('   • Throughput: 128.4 GiB/s (line-rate forwarding)');
-    console.log('   • Latency p99: 8 μs');
-    console.log('   • CPU Utilization: 23%');
+    console.log('\n⚡ Performance Targets (theoretical AF_XDP):');
+    console.log('   • Throughput target: 128.4 GiB/s (line-rate forwarding ceiling)');
+    console.log('   • Latency target p99: 8 μs');
+    console.log('   • Note: current implementation path is standard sockets; AF_XDP is roadmap work.');
 
     // Show security features
     console.log('\n🔐 Security Features:');
@@ -204,7 +213,7 @@ class SAPMTradingDemo {
     // Show architecture
     console.log('\n🏗️ Architecture Stack:');
     console.log('   Control Plane: Go (market discovery, routing)');
-    console.log('   Datapath: Rust AF_XDP zero-copy kernel');
+    console.log('   Datapath: Rust userspace networking (AF_XDP target architecture)');
     console.log('   Cryptography: Hybrid PQC + XMSS lattice signatures');
 
     // Fetch latest coin
@@ -245,7 +254,7 @@ class SAPMTradingDemo {
     console.log('📊 Key Metrics for Judges:');
     console.log('   • Innovation: Formal verification (Lean 4) - Rare in production!');
     console.log('   • Security: Quantum resistant + TPM attestation');
-    console.log('   • Performance: AF_XDP line-rate forwarding (128+ GiB/s)');
+    console.log('   • Performance target: AF_XDP line-rate forwarding (128+ GiB/s theoretical)');
     console.log('   • Enterprise Ready: Kubernetes/Helm manifests complete');
     console.log('   • Sui Integration: Trading adapter implemented');
     
@@ -287,9 +296,16 @@ class SAPMTradingDemo {
 // Run demo if executed directly
 async function main() {
   try {
+    const marketObjectIds = (process.env.SUI_MARKET_OBJECT_IDS || '')
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean);
+
     const config = {
       rpcEndpoint: process.env.SUI_RPC || 'https://fullnode.testnet.sui.io:443',
-      packageId: '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8'
+      packageId: '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8',
+      walletAddress: process.env.SUI_WALLET || '',
+      marketObjectIds
     };
     
     const demo = new SAPMTradingDemo(config);

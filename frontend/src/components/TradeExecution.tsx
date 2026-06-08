@@ -19,7 +19,7 @@ export interface TradeRequest {
 interface TradeResult {
   id: string;
   status: 'pending' | 'success' | 'error';
-  stage: 'approval' | 'submitted' | 'confirmed' | 'failed';
+  stage: 'approval' | 'submitted' | 'confirmed' | 'finalized' | 'failed';
   marketId: string;
   side: 'yes' | 'no';
   amount: number;
@@ -34,6 +34,8 @@ interface TradeResult {
 interface TradeHistory {
   [marketId: string]: TradeResult[];
 }
+
+export type TradeLifecycleStage = 'approval' | 'submitted' | 'confirmed' | 'finalized' | 'failed';
 
 const SUI_MIST = 1_000_000_000;
 const TRADE_RETRY_ATTEMPTS = 2;
@@ -67,6 +69,29 @@ type TargetIntrospectionState = {
   returnTypes?: string[];
   message?: string;
 };
+
+function resolvePreferredNetwork(): 'testnet' | 'mainnet' {
+  if (typeof window === 'undefined') {
+    return 'testnet';
+  }
+  return window.localStorage.getItem('preferredNetwork') === 'mainnet' ? 'mainnet' : 'testnet';
+}
+
+function resolveRpcUrl(network: 'testnet' | 'mainnet'): string {
+  if (typeof window !== 'undefined') {
+    const saved = window.localStorage.getItem('rpcEndpoint')?.trim();
+    if (saved) {
+      return saved;
+    }
+  }
+
+  const configured = process.env.NEXT_PUBLIC_SUI_RPC?.trim();
+  if (configured) {
+    return configured;
+  }
+
+  return getFullnodeUrl(network);
+}
 
 function isValidSuiHexAddress(value: string | null | undefined): value is string {
   if (!value) {
@@ -389,6 +414,28 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function waitForFinalization(digest: string, network: 'testnet' | 'mainnet'): Promise<boolean> {
+  const client = new SuiClient({ url: resolveRpcUrl(network) });
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      const tx = await client.getTransactionBlock({
+        digest,
+        options: { showEffects: true },
+      });
+
+      if (tx.effects?.status?.status) {
+        return true;
+      }
+    } catch {
+      // Retry below.
+    }
+    await delay(900 * (attempt + 1));
+  }
+
+  return false;
+}
+
 function getOptionalWalletAttestation(): AttestationData | undefined {
   const leafCertificateFingerprint = process.env.NEXT_PUBLIC_WALLET_ATTESTATION_FINGERPRINT || '';
   const nonce = process.env.NEXT_PUBLIC_WALLET_ATTESTATION_NONCE || '';
@@ -428,7 +475,8 @@ export function useTradeExecution() {
   const inFlightTradesRef = useRef<Set<string>>(new Set());
 
   const executeOnchainTransaction = async (trade: TradeRequest, totalCost: number) => {
-    const preferredNetwork: 'testnet' | 'mainnet' = localStorage.getItem('preferredNetwork') === 'mainnet' ? 'mainnet' : 'testnet';
+    const preferredNetwork = resolvePreferredNetwork();
+    const preferredRpcUrl = resolveRpcUrl(preferredNetwork);
     const context = await getConnectedWalletContext(localStorage.getItem('walletId') || undefined);
     const walletIsTrusted = await walletSecurityService.verifyWalletAuthenticity(context.account.address);
     if (!walletIsTrusted) {
@@ -436,16 +484,43 @@ export function useTradeExecution() {
     }
 
     const walletAttestation = getOptionalWalletAttestation();
-    const client = new SuiClient({ url: getFullnodeUrl(preferredNetwork) });
+    const client = new SuiClient({ url: preferredRpcUrl });
     const tradeTarget = resolveTradeTarget();
     const parsedTarget = parseTarget(tradeTarget);
 
-    const pkg = await client.getObject({
-      id: SUI_PACKAGE_ID,
-      options: { showType: true },
-    });
+    let pkg;
+    try {
+      pkg = await client.getObject({
+        id: SUI_PACKAGE_ID,
+        options: { showType: true },
+      });
+    } catch (error) {
+      throw new Error(
+        `Unable to query package on configured RPC (${preferredRpcUrl}). Review wallet/network configuration and ensure your RPC endpoint is reachable. ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
     if (!pkg.data) {
-      throw new Error(`Configured Sui package not found on ${preferredNetwork}: ${SUI_PACKAGE_ID}`);
+      const alternateNetwork: 'testnet' | 'mainnet' = preferredNetwork === 'testnet' ? 'mainnet' : 'testnet';
+      try {
+        const alternateClient = new SuiClient({ url: getFullnodeUrl(alternateNetwork) });
+        const alternatePkg = await alternateClient.getObject({
+          id: SUI_PACKAGE_ID,
+          options: { showType: true },
+        });
+        if (alternatePkg.data) {
+          throw new Error(
+            `Configured package is not deployed on ${preferredNetwork} (${preferredRpcUrl}) but exists on ${alternateNetwork}. Switch wallet network to ${alternateNetwork} and retry.`
+          );
+        }
+      } catch (alternateError) {
+        if (alternateError instanceof Error && alternateError.message.includes('Switch wallet network')) {
+          throw alternateError;
+        }
+      }
+
+      throw new Error(
+        `Configured Sui package not found on ${preferredNetwork} via ${preferredRpcUrl}: ${SUI_PACKAGE_ID}. Verify package ID and selected wallet/network.`
+      );
     }
 
     const requiredNotionalMist = Math.ceil(totalCost * SUI_MIST);
@@ -596,7 +671,10 @@ export function useTradeExecution() {
     throw lastError instanceof Error ? lastError : new Error('Transaction failed after retry policy exhausted.');
   };
 
-  const executeTrade = async (trade: TradeRequest): Promise<TradeResult> => {
+  const executeTrade = async (
+    trade: TradeRequest,
+    options?: { onStageChange?: (stage: TradeLifecycleStage, meta?: { digest?: string; network?: 'testnet' | 'mainnet' }) => void },
+  ): Promise<TradeResult> => {
     const totalCost = trade.amount * trade.executionPrice;
     if (totalCost > MAX_NOTIONAL_SUI) {
       return {
@@ -649,6 +727,7 @@ export function useTradeExecution() {
       ...prev,
       [trade.marketId]: [...(prev[trade.marketId] || []), result],
     }));
+    options?.onStageChange?.('approval');
 
     addToast('Awaiting wallet approval...', 'info');
 
@@ -670,6 +749,7 @@ export function useTradeExecution() {
       }));
 
       addToast(`Transaction failed: ${failedResult.error}`, 'error');
+      options?.onStageChange?.('failed');
       inFlightTradesRef.current.delete(idempotencyKey);
       return failedResult;
     }
@@ -687,6 +767,7 @@ export function useTradeExecution() {
       ...prev,
       [trade.marketId]: prev[trade.marketId].map(t => t.id === tradeId ? submittedResult : t),
     }));
+    options?.onStageChange?.('submitted', { digest: txOutcome.digest, network: txOutcome.network });
 
     addToast(`Transaction submitted: ${submittedResult.transactionHash}`, 'info');
 
@@ -701,6 +782,7 @@ export function useTradeExecution() {
       ...prev,
       [trade.marketId]: prev[trade.marketId].map(t => t.id === tradeId ? successResult : t),
     }));
+    options?.onStageChange?.('confirmed', { digest: txOutcome.digest, network: txOutcome.network });
 
     // Update positions only after confirmation
     setPositions(prev => ({
@@ -714,6 +796,22 @@ export function useTradeExecution() {
     // Show success toast
     addToast(`Transaction confirmed: ${trade.side.toUpperCase()} ${trade.amount.toFixed(2)} SUI`, 'success');
     addToast(`View on SuiScan: https://suiscan.xyz/${txOutcome.network}/tx/${submittedResult.transactionHash}`, 'info');
+
+    const finalized = await waitForFinalization(txOutcome.digest, txOutcome.network);
+    if (finalized) {
+      const finalizedResult: TradeResult = {
+        ...successResult,
+        stage: 'finalized',
+      };
+      setTradeHistory(prev => ({
+        ...prev,
+        [trade.marketId]: prev[trade.marketId].map(t => t.id === tradeId ? finalizedResult : t),
+      }));
+      options?.onStageChange?.('finalized', { digest: txOutcome.digest, network: txOutcome.network });
+      addToast('Transaction finalized on-chain checkpoint.', 'success');
+      inFlightTradesRef.current.delete(idempotencyKey);
+      return finalizedResult;
+    }
 
     inFlightTradesRef.current.delete(idempotencyKey);
 
@@ -768,7 +866,7 @@ export function TradeForm({
   const [amount, setAmount] = useState('10');
   const [side, setSide] = useState<'yes' | 'no'>(initialSide);
   const [isExecuting, setIsExecuting] = useState(false);
-  const [executionStage, setExecutionStage] = useState<'idle' | 'approval' | 'submitted' | 'confirmed' | 'failed'>('idle');
+  const [executionStage, setExecutionStage] = useState<'idle' | 'approval' | 'submitted' | 'confirmed' | 'finalized' | 'failed'>('idle');
   const [error, setError] = useState<string | null>(null);
   const preflightIssues = useMemo(() => getTradePreflightIssues(marketId), [marketId]);
   const [targetIntrospection, setTargetIntrospection] = useState<TargetIntrospectionState>(() => ({
@@ -782,6 +880,7 @@ export function TradeForm({
 
     const inspectTarget = async () => {
       const preferredNetwork: 'testnet' | 'mainnet' = localStorage.getItem('preferredNetwork') === 'mainnet' ? 'mainnet' : 'testnet';
+      const preferredRpcUrl = resolveRpcUrl(preferredNetwork);
       const target = resolveTradeTarget();
 
       setTargetIntrospection({
@@ -793,7 +892,7 @@ export function TradeForm({
 
       try {
         const parsedTarget = parseTarget(target);
-        const client = new SuiClient({ url: getFullnodeUrl(preferredNetwork) });
+        const client = new SuiClient({ url: preferredRpcUrl });
         const normalizedModule = await client.getNormalizedMoveModule({
           package: parsedTarget.packageId,
           module: parsedTarget.moduleName,
@@ -904,7 +1003,7 @@ export function TradeForm({
 
       if (result.status === 'success') {
         clearTimeout(pendingTimer);
-        setExecutionStage('confirmed');
+        setExecutionStage(result.stage === 'finalized' ? 'finalized' : 'confirmed');
         setAmount('');
         onTradeExecuted?.(result);
         setTimeout(() => setExecutionStage('idle'), 1200);
@@ -1083,6 +1182,12 @@ export function TradeForm({
       {!isExecuting && executionStage === 'confirmed' && (
         <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#064e3b', borderRadius: '0.375rem', border: '1px solid #34d399', color: '#6ee7b7', fontSize: '0.875rem' }}>
           ✅ Transaction confirmed on-chain.
+        </div>
+      )}
+
+      {!isExecuting && executionStage === 'finalized' && (
+        <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#064e3b', borderRadius: '0.375rem', border: '1px solid #10b981', color: '#a7f3d0', fontSize: '0.875rem' }}>
+          ✅ Transaction finalized in checkpoint.
         </div>
       )}
 

@@ -3,6 +3,11 @@ use std::collections::VecDeque;
 use std::env;
 
 const DEFAULT_BENCH_FLUSH_INTERVAL: usize = 16_384;
+const DEFAULT_BACKPRESSURE_HIGH_WATERMARK_PCT: u8 = 85;
+const DEFAULT_BACKPRESSURE_LOW_WATERMARK_PCT: u8 = 60;
+const DEFAULT_CIRCUIT_BREAKER_LATENCY_THRESHOLD_MS: u64 = 5;
+const DEFAULT_CIRCUIT_BREAKER_WINDOW_SIZE: usize = 32;
+const DEFAULT_CIRCUIT_BREAKER_COOLDOWN_TICKS: usize = 64;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DatapathMode {
@@ -25,6 +30,11 @@ pub struct DatapathConfig {
     pub interfaces: Vec<String>,
     pub ring_buffer_size: usize,
     pub packet_max_size: usize,
+    pub backpressure_high_watermark_pct: u8,
+    pub backpressure_low_watermark_pct: u8,
+    pub circuit_breaker_latency_threshold_ms: u64,
+    pub circuit_breaker_window_size: usize,
+    pub circuit_breaker_cooldown_ticks: usize,
 }
 
 impl Default for DatapathConfig {
@@ -34,6 +44,11 @@ impl Default for DatapathConfig {
             interfaces: vec!["eth0".to_string(), "eth1".to_string(), "eth2".to_string()],
             ring_buffer_size: 262_144,
             packet_max_size: 9_516,
+            backpressure_high_watermark_pct: DEFAULT_BACKPRESSURE_HIGH_WATERMARK_PCT,
+            backpressure_low_watermark_pct: DEFAULT_BACKPRESSURE_LOW_WATERMARK_PCT,
+            circuit_breaker_latency_threshold_ms: DEFAULT_CIRCUIT_BREAKER_LATENCY_THRESHOLD_MS,
+            circuit_breaker_window_size: DEFAULT_CIRCUIT_BREAKER_WINDOW_SIZE,
+            circuit_breaker_cooldown_ticks: DEFAULT_CIRCUIT_BREAKER_COOLDOWN_TICKS,
         }
     }
 }
@@ -63,6 +78,40 @@ impl DatapathConfig {
         if let Ok(size) = env::var("SAPM_PACKET_MAX_SIZE") {
             if let Ok(value) = size.parse::<usize>() {
                 config.packet_max_size = value;
+            }
+        }
+
+        if let Ok(value) = env::var("SAPM_BACKPRESSURE_HIGH_WATERMARK_PCT") {
+            if let Ok(parsed) = value.parse::<u8>() {
+                config.backpressure_high_watermark_pct = parsed.min(100);
+            }
+        }
+
+        if let Ok(value) = env::var("SAPM_BACKPRESSURE_LOW_WATERMARK_PCT") {
+            if let Ok(parsed) = value.parse::<u8>() {
+                config.backpressure_low_watermark_pct = parsed.min(100);
+            }
+        }
+
+        if config.backpressure_low_watermark_pct > config.backpressure_high_watermark_pct {
+            config.backpressure_low_watermark_pct = config.backpressure_high_watermark_pct;
+        }
+
+        if let Ok(value) = env::var("SAPM_CIRCUIT_BREAKER_LATENCY_THRESHOLD_MS") {
+            if let Ok(parsed) = value.parse::<u64>() {
+                config.circuit_breaker_latency_threshold_ms = parsed.max(1);
+            }
+        }
+
+        if let Ok(value) = env::var("SAPM_CIRCUIT_BREAKER_WINDOW_SIZE") {
+            if let Ok(parsed) = value.parse::<usize>() {
+                config.circuit_breaker_window_size = parsed.max(1);
+            }
+        }
+
+        if let Ok(value) = env::var("SAPM_CIRCUIT_BREAKER_COOLDOWN_TICKS") {
+            if let Ok(parsed) = value.parse::<usize>() {
+                config.circuit_breaker_cooldown_ticks = parsed.max(1);
             }
         }
 
@@ -96,6 +145,23 @@ pub struct DatapathStats {
     pub enqueued: usize,
     pub processed: usize,
     pub dropped: usize,
+    pub throttled: usize,
+    pub backpressure_drops: usize,
+    pub circuit_open_drops: usize,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CircuitState {
+    Closed,
+    Open,
+    HalfOpen,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DatapathSignal {
+    Healthy,
+    Throttle,
+    Fallback,
 }
 
 #[derive(Debug)]
@@ -135,6 +201,8 @@ pub enum DatapathError {
     UnknownInterface(String),
     OversizedPacket { size: usize, max: usize },
     RingFull,
+    BackpressureActive,
+    CircuitOpen,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -148,6 +216,10 @@ pub struct Datapath {
     config: DatapathConfig,
     ring: PacketRing,
     stats: DatapathStats,
+    circuit_state: CircuitState,
+    cooldown_ticks_remaining: usize,
+    backpressure_active: bool,
+    latency_samples_ms: VecDeque<u64>,
 }
 
 impl Datapath {
@@ -157,6 +229,83 @@ impl Datapath {
             config,
             ring,
             stats: DatapathStats::default(),
+            circuit_state: CircuitState::Closed,
+            cooldown_ticks_remaining: 0,
+            backpressure_active: false,
+            latency_samples_ms: VecDeque::new(),
+        }
+    }
+
+    fn ring_usage_pct(&self) -> u8 {
+        if self.config.ring_buffer_size == 0 {
+            return 100;
+        }
+
+        let pct = (self.ring.len() * 100) / self.config.ring_buffer_size;
+        pct.min(100) as u8
+    }
+
+    fn update_backpressure(&mut self) {
+        let usage = self.ring_usage_pct();
+
+        if usage >= self.config.backpressure_high_watermark_pct {
+            self.backpressure_active = true;
+        }
+
+        if self.backpressure_active && usage <= self.config.backpressure_low_watermark_pct {
+            self.backpressure_active = false;
+        }
+    }
+
+    fn tick_circuit(&mut self) {
+        if self.circuit_state == CircuitState::Open {
+            if self.cooldown_ticks_remaining > 0 {
+                self.cooldown_ticks_remaining -= 1;
+            }
+
+            if self.cooldown_ticks_remaining == 0 {
+                self.circuit_state = CircuitState::HalfOpen;
+            }
+        }
+    }
+
+    fn average_latency_ms(&self) -> u64 {
+        if self.latency_samples_ms.is_empty() {
+            return 0;
+        }
+
+        let total = self.latency_samples_ms.iter().copied().sum::<u64>();
+        total / self.latency_samples_ms.len() as u64
+    }
+
+    pub fn record_latency_sample(&mut self, latency_ms: u64) {
+        self.latency_samples_ms.push_back(latency_ms);
+        while self.latency_samples_ms.len() > self.config.circuit_breaker_window_size {
+            self.latency_samples_ms.pop_front();
+        }
+
+        let avg = self.average_latency_ms();
+        if avg > self.config.circuit_breaker_latency_threshold_ms {
+            self.circuit_state = CircuitState::Open;
+            self.cooldown_ticks_remaining = self.config.circuit_breaker_cooldown_ticks;
+        } else if self.circuit_state == CircuitState::HalfOpen {
+            self.circuit_state = CircuitState::Closed;
+        }
+    }
+
+    pub fn circuit_state(&self) -> CircuitState {
+        self.circuit_state
+    }
+
+    pub fn is_backpressure_active(&self) -> bool {
+        self.backpressure_active
+    }
+
+    pub fn operational_signal(&self) -> DatapathSignal {
+        match self.circuit_state {
+            CircuitState::Open => DatapathSignal::Fallback,
+            _ if self.backpressure_active => DatapathSignal::Throttle,
+            _ => DatapathSignal::Healthy,
         }
     }
 
@@ -165,6 +314,22 @@ impl Datapath {
         interface: &str,
         packet: &[u8],
     ) -> Result<ForwardingDecision, DatapathError> {
+        self.tick_circuit();
+        self.update_backpressure();
+
+        if self.circuit_state == CircuitState::Open {
+            self.stats.dropped += 1;
+            self.stats.circuit_open_drops += 1;
+            return Err(DatapathError::CircuitOpen);
+        }
+
+        if self.backpressure_active {
+            self.stats.dropped += 1;
+            self.stats.throttled += 1;
+            self.stats.backpressure_drops += 1;
+            return Err(DatapathError::BackpressureActive);
+        }
+
         let interface_index = if let Some(index) = self
             .config
             .interfaces
@@ -198,6 +363,10 @@ impl Datapath {
             })?;
 
         self.stats.enqueued += 1;
+        if self.circuit_state == CircuitState::HalfOpen {
+            self.circuit_state = CircuitState::Closed;
+        }
+        self.update_backpressure();
         Ok(ForwardingDecision::Enqueued)
     }
 
@@ -210,6 +379,8 @@ impl Datapath {
             drained += 1;
             self.stats.processed += 1;
         }
+
+        self.update_backpressure();
 
         drained
     }
@@ -286,5 +457,44 @@ mod tests {
         let mut datapath = Datapath::new(DatapathConfig::default());
         let processed = benchmark(&mut datapath, 1_000);
         assert_eq!(processed, 1_000);
+    }
+
+    #[test]
+    fn circuit_breaker_opens_on_latency_spike() {
+        let mut datapath = Datapath::new(DatapathConfig {
+            circuit_breaker_latency_threshold_ms: 2,
+            circuit_breaker_window_size: 2,
+            circuit_breaker_cooldown_ticks: 2,
+            ..DatapathConfig::default()
+        });
+
+        datapath.record_latency_sample(1);
+        datapath.record_latency_sample(10);
+        assert_eq!(datapath.circuit_state(), CircuitState::Open);
+
+        let err = datapath.process_packet("eth0", &[1, 2, 3]).unwrap_err();
+        assert!(matches!(err, DatapathError::CircuitOpen));
+        assert_eq!(datapath.operational_signal(), DatapathSignal::Fallback);
+    }
+
+    #[test]
+    fn backpressure_throttles_until_usage_drops() {
+        let mut datapath = Datapath::new(DatapathConfig {
+            ring_buffer_size: 4,
+            backpressure_high_watermark_pct: 50,
+            backpressure_low_watermark_pct: 25,
+            ..DatapathConfig::default()
+        });
+
+        assert!(datapath.process_packet("eth0", &[1]).is_ok());
+        assert!(datapath.process_packet("eth0", &[1]).is_ok());
+
+        let err = datapath.process_packet("eth0", &[1]).unwrap_err();
+        assert!(matches!(err, DatapathError::BackpressureActive));
+        assert!(datapath.is_backpressure_active());
+        assert_eq!(datapath.operational_signal(), DatapathSignal::Throttle);
+
+        datapath.flush();
+        assert!(!datapath.is_backpressure_active());
     }
 }

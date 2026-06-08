@@ -6,12 +6,37 @@
 
 'use strict';
 
+const { CanonicalEnvelopeValidator } = require('./validator-adapter');
+
 class Orchestrator {
   constructor(config = {}) {
     this.config = Object.assign({ maxAgents: 50, taskTimeout: 30000 }, config);
     this.agentRegistry = new Map();
     this.taskQueue = new Map();
     this.metricsStore = new Map(); // agentId -> { latency, uptime, throughput, accuracy, ... }
+    this.validatorAdapter = new CanonicalEnvelopeValidator();
+    this.policyRejectionsByCorrelationId = new Map();
+  }
+
+  ingestCanonicalMessage(envelope) {
+    const result = this.validatorAdapter.validateIngress(envelope);
+    if (result.ok) {
+      return result;
+    }
+
+    const correlationId = result.correlationId || 'missing-correlation-id';
+    const prior = this.policyRejectionsByCorrelationId.get(correlationId) || [];
+    prior.push({
+      code: result.code,
+      errors: result.errors,
+      ts: new Date().toISOString(),
+    });
+    this.policyRejectionsByCorrelationId.set(correlationId, prior);
+    return result;
+  }
+
+  getPolicyErrors(correlationId) {
+    return this.policyRejectionsByCorrelationId.get(correlationId) || [];
   }
 
   // ─── Config ────────────────────────────────────────────────────────────────

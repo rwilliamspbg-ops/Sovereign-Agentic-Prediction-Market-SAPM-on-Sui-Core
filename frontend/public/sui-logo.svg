@@ -1,0 +1,7 @@
+<svg width="74" height="28" viewBox="0 0 74 28" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="suiTitle suiDesc">
+  <title id="suiTitle">Sui Logo</title>
+  <desc id="suiDesc">Minimal Sui mark and label</desc>
+  <path d="M11.8 2.8c1.7 2.3 4.8 5.4 4.8 9.2 0 3.3-2.5 5.9-5.8 5.9-3.2 0-5.8-2.6-5.8-5.9 0-3.8 3.1-6.9 4.8-9.2.5-.7 1.5-.7 2 0z" fill="#60a5fa"/>
+  <path d="M10.8 9.1c1.4 1.9 3.4 3.7 3.4 5.8 0 1.9-1.5 3.4-3.4 3.4S7.4 16.8 7.4 14.9c0-2.1 2-3.9 3.4-5.8z" fill="#dbeafe"/>
+  <text x="22" y="18" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="13" font-weight="700" fill="#dbeafe">SUI</text>
+</svg>

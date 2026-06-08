@@ -2,7 +2,6 @@
 
 import React, { ReactNode } from "react";
 import Link from "next/link";
-import { CopilotKit } from '@copilotkit/react-core';
 import { getWallets } from '@wallet-standard/app';
 import { SUI_MAINNET_CHAIN, SUI_TESTNET_CHAIN } from '@mysten/wallet-standard';
 import "./globals.css";
@@ -11,7 +10,8 @@ import { CopilotOpsPanel } from '@/components/a2ui/CopilotOpsPanel';
 import { SUI_PACKAGE_ID, SUISCAN_PACKAGE_URL } from '@/lib/sui-config';
 const LAST_WALLET_ID_KEY = 'walletId';
 const LAST_WALLET_ADDRESS_KEY = 'walletAddress';
-const CONNECT_TIMEOUT_MS = 15000;
+const CONNECT_TIMEOUT_MS = 30000;
+const SILENT_CONNECT_TIMEOUT_MS = 5000;
 
 function isValidSuiHexAddress(value: string | null | undefined): boolean {
   if (!value) {
@@ -120,7 +120,6 @@ export default function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
-  const copilotRuntimeUrl = process.env.NEXT_PUBLIC_COPILOTKIT_RUNTIME_URL || '/api/copilotkit';
   const [walletConnected, setWalletConnected] = React.useState(false);
   const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
   const [showWalletMenu, setShowWalletMenu] = React.useState(false);
@@ -174,13 +173,9 @@ export default function RootLayout({
 
       let output: { accounts: readonly { address: string }[] };
       try {
-        output = await withTimeout(connectFeature.connect(), CONNECT_TIMEOUT_MS, 'Wallet connect');
-      } catch {
-        try {
-          output = await withTimeout(connectFeature.connect({ silent: false }), CONNECT_TIMEOUT_MS, 'Wallet connect');
-        } catch (error) {
-          throw normalizeWalletConnectError(error);
-        }
+        output = await withTimeout(connectFeature.connect({ silent: false }), CONNECT_TIMEOUT_MS, 'Wallet connect');
+      } catch (error) {
+        throw normalizeWalletConnectError(error);
       }
       const accountAddress = getFirstSuiHexAddress(output.accounts)
         || getFirstSuiHexAddress(wallet.accounts as readonly { address: string }[] | undefined);
@@ -276,13 +271,15 @@ export default function RootLayout({
 
       try {
         setIsConnecting(true);
-        let output: { accounts: readonly { address: string }[] };
+        let output: { accounts: readonly { address: string }[] } | null = null;
         try {
-          output = await withTimeout(connectFeature.connect({ silent: true }), CONNECT_TIMEOUT_MS, 'Wallet reconnect');
+          // Reconnect should never force an interactive approval prompt.
+          // If silent reconnect fails, keep state disconnected and wait for user click.
+          output = await withTimeout(connectFeature.connect({ silent: true }), SILENT_CONNECT_TIMEOUT_MS, 'Wallet reconnect');
         } catch {
-          output = await withTimeout(connectFeature.connect(), CONNECT_TIMEOUT_MS, 'Wallet reconnect');
+          output = null;
         }
-        const accountAddress = getFirstSuiHexAddress(output.accounts)
+        const accountAddress = getFirstSuiHexAddress(output?.accounts)
           || getFirstSuiHexAddress(wallet.accounts as readonly { address: string }[] | undefined)
           || (isValidSuiHexAddress(savedAddress) ? savedAddress : null);
         if (accountAddress && isValidSuiHexAddress(accountAddress)) {
@@ -367,9 +364,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body style={{ margin: 0, padding: 0, backgroundColor: '#0f172a', fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
-        <CopilotKit runtimeUrl={copilotRuntimeUrl} useSingleEndpoint={false}>
-          {/* Main Application Content */}
-          <div style={{ position: 'relative' }}>
+        {/* Main Application Content */}
+        <div style={{ position: 'relative' }}>
             
             {/* Header Navigation */}
             <header style={{
@@ -806,8 +802,7 @@ export default function RootLayout({
                 <p style={{ margin: 0, color: '#64748b' }}>© 2025 SAPM on Sui. All rights reserved. | Built with ⚡ on Sui Blockchain</p>
               </div>
             </footer>
-          </div>
-        </CopilotKit>
+        </div>
       </body>
     </html>
   );
