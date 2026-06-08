@@ -7,6 +7,23 @@
 [![Sui Testnet](https://img.shields.io/badge/Sui-Testnet-6fbcf0?style=for-the-badge&logo=sui&logoColor=0b1f3a)](https://docs.sui.io)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-D22128?style=for-the-badge&logo=apache&logoColor=white)](LICENSE.md)
 
+<p align="center">
+  <iframe
+    width="800"
+    height="450"
+    src="https://www.youtube.com/embed/CEEmdBJklB0"
+    title="SAPM Demo Video"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allowfullscreen>
+  </iframe>
+</p>
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=CEEmdBJklB0">Watch the SAPM demo on YouTube</a>
+</p>
+
 ---
 
 ## Problem
