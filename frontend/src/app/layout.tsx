@@ -258,6 +258,61 @@ export default function RootLayout({
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
+  // ─── Global wallet-extension error interceptor ───────────────────────────
+  // The Sui wallet extension (chrome-extension://…/inapp.js) throws
+  // "JSON-RPC: method call timeout calling connect" as an unhandled promise
+  // rejection when the background service page is slow to respond. This fires
+  // *before* our withTimeout wrapper can catch it, causing Next.js to surface
+  // it as a fatal dev overlay even though it is recoverable.
+  //
+  // We intercept it here at the earliest possible mount point, convert it to a
+  // handled error, and surface a friendly message via walletError state instead.
+  React.useEffect(() => {
+    const isWalletExtensionError = (message: string): boolean => {
+      const m = message.toLowerCase();
+      return (
+        m.includes('json-rpc: method call timeout') ||
+        (m.includes('timeout') && m.includes('connect') && m.includes('wallet')) ||
+        m.includes('chrome-extension') ||
+        (m.includes('method call timeout') && m.includes('connect'))
+      );
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const message =
+        event.reason instanceof Error
+          ? event.reason.message
+          : String(event.reason ?? '');
+      if (isWalletExtensionError(message)) {
+        event.preventDefault(); // suppresses Next.js fatal overlay
+        setWalletError(
+          'Wallet extension timed out connecting to its background page. ' +
+          'Unlock your wallet extension, wait a moment, then click Connect Wallet again.'
+        );
+        setIsConnecting(false);
+      }
+    };
+
+    const handleGlobalError = (event: ErrorEvent) => {
+      if (isWalletExtensionError(event.message || '')) {
+        event.preventDefault();
+        setWalletError(
+          'Wallet extension error. Unlock/reopen the extension and retry.'
+        );
+        setIsConnecting(false);
+        return true; // suppresses console error
+      }
+      return false;
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleGlobalError as unknown as EventListener);
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleGlobalError as unknown as EventListener);
+    };
+  }, []);
+
   // Load wallet and network on mount if previously connected
   React.useEffect(() => {
     const registry = getWallets();
