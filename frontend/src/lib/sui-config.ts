@@ -1,13 +1,31 @@
-export const SUI_PACKAGE_ID = '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
-export const SUI_NETWORK = 'testnet';
+// SAPM deployed Move package (Registry + incentives + prediction_market)
+export const SUI_PACKAGE_ID = process.env.NEXT_PUBLIC_SUI_PACKAGE_ID ||
+  '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
+export const SUI_NETWORK = (process.env.NEXT_PUBLIC_SUI_NETWORK as 'testnet' | 'mainnet') || 'testnet';
 
 export const SUISCAN_PACKAGE_URL = `https://suiscan.xyz/${SUI_NETWORK}/object/${SUI_PACKAGE_ID}`;
+export const SUISCAN_TX_URL = (digest: string) =>
+  `https://suiscan.xyz/${SUI_NETWORK}/tx/${digest}`;
 
-export const DEEPBOOK_PREDICT_PACKAGE_ID = process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID || SUI_PACKAGE_ID;
+// ─── DeepBook Predict (testnet, predict-testnet-4-16 branch) ─────────────────
+// Source: https://docs.sui.io/onchain-finance/deepbook-predict/contract-information
+export const DEEPBOOK_PREDICT_PACKAGE_ID =
+  process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID ||
+  '0xf5ea2b3749c65d6e56507cc35388719aadb28f9cab873696a2f8687f5c785138';
+export const DEEPBOOK_PREDICT_REGISTRY =
+  '0x43af14fed5480c20ff77e2263d5f794c35b9fab7e2212903127062f4fe2a6e64';
+export const DEEPBOOK_PREDICT_OBJECT_ID =
+  '0xc8736204d12f0a7277c86388a68bf8a194b0a14c5538ad13f22cbd8e2a38028a';
+export const DEEPBOOK_PREDICT_SERVER = 'https://predict-server.testnet.mystenlabs.com';
+export const DEEPBOOK_PREDICT_DUSDC_TYPE =
+  '0xe95040085976bfd54a1a07225cd46c8a2b4e8e2b6732f140a0fc49850ba73e1a::dusdc::DUSDC';
 export const DEEPBOOK_SANDBOX_URL = 'https://github.com/MystenLabs/deepbook-sandbox';
 
-export const WALRUS_AGGREGATOR_URL = process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL || 'https://aggregator.walrus-testnet.walrus.space';
-export const WALRUS_PUBLISHER_URL = process.env.NEXT_PUBLIC_WALRUS_PUBLISHER_URL || 'https://publisher.walrus-testnet.walrus.space';
+// ─── Walrus (testnet) ─────────────────────────────────────────────────────────
+export const WALRUS_AGGREGATOR_URL = process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL ||
+  'https://aggregator.walrus-testnet.walrus.space';
+export const WALRUS_PUBLISHER_URL = process.env.NEXT_PUBLIC_WALRUS_PUBLISHER_URL ||
+  'https://publisher.walrus-testnet.walrus.space';
 
 export type ResourceCategory = {
   title: string;
