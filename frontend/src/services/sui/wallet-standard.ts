@@ -8,9 +8,6 @@ const LAST_WALLET_ADDRESS_KEY = 'walletAddress';
 const CONNECT_TIMEOUT_MS = 30000;
 const SILENT_CONNECT_TIMEOUT_MS = 5000;
 const SIGN_TIMEOUT_MS = 60000;
-const ENABLE_BLIND_SIGNING_FALLBACK = ['1', 'true', 'yes'].includes(
-  String(process.env.NEXT_PUBLIC_ENABLE_BLIND_SIGNING_FALLBACK || '').toLowerCase()
-);
 
 type WalletLike = ReturnType<ReturnType<typeof getWallets>['get']>[number];
 type WalletAccount = WalletLike['accounts'][number];
@@ -59,6 +56,70 @@ export type WalletExecutionContext = {
   wallet: WalletLike;
   account: WalletAccount;
 };
+
+type BlindSigningFallbackDependencies = {
+  createClient?: (url: string) => {
+    executeTransactionBlock: (input: {
+      transactionBlock: string;
+      signature: string | string[];
+      options: { showEffects: boolean };
+    }) => Promise<{ digest?: string }>;
+  };
+};
+
+export async function executeWithBlindSigningFallback(
+  context: WalletExecutionContext,
+  tx: Transaction,
+  chain: 'testnet' | 'mainnet' = 'testnet',
+  dependencies: BlindSigningFallbackDependencies = {},
+): Promise<{ digest?: string } | null> {
+  const signFeature = context.wallet.features['sui:signTransaction'] as
+    | {
+        signTransaction?: (input: { account: WalletAccount; chain: string; transaction: Transaction }) => Promise<{
+          bytes?: string;
+          transactionBlockBytes?: string;
+          signature?: string;
+          signatures?: string[];
+        }>;
+      }
+    | undefined;
+
+  if (typeof signFeature?.signTransaction !== 'function') {
+    return null;
+  }
+
+  const signed = await withTimeout(
+    signFeature.signTransaction({
+      account: context.account,
+      chain: chain === 'mainnet' ? SUI_MAINNET_CHAIN : SUI_TESTNET_CHAIN,
+      transaction: tx,
+    }),
+    SIGN_TIMEOUT_MS,
+    'signTransaction'
+  );
+
+  const transactionBytes = signed.bytes || signed.transactionBlockBytes;
+  const signatures = signed.signatures || (signed.signature ? [signed.signature] : []);
+
+  if (!transactionBytes || signatures.length === 0) {
+    throw new Error('Wallet signTransaction did not return transaction bytes/signature.');
+  }
+
+  const client = dependencies.createClient
+    ? dependencies.createClient(getFullnodeUrl(chain))
+    : new SuiClient({ url: getFullnodeUrl(chain) });
+  const execution = await withTimeout(
+    client.executeTransactionBlock({
+      transactionBlock: transactionBytes,
+      signature: signatures.length === 1 ? signatures[0] : signatures,
+      options: { showEffects: true },
+    }),
+    SIGN_TIMEOUT_MS,
+    'executeTransactionBlock'
+  );
+
+  return { digest: execution.digest };
+}
 
 function hasConnectFeature(wallet: WalletLike): boolean {
   return typeof (wallet.features?.['standard:connect'] as { connect?: unknown } | undefined)?.connect === 'function';
@@ -235,62 +296,18 @@ export async function signAndExecuteWalletTransaction(context: WalletExecutionCo
     }
   }
 
-  if (!result && ENABLE_BLIND_SIGNING_FALLBACK) {
+  if (!result) {
     const signFeature = context.wallet.features['sui:signTransaction'] as
-      | {
-          signTransaction?: (input: { account: WalletAccount; chain: string; transaction: Transaction }) => Promise<{
-            bytes?: string;
-            transactionBlockBytes?: string;
-            signature?: string;
-            signatures?: string[];
-          }>;
-        }
+      | { signTransaction?: unknown }
       | undefined;
 
     if (typeof signFeature?.signTransaction === 'function') {
       try {
-        const signed = await withTimeout(
-          signFeature.signTransaction({
-            account: context.account,
-            chain: targetChain,
-            transaction: tx,
-          }),
-          SIGN_TIMEOUT_MS,
-          'signTransaction'
-        );
-
-        const transactionBytes = signed.bytes || signed.transactionBlockBytes;
-        const signatures = signed.signatures || (signed.signature ? [signed.signature] : []);
-
-        if (!transactionBytes || signatures.length === 0) {
-          throw new Error('Wallet signTransaction did not return transaction bytes/signature.');
-        }
-
-        const client = new SuiClient({ url: getFullnodeUrl(chain) });
-        const execution = await withTimeout(
-          client.executeTransactionBlock({
-            transactionBlock: transactionBytes,
-            signature: signatures.length === 1 ? signatures[0] : signatures,
-            options: { showEffects: true },
-          }),
-          SIGN_TIMEOUT_MS,
-          'executeTransactionBlock'
-        );
-
-        result = { digest: execution.digest };
+        result = await executeWithBlindSigningFallback(context, tx, chain);
       } catch (error) {
         lastExecutionError = error;
         result = null;
       }
-    }
-  }
-
-  if (!result && !ENABLE_BLIND_SIGNING_FALLBACK) {
-    const signFeature = context.wallet.features['sui:signTransaction'] as { signTransaction?: unknown } | undefined;
-    if (typeof signFeature?.signTransaction === 'function') {
-      lastExecutionError = new Error(
-        'Wallet exposes signTransaction but blind-signing fallback is disabled. Enable blind signing in wallet settings or set NEXT_PUBLIC_ENABLE_BLIND_SIGNING_FALLBACK=true to allow signTransaction + RPC execution fallback.'
-      );
     }
   }
 
