@@ -16,6 +16,7 @@ export const INTEGRATION_STATUS_KEY = 'sapm.integrationStatus';
 const BRIDGE_STATE_KEY = 'sapm.copilot.bridge.state.v1';
 const JUDGE_RESULT_KEY = 'sapm.judgeMode.lastResult';
 const WALRUS_BLOB_ID_KEY = 'sapm.walrus.latestBlobId';
+const LOCAL_ONCHAIN_OBJECT_IDS_KEY = 'sapm.onchainObjectIds';
 
 type ActiveMarketInsight = {
   id: string;
@@ -95,6 +96,19 @@ function getConfiguredMarketObjectIds(): { validIds: string[]; invalidIds: strin
   return { validIds, invalidIds };
 }
 
+function getLocalOnchainObjectIds(): { validIds: string[]; invalidIds: string[] } {
+  const raw = window.localStorage.getItem(LOCAL_ONCHAIN_OBJECT_IDS_KEY) || '';
+  const rawIds = raw
+    .split(/[\s,]+/g)
+    .map((id) => id.trim())
+    .filter(Boolean);
+
+  const validIds = Array.from(new Set(rawIds.filter((id) => isValidSuiHexAddress(id))));
+  const invalidIds = Array.from(new Set(rawIds.filter((id) => !isValidSuiHexAddress(id))));
+
+  return { validIds, invalidIds };
+}
+
 function persistActiveMarketInsight(market: ActiveMarketInsight): void {
   writeJson(ACTIVE_MARKET_INSIGHT_KEY, market);
   publishStorageEvent('sapm:active-market-insight', market);
@@ -132,8 +146,42 @@ function readLastTranscript(fallback: CopilotExecutionTranscript | null): Copilo
   return bridgeState?.lastTranscript || fallback;
 }
 
-async function loadOnchainMarkets(): Promise<ActionResultPayload> {
-  const { validIds, invalidIds } = getConfiguredMarketObjectIds();
+function resolveOnchainMarketObjectIds(context: CopilotContext): {
+  validIds: string[];
+  invalidIds: string[];
+  sourceLabels: string[];
+} {
+  const configured = getConfiguredMarketObjectIds();
+  const local = getLocalOnchainObjectIds();
+  const contextActiveId = context.activeMarketId?.trim() || '';
+  const registryObjectId = (process.env.NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID || '').trim();
+
+  const contextualIds = [contextActiveId, registryObjectId].filter(Boolean);
+  const contextualValidIds = Array.from(new Set(contextualIds.filter((id) => isValidSuiHexAddress(id))));
+  const contextualInvalidIds = Array.from(new Set(contextualIds.filter((id) => !isValidSuiHexAddress(id))));
+
+  const validIds = Array.from(new Set([...configured.validIds, ...local.validIds, ...contextualValidIds]));
+  const invalidIds = Array.from(new Set([...configured.invalidIds, ...local.invalidIds, ...contextualInvalidIds]));
+
+  const sourceLabels: string[] = [];
+  if (configured.validIds.length > 0) {
+    sourceLabels.push('env:NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS');
+  }
+  if (local.validIds.length > 0) {
+    sourceLabels.push('local:sapm.onchainObjectIds');
+  }
+  if (contextActiveId && isValidSuiHexAddress(contextActiveId)) {
+    sourceLabels.push('context:activeMarketId');
+  }
+  if (registryObjectId && isValidSuiHexAddress(registryObjectId)) {
+    sourceLabels.push('env:NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID');
+  }
+
+  return { validIds, invalidIds, sourceLabels };
+}
+
+async function loadOnchainMarkets(context: CopilotContext): Promise<ActionResultPayload> {
+  const { validIds, invalidIds, sourceLabels } = resolveOnchainMarketObjectIds(context);
 
   if (invalidIds.length > 0) {
     return {
@@ -147,7 +195,7 @@ async function loadOnchainMarkets(): Promise<ActionResultPayload> {
     return {
       id: '',
       ok: false,
-      message: 'No on-chain market object IDs are configured. Set NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS before loading markets.',
+      message: 'No on-chain market object IDs are configured. Set NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS, or load/persist IDs in Trade Execution before loading markets.',
     };
   }
 
@@ -172,6 +220,7 @@ async function loadOnchainMarkets(): Promise<ActionResultPayload> {
   emitObservabilityEvent('frontend', 'copilot_markets_loaded', 'info', {
     marketCount: markets.length,
     selectedMarketId: selected.id,
+    sourceLabels,
   });
 
   return {
@@ -182,6 +231,7 @@ async function loadOnchainMarkets(): Promise<ActionResultPayload> {
       marketCount: markets.length,
       selectedMarketId: selected.id,
       validatedIds: validIds,
+      sourceLabels,
     },
   };
 }
@@ -364,7 +414,7 @@ async function executeCopilotAction(request: CopilotActionRequest, options: Acti
 
   switch (request.type) {
     case 'load-onchain-markets':
-      return loadOnchainMarkets();
+      return loadOnchainMarkets(context);
     case 'run-judge-mode':
       return runJudgeMode(request.payload, context, options.getWalletContext || getConnectedWalletContext);
     case 'archive-snapshot':
