@@ -1,65 +1,52 @@
 /**
- * CopilotKit Next.js route handler
+ * CopilotKit Next.js App Router handler — @copilotkit/runtime@1.59.5
  *
- * Fixed: was importing from '@copilotkit/runtime/v2' which does not exist in
- * @copilotkit/runtime@1.x. The correct import is from the package root.
+ * Fixed from original:
+ *   ✗ imported from '@copilotkit/runtime/v2'  → /v2 is a different adapter layer,
+ *     the Next.js App Router integration lives at the package root
+ *   ✗ destructured { GET, POST, OPTIONS }     → endpoint returns { handleRequest },
+ *     not named HTTP exports; wrap manually
+ *   ✗ onBeforeRequest middleware with wrong return type → removed; system prompt
+ *     belongs on the CopilotChat `instructions` prop in the client component
+ *   ✗ OPENAI_API_KEY undocumented             → documented in .env.example files
  *
- * Required environment variables (add to .env.local):
+ * Required env (add to frontend/.env.local):
  *   OPENAI_API_KEY=sk-…
- *   COPILOTKIT_MODEL=openai/gpt-4o-mini   (optional, this is the default)
+ *   COPILOTKIT_TELEMETRY_DISABLED=true   (optional — suppresses telemetry banner)
+ *
+ * Note: the SAPM Copilot system prompt is injected client-side via the
+ *   `instructions` prop on the <CopilotChat> component, not here.
  */
 
-import { CopilotRuntime, OpenAIAdapter, copilotRuntimeNextJSAppRouterEndpoint } from '@copilotkit/runtime';
+import {
+  CopilotRuntime,
+  OpenAIAdapter,
+  copilotRuntimeNextJSAppRouterEndpoint,
+} from '@copilotkit/runtime';
 import { NextRequest } from 'next/server';
 
-const systemPrompt = `You are SAPM Copilot, an execution-focused assistant for a Sui prediction market.
-
-Rules:
-1. Prioritize concrete actions over generic chat.
-2. Never recommend bypassing wallet checks, risk caps, or preflight safeguards.
-3. For action planning, return concise steps with explicit prerequisites.
-4. If required context is missing, ask for the minimal missing fields.
-5. Keep responses short, operational, and tied to market/trade workflows.
-6. Output MUST follow this structure exactly:
-  - PLAN: one sentence objective
-  - PRECHECKS: bullet list
-  - ACTIONS: numbered list where each step maps to one executable action type from {open-market, load-onchain-markets, run-judge-mode, archive-snapshot, refresh-integrations}
-  - RISKS: bullet list with mitigations
-  - STOP_CONDITION: one sentence
-7. Do not invent action types, API routes, or wallet capabilities.
-8. If a requested step is unsafe or unsupported, mark it as BLOCKED and explain the safe alternative.`;
-
 if (!process.env.OPENAI_API_KEY) {
-  console.warn('[CopilotKit] OPENAI_API_KEY is not set — copilot requests will fail at the LLM call. Add it to .env.local.');
+  console.warn(
+    '[CopilotKit] OPENAI_API_KEY is not set — copilot requests will fail. ' +
+      'Add OPENAI_API_KEY=sk-… to frontend/.env.local'
+  );
 }
 
-const runtime = new CopilotRuntime({
-  middleware: {
-    onBeforeRequest: ({ properties }) => {
-      // Inject the SAPM system prompt into every request
-      return {
-        properties: {
-          ...properties,
-          instructions: systemPrompt,
-        },
-      };
-    },
-  },
-});
+const runtime = new CopilotRuntime();
 
 const serviceAdapter = new OpenAIAdapter({
-  model: process.env.COPILOTKIT_MODEL || 'gpt-4o-mini',
-  // OpenAI SDK reads OPENAI_API_KEY from the environment automatically
+  model: process.env.COPILOTKIT_MODEL ?? 'gpt-4o-mini',
+  // OpenAI SDK reads OPENAI_API_KEY from env automatically.
 });
 
-const { GET, POST, OPTIONS } = copilotRuntimeNextJSAppRouterEndpoint({
+const { handleRequest } = copilotRuntimeNextJSAppRouterEndpoint({
   runtime,
   serviceAdapter,
   endpoint: '/api/copilotkit',
 });
 
-export { GET, POST, OPTIONS };
-
-export async function middleware(request: NextRequest) {
-  return new Response(null, { status: 200 });
-}
+// Next.js App Router requires named HTTP method exports.
+// copilotRuntimeNextJSAppRouterEndpoint returns { handleRequest } — wrap it.
+export const GET     = (req: NextRequest) => handleRequest(req);
+export const POST    = (req: NextRequest) => handleRequest(req);
+export const OPTIONS = (req: NextRequest) => handleRequest(req);
