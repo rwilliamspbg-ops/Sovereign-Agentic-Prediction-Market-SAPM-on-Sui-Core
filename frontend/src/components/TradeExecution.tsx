@@ -489,9 +489,10 @@ export function useTradeExecution() {
     const parsedTarget = parseTarget(tradeTarget);
 
     let pkg;
+    const configuredPackageId = parsedTarget.packageId;
     try {
       pkg = await client.getObject({
-        id: SUI_PACKAGE_ID,
+        id: configuredPackageId,
         options: { showType: true },
       });
     } catch (error) {
@@ -504,7 +505,7 @@ export function useTradeExecution() {
       try {
         const alternateClient = new SuiClient({ url: getFullnodeUrl(alternateNetwork) });
         const alternatePkg = await alternateClient.getObject({
-          id: SUI_PACKAGE_ID,
+          id: configuredPackageId,
           options: { showType: true },
         });
         if (alternatePkg.data) {
@@ -519,8 +520,33 @@ export function useTradeExecution() {
       }
 
       throw new Error(
-        `Configured Sui package not found on ${preferredNetwork} via ${preferredRpcUrl}: ${SUI_PACKAGE_ID}. Verify package ID and selected wallet/network.`
+        `Configured Sui package not found on ${preferredNetwork} via ${preferredRpcUrl}: ${configuredPackageId}. Verify NEXT_PUBLIC_SUI_PACKAGE_ID / NEXT_PUBLIC_SUI_TRADE_TARGET package and selected wallet network.`
       );
+    }
+
+    const validatedRegistryObjectId = parsedTarget.moduleName === 'registry' && parsedTarget.functionName === 'add_key'
+      ? resolveRegistryObjectId(trade.marketId)
+      : null;
+
+    if (parsedTarget.moduleName === 'registry' && parsedTarget.functionName === 'add_key') {
+      if (!isValidSuiHexAddress(validatedRegistryObjectId)) {
+        throw new Error('registry::add_key requires a valid registry object ID. Set NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID, NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS, load/persist on-chain IDs, or pass a 0x... market ID.');
+      }
+
+      const registryObject = await client.getObject({
+        id: validatedRegistryObjectId,
+        options: { showType: true },
+      });
+
+      if (!registryObject.data) {
+        throw new Error(`Configured registry object not found on ${preferredNetwork}: ${validatedRegistryObjectId}. Verify your publish/shared object ID (NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID or NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS).`);
+      }
+
+      const expectedRegistryType = `${configuredPackageId}::registry::PubkeyRegistry`;
+      const actualRegistryType = registryObject.data.type || '';
+      if (actualRegistryType !== expectedRegistryType) {
+        throw new Error(`Registry object type mismatch for ${validatedRegistryObjectId}. Expected ${expectedRegistryType}, received ${actualRegistryType || 'unknown'}. Verify package ID and publish/shared object ID are from the same deployment.`);
+      }
     }
 
     const requiredNotionalMist = Math.ceil(totalCost * SUI_MIST);
@@ -552,11 +578,9 @@ export function useTradeExecution() {
         // Exact encoding for the currently deployed package signature:
         // registry::add_key(&mut PubkeyRegistry, vector<u8>)
         if (parsedTarget.moduleName === 'registry' && parsedTarget.functionName === 'add_key') {
-          const registryObjectId = resolveRegistryObjectId(trade.marketId);
-          if (!isValidSuiHexAddress(registryObjectId)) {
+          if (!validatedRegistryObjectId || !isValidSuiHexAddress(validatedRegistryObjectId)) {
             throw new Error('registry::add_key requires a valid registry object ID. Set NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID, NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS, load/persist on-chain IDs, or pass a 0x... market ID.');
           }
-          const validatedRegistryObjectId = registryObjectId;
 
           const keyBytes = buildRegistryPayload(trade, context.account.address);
           args = [

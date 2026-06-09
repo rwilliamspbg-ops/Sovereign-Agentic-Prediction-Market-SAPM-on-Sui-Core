@@ -6,7 +6,7 @@
         "install:all": "npm ci && npm --prefix agents/trader ci && npm --prefix agents/aggregator ci && npm --prefix agents/orchestrator ci && npm --prefix frontend ci",
         "test:trader": "npm --prefix agents/trader test",
         "test:aggregator": "npm --prefix agents/aggregator test",
-        "test:all": "npm run test:trader && npm run test:aggregator && npm run test:orchestrator && node --test agents/lib/logger.test.js && node --test market-data/adapters/prediction-market-deepbook-bridge.test.js",
+        "test:all": "npm run test:trader && npm run test:aggregator && npm run test:orchestrator && node --test agents/lib/logger.test.js && node --test market-data/adapters/prediction-market-deepbook-bridge.test.js && node scripts/validate_canonical_schemas.js",
         "test:e2e": "jest test/e2e --testTimeout=10000",
         "test:reasoner-smoke": "node scripts/reasoner_smoke_test.js",
         "test:chaos": "node scripts/chaos_trading_scenarios.js",
@@ -23,7 +23,9 @@
         "test:bridge": "node --test market-data/adapters/prediction-market-deepbook-bridge.test.js",
         "test:logger": "node --test agents/lib/logger.test.js",
         "demo:live": "node demo/demo_predict_live.js",
-        "demo:trade": "node demo/demo_trading.js"
+        "demo:trade": "node demo/demo_trading.js",
+        "test:smoke": "node scripts/reasoner_smoke_test.js",
+        "validate:schemas": "node scripts/validate_canonical_schemas.js"
     },
     "engines": {
         "node": ">=18"

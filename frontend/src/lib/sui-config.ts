@@ -40,7 +40,7 @@ export const SUI_RESOURCE_HUB: ResourceCategory[] = [
     links: [
       { label: 'Founder Starter Pack', url: 'https://www.sui.io/founder-starter-pack' },
       { label: 'Sui Docs', url: 'https://docs.sui.io/' },
-      { label: 'Mysten TypeScript SDK', url: 'https://sdk.mystenlabs.com/' },
+      { label: 'Mysten TypeScript SDK', url: 'https://sdk.mystenlabs.com/sui' },
       { label: 'Awesome Sui', url: 'https://github.com/sui-foundation/awesome-sui' },
       { label: 'Sui Move Bootcamp', url: 'https://github.com/MystenLabs/sui-move-bootcamp' },
       { label: 'Sui Pilot', url: 'https://github.com/contract-hero/sui-pilot' },

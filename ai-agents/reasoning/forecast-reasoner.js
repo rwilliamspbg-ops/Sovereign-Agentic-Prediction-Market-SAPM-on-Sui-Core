@@ -1,3 +1,4 @@
+const logger = require('../../agents/lib/logger').create('ForecastReasoner');
 /**
  * AI Forecast Reasoner
  * 
@@ -81,7 +82,7 @@ class ForecastReasoner extends EventEmitter {
     this.forecastHistory = new Map(); // marketId -> array of past forecasts
     this.accuracyMetrics = new Map(); // marketId -> latest accuracy snapshot
     
-    console.log(`[ForecastReasoner] Initialized with model: ${this.model}`);
+    logger.info(`Initialized with model: ${this.model}`);
   }
 
   /**
@@ -94,7 +95,7 @@ class ForecastReasoner extends EventEmitter {
     await this.rateLimiter.acquire();
     
     try {
-      console.log(`[ForecastReasoner] Analyzing market: ${marketId}`);
+      logger.info(`Analyzing market: ${marketId}`);
       
       // Prepare prompt with market context
       const prompt = this._prepareAnalysisPrompt(marketId, context);
@@ -117,7 +118,7 @@ class ForecastReasoner extends EventEmitter {
       return analysis;
       
     } catch (error) {
-      console.error(`[ForecastReasoner] Analysis failed for ${marketId}:`, error.message);
+      logger.error(`Analysis failed for ${marketId}:`, { err: String(error.message) });
       
       // Emit error event
       this.emit('analysis_error', {
@@ -181,7 +182,7 @@ CONSTRAINTS:
       model = 'openai/o1-mini';
     }
 
-    console.log(`[ForecastReasoner] Calling ${model} for market: ${marketId}`);
+    logger.info(`Calling ${model} for market: ${marketId}`);
     
     // Use AI SDK or direct API call based on available credentials
     try {
@@ -203,7 +204,7 @@ CONSTRAINTS:
     // This would integrate with Anthropic or OpenAI SDK
     // For now, return a simulated response for testing
     
-    console.log(`[ForecastReasoner] [${model}] Processing prompt...`);
+    logger.info(`[${model}] Processing prompt...`);
     
     // Simulate API call (remove in production)
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -332,7 +333,7 @@ CONSTRAINTS:
     const history = this.forecastHistory.get(marketId);
     
     if (!history || history.length === 0) {
-      console.log(`[ForecastReasoner] No history found for ${marketId}`);
+      logger.info(`No history found for ${marketId}`);
       return;
     }
 
@@ -341,7 +342,7 @@ CONSTRAINTS:
     latestForecast.outcome = resolution.outcome;
     latestForecast.actualConfidence = resolution.confidence || null;
 
-    console.log(`[ForecastReasoner] Updated accuracy for ${marketId}: predicted ${latestForecast.prediction}, actual ${resolution.outcome}`);
+    logger.info(`Updated accuracy for ${marketId}: predicted ${latestForecast.prediction}, actual ${resolution.outcome}`);
     
     // Recalculate rolling accuracy
     this._recalculateAccuracy(marketId);
@@ -362,7 +363,7 @@ CONSTRAINTS:
     const correctPredictions = history.filter(f => f.outcome && f.prediction === f.outcome).length;
     const accuracy = (correctPredictions / history.length) * 100;
 
-    console.log(`[ForecastReasoner] Accuracy for ${marketId}: ${(accuracy).toFixed(1)}% (${correctPredictions}/${history.length})`);
+    logger.info(`Accuracy for ${marketId}: ${(accuracy).toFixed(1)}% (${correctPredictions}/${history.length})`);
     
     // Store accuracy metric
     this._setAccuracyMetric(marketId, {
@@ -463,7 +464,7 @@ CONSTRAINTS:
   reset() {
     this.forecastHistory.clear();
     this.requestQueue = [];
-    console.log('[ForecastReasoner] State reset');
+    logger.info('State reset');
   }
 }
 

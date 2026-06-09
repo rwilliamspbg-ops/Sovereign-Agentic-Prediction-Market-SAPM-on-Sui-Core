@@ -51,13 +51,13 @@ export class WalrusService {
       return bytes.map((b) => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // Fallback lightweight checksum for environments without SubtleCrypto.
-    let hash = 0;
-    for (let index = 0; index < input.length; index += 1) {
-      hash = ((hash << 5) - hash) + input.charCodeAt(index);
-      hash |= 0;
+    // Node/Jest fallback: use native crypto SHA-256 to keep checksum semantics consistent.
+    try {
+      const nodeCrypto = await import('crypto');
+      return nodeCrypto.createHash('sha256').update(input).digest('hex');
+    } catch {
+      throw new Error('Unable to compute SHA-256 checksum: SubtleCrypto and Node crypto are unavailable in this runtime.');
     }
-    return `fallback-${Math.abs(hash)}`;
   }
 
   async buildSnapshotManifest(input: {

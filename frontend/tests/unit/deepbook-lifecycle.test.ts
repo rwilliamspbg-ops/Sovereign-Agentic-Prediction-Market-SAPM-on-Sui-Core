@@ -1,8 +1,25 @@
-import { describe, expect, test } from '@jest/globals';
-import { DeepBookService } from '@/services/sui/deepbook-service';
+import { afterAll, beforeAll, describe, expect, jest, test } from '@jest/globals';
+
+let DeepBookService: typeof import('@/services/sui/deepbook-service').DeepBookService;
+let service: import('@/services/sui/deepbook-service').DeepBookService;
 
 describe('deepbook lifecycle builders', () => {
-  const service = new DeepBookService('testnet');
+  const originalDeepBookPackage = process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID;
+
+  beforeAll(async () => {
+    process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID = `0x${'d'.repeat(64)}`;
+    jest.resetModules();
+    ({ DeepBookService } = await import('@/services/sui/deepbook-service'));
+    service = new DeepBookService('testnet');
+  });
+
+  afterAll(() => {
+    if (originalDeepBookPackage === undefined) {
+      delete process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID;
+      return;
+    }
+    process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID = originalDeepBookPackage;
+  });
 
   test('buildPlaceLimitOrderTransaction maps target and argument arity', () => {
     const tx = service.buildPlaceLimitOrderTransaction({

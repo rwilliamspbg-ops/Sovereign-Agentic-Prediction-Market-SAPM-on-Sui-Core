@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const root = process.cwd();
+const root = path.resolve(__dirname, '..');
 const schemaDir = path.join(root, 'schemas');
 const requiredSchemas = [
   'canonical-envelope.v1.schema.json',
