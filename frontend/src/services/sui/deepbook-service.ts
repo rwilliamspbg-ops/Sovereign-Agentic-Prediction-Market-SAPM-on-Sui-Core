@@ -1,6 +1,12 @@
 import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
-import { DEEPBOOK_PREDICT_PACKAGE_ID } from '@/lib/sui-config';
+import {
+  DEEPBOOK_PREDICT_PACKAGE_ID,
+  DEEPBOOK_PREDICT_OBJECT_ID,
+  DEEPBOOK_PREDICT_REGISTRY,
+  DEEPBOOK_PREDICT_SERVER,
+  SUISCAN_TX_URL,
+} from '@/lib/sui-config';
 import { emitObservabilityEvent } from '@/lib/observability';
 
 export type DeepBookStatus = {
@@ -8,6 +14,9 @@ export type DeepBookStatus = {
   packageConfigured: boolean;
   packageReachable: boolean;
   packageId: string;
+  predictServerReachable?: boolean;
+  predictObjectId?: string;
+  predictServerLatencyMs?: number;
   error?: string;
 };
 
@@ -288,11 +297,28 @@ export class DeepBookService {
         latencyMs: Math.round(performance.now() - startedAt),
       });
 
+      // Also probe the DeepBook Predict public server
+      let predictServerReachable = false;
+      let predictServerLatencyMs: number | undefined;
+      try {
+        const t0 = performance.now();
+        const resp = await fetch(`${DEEPBOOK_PREDICT_SERVER}/status`, {
+          signal: AbortSignal.timeout(5000),
+        });
+        predictServerReachable = resp.ok || resp.status === 200;
+        predictServerLatencyMs = Math.round(performance.now() - t0);
+      } catch {
+        predictServerReachable = false;
+      }
+
       return {
         rpcReachable: true,
         packageConfigured: true,
         packageReachable: Boolean(pkg.data),
         packageId: DEEPBOOK_PREDICT_PACKAGE_ID,
+        predictServerReachable,
+        predictObjectId: DEEPBOOK_PREDICT_OBJECT_ID,
+        predictServerLatencyMs,
       };
     } catch (error) {
       emitObservabilityEvent('deepbook', 'status_check', 'error', {

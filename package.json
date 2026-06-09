@@ -22,6 +22,8 @@
         "test:orchestrator": "npm --prefix agents/orchestrator test",
         "test:bridge": "node --test market-data/adapters/prediction-market-deepbook-bridge.test.js",
         "test:logger": "node --test agents/lib/logger.test.js",
+        "demo:live": "node demo/demo_predict_live.js",
+        "demo:trade": "node demo/demo_trading.js",
         "test:smoke": "node scripts/reasoner_smoke_test.js",
         "validate:schemas": "node scripts/validate_canonical_schemas.js"
     },
