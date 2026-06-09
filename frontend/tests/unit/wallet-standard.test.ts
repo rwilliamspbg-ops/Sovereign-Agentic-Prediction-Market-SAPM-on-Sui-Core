@@ -8,11 +8,18 @@ jest.mock('@mysten/wallet-standard', () => ({
   signAndExecuteTransaction: mockSignAndExecuteTransaction,
 }));
 
-import { executeWithBlindSigningFallback } from '@/services/sui/wallet-standard';
+import { executeWithBlindSigningFallback, signAndExecuteWalletTransaction } from '@/services/sui/wallet-standard';
 
 describe('wallet-standard execution fallback', () => {
+  const originalBlindSigningEnv = process.env.NEXT_PUBLIC_ENABLE_BLIND_SIGNING_FALLBACK;
+
   beforeEach(() => {
     jest.resetAllMocks();
+    if (typeof originalBlindSigningEnv === 'undefined') {
+      delete process.env.NEXT_PUBLIC_ENABLE_BLIND_SIGNING_FALLBACK;
+    } else {
+      process.env.NEXT_PUBLIC_ENABLE_BLIND_SIGNING_FALLBACK = originalBlindSigningEnv;
+    }
   });
 
   test('uses signTransaction + RPC execution when fallback is invoked', async () => {
@@ -45,5 +52,61 @@ describe('wallet-standard execution fallback', () => {
     expect(result?.digest).toBe('0xdeadbeef');
     expect(signTransaction).toHaveBeenCalledTimes(1);
     expect(mockCreateClient).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not use signTransaction fallback when blind-signing env flag is disabled', async () => {
+    delete process.env.NEXT_PUBLIC_ENABLE_BLIND_SIGNING_FALLBACK;
+
+    const signTransaction = jest.fn().mockResolvedValue({
+      bytes: '0x1234',
+      signatures: ['0xsig'],
+    });
+
+    const context = {
+      wallet: {
+        features: {
+          'sui:signTransaction': {
+            signTransaction,
+          },
+        },
+      },
+      account: {
+        address: '0x' + 'a'.repeat(64),
+        chains: ['sui:testnet'],
+      },
+    };
+
+    await expect(signAndExecuteWalletTransaction(context as never, {} as never, 'testnet')).rejects.toThrow(
+      'Wallet execution failed. Unlock/foreground your wallet extension and approve the request.',
+    );
+    expect(signTransaction).toHaveBeenCalledTimes(0);
+  });
+
+  test('uses signTransaction fallback when blind-signing env flag is enabled', async () => {
+    process.env.NEXT_PUBLIC_ENABLE_BLIND_SIGNING_FALLBACK = 'true';
+
+    const signTransaction = jest.fn().mockResolvedValue({
+      bytes: '0x1234',
+      signatures: ['0xsig'],
+    });
+
+    const context = {
+      wallet: {
+        features: {
+          'sui:signTransaction': {
+            signTransaction,
+          },
+        },
+      },
+      account: {
+        address: '0x' + 'a'.repeat(64),
+        chains: ['sui:testnet'],
+      },
+    };
+
+    await expect(signAndExecuteWalletTransaction(context as never, {} as never, 'testnet')).rejects.toThrow(
+      'Wallet execution failed. Unlock/foreground your wallet extension and approve the request.',
+    );
+    expect(signTransaction).toHaveBeenCalledTimes(1);
   });
 });

@@ -9,6 +9,11 @@ const CONNECT_TIMEOUT_MS = 30000;
 const SILENT_CONNECT_TIMEOUT_MS = 5000;
 const SIGN_TIMEOUT_MS = 60000;
 
+function isBlindSigningFallbackEnabled(): boolean {
+  const raw = process.env.NEXT_PUBLIC_ENABLE_BLIND_SIGNING_FALLBACK;
+  return typeof raw === 'string' && raw.trim().toLowerCase() === 'true';
+}
+
 type WalletLike = ReturnType<ReturnType<typeof getWallets>['get']>[number];
 type WalletAccount = WalletLike['accounts'][number];
 
@@ -301,7 +306,7 @@ export async function signAndExecuteWalletTransaction(context: WalletExecutionCo
       | { signTransaction?: unknown }
       | undefined;
 
-    if (typeof signFeature?.signTransaction === 'function') {
+    if (isBlindSigningFallbackEnabled() && typeof signFeature?.signTransaction === 'function') {
       try {
         result = await executeWithBlindSigningFallback(context, tx, chain);
       } catch (error) {

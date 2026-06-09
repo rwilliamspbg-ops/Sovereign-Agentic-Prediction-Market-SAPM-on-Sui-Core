@@ -32,6 +32,12 @@ describe('CopilotBridge', () => {
     expect(plan.actions.length).toBeGreaterThan(0);
     expect(plan.actions.some((action) => action.type === 'run-judge-mode')).toBe(true);
     expect(plan.actions.some((action) => action.type === 'archive-snapshot')).toBe(true);
+    expect(plan.actions.some((action) => action.type === 'refresh-integrations')).toBe(true);
+
+    const refreshIndex = plan.actions.findIndex((action) => action.type === 'refresh-integrations');
+    const archiveIndex = plan.actions.findIndex((action) => action.type === 'archive-snapshot');
+    expect(refreshIndex).toBeGreaterThanOrEqual(0);
+    expect(archiveIndex).toBeGreaterThan(refreshIndex);
   });
 
   test('executes queued action through window event result channel', async () => {
