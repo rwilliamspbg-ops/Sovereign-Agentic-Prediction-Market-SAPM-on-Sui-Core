@@ -108,11 +108,36 @@ function normalizeWalletConnectError(error: unknown): Error {
   const message = error instanceof Error ? error.message : String(error);
   const lower = message.toLowerCase();
 
-  if (lower.includes('json-rpc: method call timeout') || (lower.includes('timeout') && lower.includes('connect'))) {
+  if (
+    lower.includes('json-rpc: method call timeout')
+    || lower.includes('method call timeout calling connect')
+    || (lower.includes('timeout') && lower.includes('connect'))
+  ) {
     return new Error('Wallet connect timed out. Open/unlock your wallet extension and approve the request, then retry.');
   }
 
+  if (lower.includes('reject') || lower.includes('denied') || lower.includes('cancel')) {
+    return new Error('Wallet connection request was canceled. Approve the extension popup to continue.');
+  }
+
   return error instanceof Error ? error : new Error(message);
+}
+
+function isWalletExtensionConnectTimeoutMessage(input: unknown): boolean {
+  const message = typeof input === 'string'
+    ? input
+    : input instanceof Error
+      ? input.message
+      : String(input || '');
+  const lower = message.toLowerCase();
+  return lower.includes('json-rpc: method call timeout')
+    || lower.includes('method call timeout calling connect')
+    || (lower.includes('timeout') && lower.includes('connect'));
+}
+
+function isExtensionOriginStack(input: unknown): boolean {
+  const stack = input instanceof Error ? input.stack || '' : String(input || '');
+  return stack.toLowerCase().includes('chrome-extension://');
 }
 
 export default function RootLayout({
@@ -322,6 +347,34 @@ export default function RootLayout({
 
     return () => {
       window.removeEventListener('resize', updateScreenMode);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    // Prevent known wallet extension connect timeouts from tripping the Next dev overlay.
+    // These originate from extension-injected scripts and are already surfaced via walletError UI.
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason;
+      if (isWalletExtensionConnectTimeoutMessage(reason) && isExtensionOriginStack(reason)) {
+        event.preventDefault();
+      }
+    };
+
+    const onWindowError = (event: ErrorEvent) => {
+      const message = event.message || event.error;
+      const source = event.filename || '';
+      const extensionSource = source.toLowerCase().includes('chrome-extension://') || isExtensionOriginStack(event.error);
+      if (extensionSource && isWalletExtensionConnectTimeoutMessage(message)) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener('unhandledrejection', onUnhandledRejection);
+    window.addEventListener('error', onWindowError);
+
+    return () => {
+      window.removeEventListener('unhandledrejection', onUnhandledRejection);
+      window.removeEventListener('error', onWindowError);
     };
   }, []);
 
