@@ -36,13 +36,9 @@ if (!process.env.OPENAI_API_KEY) {
 const runtime = new CopilotRuntime({
   middleware: {
     onBeforeRequest: ({ properties }) => {
-      // Inject the SAPM system prompt into every request
-      return {
-        properties: {
-          ...properties,
-          instructions: systemPrompt,
-        },
-      };
+      // Inject the SAPM system prompt into every request.
+      // Runtime v1 middleware mutates `properties` and must not return a value.
+      properties.instructions = systemPrompt;
     },
   },
 });
@@ -52,13 +48,23 @@ const serviceAdapter = new OpenAIAdapter({
   // OpenAI SDK reads OPENAI_API_KEY from the environment automatically
 });
 
-const { GET, POST, OPTIONS } = copilotRuntimeNextJSAppRouterEndpoint({
+const endpoint = copilotRuntimeNextJSAppRouterEndpoint({
   runtime,
   serviceAdapter,
   endpoint: '/api/copilotkit',
 });
 
-export { GET, POST, OPTIONS };
+export async function GET(request: Request) {
+  return endpoint.handleRequest(request);
+}
+
+export async function POST(request: Request) {
+  return endpoint.handleRequest(request);
+}
+
+export async function OPTIONS(request: Request) {
+  return endpoint.handleRequest(request);
+}
 
 export async function middleware(request: NextRequest) {
   return new Response(null, { status: 200 });
