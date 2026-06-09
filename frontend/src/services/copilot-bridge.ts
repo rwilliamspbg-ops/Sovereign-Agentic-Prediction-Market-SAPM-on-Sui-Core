@@ -556,6 +556,7 @@ export class CopilotBridge {
 
     if (lowerPrompt.includes('judge') || lowerPrompt.includes('demo')) {
       addAction('load-onchain-markets', 'Load On-chain Markets', 'Load and validate on-chain market IDs before execution.', {}, 'high');
+      addAction('refresh-integrations', 'Refresh Integrations', 'Re-check DeepBook and Walrus integration health before execution.', {}, 'high');
       addAction('run-judge-mode', 'Run Judge Mode', 'Execute micro trade and capture proof artifacts.', {}, 'urgent');
       addAction('archive-snapshot', 'Archive Walrus Snapshot', 'Publish judge output snapshot to Walrus storage.', {}, 'high');
     }
