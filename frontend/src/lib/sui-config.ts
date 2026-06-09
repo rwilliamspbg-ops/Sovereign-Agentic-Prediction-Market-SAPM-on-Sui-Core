@@ -1,6 +1,7 @@
 // SAPM deployed Move package (Registry + incentives + prediction_market)
+// Updated to 2026-06-08 testnet deployment (EqyVmTFegJVTSkLmf2v2VMC8o1cz17dKSGtQKjTuBwak)
 export const SUI_PACKAGE_ID = process.env.NEXT_PUBLIC_SUI_PACKAGE_ID ||
-  '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
+  '0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188';
 export const SUI_NETWORK = (process.env.NEXT_PUBLIC_SUI_NETWORK as 'testnet' | 'mainnet') || 'testnet';
 
 export const SUISCAN_PACKAGE_URL = `https://suiscan.xyz/${SUI_NETWORK}/object/${SUI_PACKAGE_ID}`;
