@@ -11,7 +11,7 @@ echo "Attempting to deploy on-chain registry from: $PKG_DIR"
 if command -v sui >/dev/null 2>&1; then
   echo "Found sui CLI on host. Building and publishing..."
   (cd "$PKG_DIR" && sui move build)
-  (cd "$PKG_DIR" && sui client publish --path . --gas-budget 10000)
+  (cd "$PKG_DIR" && sui client publish --path . --gas-budget 100000000)
   echo "Done. Capture the created object id and set PUBKEY_REGISTRY_OBJ in aggregator env."
   exit 0
 fi
@@ -22,7 +22,7 @@ if docker ps --format '{{.Names}}' | grep -q '^sui-local$'; then
   # copy package into container
   docker cp "$PKG_DIR" sui-local:/tmp/sapm_registry
   echo "Running build and publish inside sui-local container (may require a funded account)."
-  docker exec -it sui-local sh -c 'cd /tmp/sapm_registry && if command -v sui >/dev/null 2>&1; then sui move build && sui client publish --path . --gas-budget 10000; else echo "sui CLI not available inside container"; fi'
+  docker exec -it sui-local sh -c 'cd /tmp/sapm_registry && if command -v sui >/dev/null 2>&1; then sui move build && sui client publish --path . --gas-budget 100000000; else echo "sui CLI not available inside container"; fi'
   echo "If publish succeeded, note the created object id and set PUBKEY_REGISTRY_OBJ in aggregator env."
   exit 0
 fi

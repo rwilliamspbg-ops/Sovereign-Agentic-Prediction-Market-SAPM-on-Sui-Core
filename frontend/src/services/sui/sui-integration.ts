@@ -74,9 +74,6 @@ export class SuiIntegrationService {
   
   async createMarket(
     question: string,
-    yesPrice: number,
-    noPrice: number,
-    category: string,
     resolutionDate: Date,
     walletContext?: WalletExecutionContext
   ): Promise<any> {
@@ -88,20 +85,20 @@ export class SuiIntegrationService {
     const tx = new Transaction();
     tx.setGasBudget(10_000_000);
 
-    const target = process.env.NEXT_PUBLIC_SUI_CREATE_MARKET_TARGET || `${this.packageId}::registry::add_key`;
-    const registryObjectId = process.env.NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID;
+    const target = process.env.NEXT_PUBLIC_SUI_CREATE_MARKET_TARGET || `${this.packageId}::prediction_market::create_market`;
 
-    const args: any[] = [];
-    if (registryObjectId) {
-      args.push(tx.object(registryObjectId));
-    }
-    args.push(tx.pure.string(question));
-    args.push(tx.pure.string(yesPrice.toString()));
-    args.push(tx.pure.string(noPrice.toString()));
-    args.push(tx.pure.string(category));
-    args.push(tx.pure.string(resolutionDate.toISOString()));
+    // prediction_market::create_market(question: vector<u8>, resolution_epoch: u64)
+    // Encode question as UTF-8 bytes; resolution_epoch as Unix seconds (u64).
+    const questionBytes = Array.from(new TextEncoder().encode(question));
+    const resolutionEpoch = BigInt(Math.floor(resolutionDate.getTime() / 1000));
 
-    tx.moveCall({ target, arguments: args });
+    tx.moveCall({
+      target,
+      arguments: [
+        tx.pure.vector('u8', questionBytes),
+        tx.pure.u64(resolutionEpoch),
+      ],
+    });
 
     const startedAt = performance.now();
     const execution = await this.txCircuitBreaker.execute(() =>
@@ -171,14 +168,23 @@ export class SuiIntegrationService {
 
     const tx = new Transaction();
     tx.setGasBudget(8_000_000);
-    const target = process.env.NEXT_PUBLIC_SUI_TRADE_TARGET || `${this.packageId}::market::execute_trade`;
+    // Correct target: prediction_market::open_position is the entry for YES/NO stake
+    const target = process.env.NEXT_PUBLIC_SUI_TRADE_TARGET || `${this.packageId}::prediction_market::open_position`;
+
+    // open_position(market: &mut PredictionMarket, side: u8, stake: Coin<SUI>, ctx)
+    // side: 1 = YES, 2 = NO (matches OUTCOME_YES / OUTCOME_NO constants in Move)
+    const side = outcome === 'yes' ? 1 : 2;
+    const amountMist = this.toMist(amount);
+
+    // Split a coin of exactly `amountMist` from the gas coin to use as stake
+    const [stakeCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(amountMist)]);
 
     tx.moveCall({
       target,
       arguments: [
         tx.object(marketId),
-        tx.pure.bool(outcome === 'yes'),
-        tx.pure.u64(this.toMist(amount)),
+        tx.pure.u8(side),
+        stakeCoin,
       ],
     });
 

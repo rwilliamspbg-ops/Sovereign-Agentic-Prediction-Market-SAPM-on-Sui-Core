@@ -44,8 +44,7 @@ class MarketAdapter {
     this.reconnectAttempts = 0;
     this.lastMessageTime = null;
     this.messageQueue = [];
-    
-    this._setupEventHandlers();
+    // NOTE: _setupEventHandlers() is called inside connect() once this.ws is set.
   }
 
   /**
@@ -119,6 +118,8 @@ class MarketAdapter {
       try {
         // Create WebSocket connection
         this.ws = new WebSocket(this.wsUrl);
+        // Attach persistent event handlers now that this.ws is live
+        this._setupEventHandlers();
 
         this.ws.on('open', () => {
           resolve();
