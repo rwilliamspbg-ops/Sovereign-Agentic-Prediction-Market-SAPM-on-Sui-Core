@@ -131,6 +131,44 @@ describe('copilot action handler', () => {
     expect(activeMarket?.question).toBe('Will SUI hold above $1?');
   });
 
+  test('loads on-chain markets from persisted local object IDs when env IDs are not configured', async () => {
+    delete process.env.NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS;
+    window.localStorage.setItem('sapm.onchainObjectIds', '0xbeef,0xface');
+
+    jest.spyOn(marketDataService, 'getOnchainMarketsFromObjectIds').mockResolvedValue([
+      {
+        id: '0xbeef',
+        question: 'Will validator uptime exceed 99.9%?',
+        yesPrice: 0.55,
+        noPrice: 0.45,
+        yesVolume: 30,
+        noVolume: 12,
+        category: 'onchain',
+        tvl: 42,
+        volume24h: 10,
+        riskLevel: 'Low',
+      },
+    ]);
+
+    registerHandler();
+    const actionId = 'action-load-local';
+    const resultPromise = waitForActionResult(actionId);
+
+    window.dispatchEvent(new CustomEvent(ACTION_REQUEST_EVENT, {
+      detail: {
+        id: actionId,
+        type: 'load-onchain-markets',
+        payload: {},
+      },
+    }));
+
+    const result = await resultPromise;
+    expect(result.ok).toBe(true);
+    expect(result.data?.selectedMarketId).toBe('0xbeef');
+    expect(Array.isArray(result.data?.sourceLabels)).toBe(true);
+    expect(result.data?.sourceLabels).toContain('local:sapm.onchainObjectIds');
+  });
+
   test('runs judge mode and archives a Walrus snapshot', async () => {
     jest.spyOn(suiIntegration, 'initialize').mockResolvedValue(undefined);
     jest.spyOn(suiIntegration, 'executeTrade').mockResolvedValue({ digest: '0xfeedbeef' });
