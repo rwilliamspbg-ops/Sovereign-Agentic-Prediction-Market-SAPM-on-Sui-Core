@@ -219,6 +219,12 @@ npm run dev
 docker compose -f docker/docker-compose.yml up
 ```
 
+Or run the root helper script (build + install in containers + startup):
+
+```bash
+bash scripts/full_stack_docker.sh up
+```
+
 ### Deploy Move contracts
 
 ```bash

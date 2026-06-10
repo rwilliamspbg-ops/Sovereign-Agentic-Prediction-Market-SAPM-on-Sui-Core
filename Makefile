@@ -12,9 +12,17 @@ help:
 	@echo "  make init-models     - Create initial model directories for all agents"
 	@echo "  make lint            - Run ESLint on all agents"
 	@echo "  make lint:fix        - Auto-fix ESLint issues"
+	@echo "  make docker-full     - Build + start full Docker stack"
+	@echo "  make docker-down     - Stop Docker stack"
 	@echo "  make clean           - Clean build artifacts and temporary files"
 	@echo "  make test            - Run all agent tests"
 	@echo ""
+
+docker-full:
+	@bash scripts/full_stack_docker.sh up
+
+docker-down:
+	@bash scripts/full_stack_docker.sh down
 
 # Formal Verification Targets
 verify:

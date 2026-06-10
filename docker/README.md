@@ -14,6 +14,20 @@ Start the local cluster
 docker compose -f docker/docker-compose.yml up -d --build
 ```
 
+One-command full setup from repository root
+
+```bash
+bash scripts/full_stack_docker.sh up
+```
+
+Useful companion commands
+
+```bash
+bash scripts/full_stack_docker.sh status
+bash scripts/full_stack_docker.sh logs
+bash scripts/full_stack_docker.sh down
+```
+
 Logs
 
 ```bash
