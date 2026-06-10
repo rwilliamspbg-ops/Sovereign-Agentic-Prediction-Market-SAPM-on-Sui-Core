@@ -718,9 +718,18 @@ export class CopilotBridge {
         return;
       }
       const parsed = JSON.parse(raw) as Partial<BridgeStateSnapshot>;
+
+      // Only restore actions that have already run (completed or failed).
+      // Do NOT restore queued/running actions across sessions — they accumulate
+      // silently (the "17-action queue" problem) and the first stale queued
+      // action always fails on Run All, aborting the entire batch before the
+      // user has a chance to set context (wallet, market IDs, etc.).
       if (Array.isArray(parsed.queue)) {
-        this.queue = parsed.queue.slice(0, 50);
+        this.queue = parsed.queue
+          .filter((item) => item.status === 'completed' || item.status === 'failed')
+          .slice(0, 50);
       }
+
       if (Array.isArray(parsed.insights)) {
         this.insights = parsed.insights.slice(0, 20);
       }
