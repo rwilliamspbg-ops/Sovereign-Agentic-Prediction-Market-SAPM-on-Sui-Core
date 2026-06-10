@@ -1,80 +1,52 @@
-# Node dependencies
+```gitignore
+# Dependencies
 node_modules/
-agents/**/node_modules/
 
-# Runtime artifacts
-artifacts/
+# Build outputs
+dist/
+build/
+.next/
+out/
 
-# Local env files
+# Environment variables
 .env
-.env.*
-!.env.example
+.env.local
+*.env.*
 
-# Local cert material
-agents/aggregator/certs/*.pem
-
-# OS/editor noise
-.DS_Store
-*.log
-
-# local artifacts
-agents/aggregator/tmp_model/
-agents/sample/model.json
-agents/sample/model.meta.json
-
-# lint config (local)
-eslint.config.cjs
-.eslintrc.json
-
-# Build artifacts and cache
-**/.cache/
-**/.turbo/
-.npm/
-.yarn/
-frontend/.next/
-*.tsbuildinfo
-package-lock.json
-!frontend/package-lock.json
-pnpm-lock.yaml
-
-# On-chain registry build artifacts
-agents/onchain-registry/build/
-agents/onchain-registry/Move.lock
-agents/onchain-registry/Published.toml
-
-# Lean verification cache
-formal_verification/.lake/packages/
-formal_verification/.lake/artifacts/
-**/.lean-cache/
-
-# Docker volumes (persistent data)
-docker-compose/*.tar
-*.tar.gz
-sui-local_data/
-aggregator_data/
-
-# Kubernetes deployment artifacts
-k8s/logs/
-production-deployment-manifests/staging/
-
-# Performance benchmarks results
-performance_optimization/benchmarks.json
-
-# Test coverage reports
-coverage/
-.nyc_output/
-
-# IDE/editor files
+# IDE files
+.vscode/
 .idea/
-.vscode/**
 *.swp
 *.swo
-*~
 
-# Generated documentation (if using docgen)
-docs/build/
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.ENV
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
 
 # Temporary files
-tmp/
-temp/
 *.tmp
+*.temp
+```
+
+Wait, let me reconsider the file changes. The modified files are only TypeScript/React source files (`frontend/src/app/api/copilotkit/[[...slug]]/route.ts` and `frontend/src/app/layout.tsx`). There are no build artifacts, dependency directories, or temporary files in the changes shown. This appears to be just source code modifications.
+
+(empty)

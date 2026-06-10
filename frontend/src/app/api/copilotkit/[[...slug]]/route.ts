@@ -51,6 +51,13 @@ if (!process.env.OPENAI_API_KEY) {
 
 const runtime = new CopilotRuntime();
 
+// Register the default agent for chat functionality
+runtime.registerAgent({
+  name: 'default',
+  description: 'SAPM Copilot - AI assistant for Sui prediction market operations',
+  instructions: systemPrompt,
+});
+
 function createEndpoint() {
   const serviceAdapter = new OpenAIAdapter({
     model: process.env.COPILOTKIT_MODEL || 'gpt-4o-mini',
