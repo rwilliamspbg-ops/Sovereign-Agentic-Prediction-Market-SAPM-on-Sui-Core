@@ -1,0 +1,4 @@
+# _config.yml
+exclude:
+  - production-deployment-manifests/
+  - docs/root-archive/
