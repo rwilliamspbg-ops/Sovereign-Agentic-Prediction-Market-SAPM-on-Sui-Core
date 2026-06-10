@@ -164,8 +164,8 @@ describe('CopilotBridge', () => {
     expect(judgeAction).toBeDefined();
 
     const result = await copilotBridge.executeAction(judgeAction!.id);
-    expect(result.status).toBe('failed');
-    expect(result.resultMessage).toContain('Preflight blocked');
+    expect(result.status).toBe('blocked');
+    expect(result.resultMessage).toContain('Blocked:');
   });
 
   test('cancels active run-all execution', async () => {

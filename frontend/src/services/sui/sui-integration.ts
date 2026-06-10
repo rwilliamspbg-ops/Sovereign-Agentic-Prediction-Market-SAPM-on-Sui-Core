@@ -34,15 +34,14 @@ export class SuiIntegrationService {
   }
   
   async initialize(): Promise<void> {
-    console.log('🔗 Initializing Sui Integration Service...');
-    
     // Initialize Sui client with RPC endpoint
     const rpcUrl = this.getRpcUrl();
     this.suiClient = new SuiClient({ url: rpcUrl });
-    
-    console.log('✅ Sui Integration Service initialized');
-    console.log(`📍 Connected to: ${this.network === 'testnet' ? 'Sui Testnet' : 'Sui Mainnet'}`);
-    console.log(`📦 Package ID: ${this.packageId}`);
+
+    emitObservabilityEvent('sui', 'integration_initialized', 'info', {
+      network: this.network,
+      packageId: this.packageId,
+    });
   }
   
   private getRpcUrl(): string {
