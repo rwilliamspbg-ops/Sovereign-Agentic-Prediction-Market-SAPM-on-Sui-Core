@@ -51,16 +51,6 @@ if (!process.env.OPENAI_API_KEY) {
 
 const runtime = new CopilotRuntime();
 
-function missingKeyResponse() {
-  return NextResponse.json(
-    {
-      ok: false,
-      error: 'OPENAI_API_KEY is not configured for Copilot runtime.',
-    },
-    { status: 503 },
-  );
-}
-
 function createEndpoint() {
   const serviceAdapter = new OpenAIAdapter({
     model: process.env.COPILOTKIT_MODEL || 'gpt-4o-mini',
@@ -80,8 +70,7 @@ function createEndpoint() {
 
 async function handle(request: Request) {
   if (!process.env.OPENAI_API_KEY) {
-    console.warn('[CopilotKit] OPENAI_API_KEY is not set — copilot requests will return 503 until configured.');
-    return missingKeyResponse();
+    console.warn('[CopilotKit] OPENAI_API_KEY is not set — runtime info will still load, but chat requests will fail until configured.');
   }
 
   const endpoint = createEndpoint();
