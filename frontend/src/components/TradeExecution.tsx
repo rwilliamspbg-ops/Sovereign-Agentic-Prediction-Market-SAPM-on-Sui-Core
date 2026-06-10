@@ -571,7 +571,7 @@ export function useTradeExecution() {
     for (let attempt = 0; attempt <= TRADE_RETRY_ATTEMPTS; attempt += 1) {
       try {
         const tx = new Transaction();
-        tx.setGasBudget(5_000_000);
+        tx.setGasBudget(100_000); // 0.0001 SUI — wallet can estimate and approve
 
         let args: ReturnType<typeof tx.object | typeof tx.pure.string | typeof tx.pure.u64 | typeof tx.pure.vector>[] = [];
 

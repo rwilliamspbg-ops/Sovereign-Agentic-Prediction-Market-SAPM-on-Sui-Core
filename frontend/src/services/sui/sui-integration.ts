@@ -82,7 +82,7 @@ export class SuiIntegrationService {
     }
 
     const tx = new Transaction();
-    tx.setGasBudget(10_000_000);
+    tx.setGasBudget(100_000); // 0.0001 SUI — wallet can estimate and approve
 
     const target = process.env.NEXT_PUBLIC_SUI_CREATE_MARKET_TARGET || `${this.packageId}::prediction_market::create_market`;
 
@@ -166,7 +166,7 @@ export class SuiIntegrationService {
     }
 
     const tx = new Transaction();
-    tx.setGasBudget(8_000_000);
+    tx.setGasBudget(100_000); // 0.0001 SUI — wallet can estimate and approve
     // Correct target: prediction_market::open_position is the entry for YES/NO stake
     const target = process.env.NEXT_PUBLIC_SUI_TRADE_TARGET || `${this.packageId}::prediction_market::open_position`;
 

@@ -96,7 +96,7 @@ export class DeepBookService {
 
     const network = this.resolveRuntimeNetwork();
     const tx = new Transaction();
-    tx.setGasBudget(5_000_000);
+    tx.setGasBudget(100_000); // 0.0001 SUI — wallet can estimate and approve
     tx.moveCall({
       target: `${this.deepBookPackageId}::pool::place_limit_order`,
       arguments: [
@@ -126,7 +126,7 @@ export class DeepBookService {
 
     const network = this.resolveRuntimeNetwork();
     const tx = new Transaction();
-    tx.setGasBudget(5_000_000);
+    tx.setGasBudget(100_000); // 0.0001 SUI — wallet can estimate and approve
     tx.moveCall({
       target: `${this.deepBookPackageId}::pool::cancel_order`,
       arguments: [
@@ -153,7 +153,7 @@ export class DeepBookService {
 
     const network = this.resolveRuntimeNetwork();
     const tx = new Transaction();
-    tx.setGasBudget(8_000_000);
+    tx.setGasBudget(100_000); // 0.0001 SUI — wallet can estimate and approve
     tx.moveCall({
       target: `${this.deepBookPackageId}::pool::cancel_order`,
       arguments: [
