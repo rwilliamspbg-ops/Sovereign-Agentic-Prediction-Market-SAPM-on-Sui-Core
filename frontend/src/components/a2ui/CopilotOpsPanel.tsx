@@ -316,6 +316,29 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
             <div>DeepBook: {context.deepbookReady === null || context.deepbookReady === undefined ? 'Unknown' : context.deepbookReady ? 'Ready' : 'Not Ready'}</div>
             <div>Walrus: {context.walrusReady === null || context.walrusReady === undefined ? 'Unknown' : context.walrusReady ? 'Ready' : 'Not Ready'}</div>
           </div>
+          {/* Warn when NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS is not configured — load-onchain-markets
+              will immediately fail and abort the whole queue if this is unset. */}
+          {!process.env.NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS && !context.activeMarketId && (
+            <div style={{
+              marginTop: '0.65rem',
+              padding: '0.5rem 0.65rem',
+              backgroundColor: 'rgba(120, 53, 15, 0.35)',
+              border: '1px solid #92400e',
+              borderRadius: '0.5rem',
+              color: '#fcd34d',
+              fontSize: '0.76rem',
+              lineHeight: 1.5,
+            }}>
+              <strong>No market IDs configured.</strong> Set{' '}
+              <code style={{ backgroundColor: 'rgba(0,0,0,0.3)', padding: '0 3px', borderRadius: 3 }}>
+                NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS
+              </code>{' '}
+              in <code style={{ backgroundColor: 'rgba(0,0,0,0.3)', padding: '0 3px', borderRadius: 3 }}>
+                frontend/.env.local
+              </code>{' '}
+              or the <em>load-onchain-markets</em> action will fail and abort any Run All queue.
+            </div>
+          )}
         </div>
 
         <div style={{ border: '1px solid #23344b', borderRadius: '0.75rem', backgroundColor: '#0b1325', padding: '0.75rem' }}>
@@ -540,15 +563,33 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
           {queue.length === 0 && (
             <div style={{ color: '#64748b', fontSize: '0.82rem' }}>No queued actions yet.</div>
           )}
+          {queue.some((a) => a.status === 'completed' || a.status === 'failed') && (
+            <button
+              type="button"
+              onClick={() => void copilotBridge.clearQueue()}
+              style={{
+                border: '1px solid #334155',
+                borderRadius: '0.45rem',
+                backgroundColor: '#0f172a',
+                color: '#94a3b8',
+                padding: '0.38rem 0.58rem',
+                cursor: 'pointer',
+                fontSize: '0.76rem',
+                marginBottom: '0.5rem',
+              }}
+            >
+              Clear all
+            </button>
+          )}
           <div style={{ display: 'grid', gap: '0.55rem' }}>
             {queue.map((action) => (
               <div
                 key={action.id}
                 style={{
-                  border: '1px solid #334155',
+                  border: `1px solid ${action.status === 'failed' ? '#7f1d1d' : '#334155'}`,
                   borderRadius: '0.65rem',
                   padding: '0.58rem',
-                  backgroundColor: '#020617',
+                  backgroundColor: action.status === 'failed' ? '#1a0808' : '#020617',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.7rem' }}>
@@ -556,12 +597,21 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
                     <div style={{ color: '#f8fafc', fontWeight: 700, fontSize: '0.86rem' }}>{action.title}</div>
                     <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '0.2rem' }}>{action.description}</div>
                   </div>
-                  <div style={{ color: statusColor(action.status), fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 700 }}>
+                  <div style={{ color: statusColor(action.status), fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 700, flexShrink: 0 }}>
                     {action.status}
                   </div>
                 </div>
                 {action.resultMessage && (
-                  <div style={{ marginTop: '0.35rem', color: '#cbd5e1', fontSize: '0.76rem' }}>{action.resultMessage}</div>
+                  <div style={{
+                    marginTop: '0.35rem',
+                    color: action.status === 'failed' ? '#fca5a5' : '#cbd5e1',
+                    fontSize: '0.76rem',
+                    backgroundColor: action.status === 'failed' ? 'rgba(127,29,29,0.3)' : 'transparent',
+                    borderRadius: '0.35rem',
+                    padding: action.status === 'failed' ? '0.3rem 0.45rem' : '0',
+                  }}>
+                    {action.resultMessage}
+                  </div>
                 )}
                 <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'flex-end' }}>
                   <button
