@@ -2,7 +2,7 @@ type ObservabilitySeverity = 'info' | 'warn' | 'error';
 
 export type ObservabilityEvent = {
   ts: string;
-  category: 'deepbook' | 'walrus' | 'trade' | 'frontend';
+  category: 'deepbook' | 'walrus' | 'trade' | 'frontend' | 'sui';
   action: string;
   severity: ObservabilitySeverity;
   details?: Record<string, unknown>;

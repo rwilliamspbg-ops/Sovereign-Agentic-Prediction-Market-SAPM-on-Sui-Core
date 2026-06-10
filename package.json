@@ -3,7 +3,8 @@
     "private": true,
     "version": "1.0.0",
     "scripts": {
-        "install:all": "npm ci && npm --prefix agents/trader ci && npm --prefix agents/aggregator ci && npm --prefix agents/orchestrator ci && npm --prefix frontend ci",
+        "build": "npm --prefix frontend run build",
+        "install:all": "npm ci --audit=false && npm --prefix agents/trader ci --audit=false && npm --prefix agents/aggregator ci --audit=false && npm --prefix agents/orchestrator ci --audit=false && npm --prefix frontend ci --audit=false",
         "test:trader": "npm --prefix agents/trader test",
         "test:aggregator": "npm --prefix agents/aggregator test",
         "test:all": "npm run test:trader && npm run test:aggregator && npm run test:orchestrator && node --test agents/lib/logger.test.js && node --test market-data/adapters/prediction-market-deepbook-bridge.test.js && node scripts/validate_canonical_schemas.js",
