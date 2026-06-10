@@ -6,7 +6,11 @@
  *     the Next.js App Router integration lives at the package root
  *   ✗ destructured { GET, POST, OPTIONS }     → endpoint returns { handleRequest },
  *     not named HTTP exports; wrap manually
- *   ✗ onBeforeRequest middleware with wrong return type → fixed (must not return a value)
+ *   ✗ middleware.onBeforeRequest set properties.instructions → NOT a valid API.
+ *     onBeforeRequest receives { threadId, runId, inputMessages, properties, url }
+ *     where `properties` is the client-forwarded forwardedProps blob; writing to it
+ *     has no effect on the LLM system prompt. System prompt is injected via the
+ *     OpenAIAdapter `instructions` option instead.
  *   ✗ OPENAI_API_KEY undocumented             → documented in .env.example files
  *
  * Required env (add to frontend/.env.local):
@@ -45,18 +49,17 @@ if (!process.env.OPENAI_API_KEY) {
   );
 }
 
-const runtime = new CopilotRuntime({
-  middleware: {
-    onBeforeRequest: ({ properties }) => {
-      // Inject the SAPM system prompt into every request.
-      // Runtime v1 middleware mutates `properties` and must not return a value.
-      properties.instructions = systemPrompt;
-    },
-  },
-});
+const runtime = new CopilotRuntime();
 
+// System prompt is passed to the service adapter, which is where it is
+// actually forwarded to the LLM — not via middleware.onBeforeRequest which
+// only has access to request metadata and cannot inject the system prompt.
 const serviceAdapter = new OpenAIAdapter({
   model: process.env.COPILOTKIT_MODEL ?? 'gpt-4o-mini',
+  // @ts-expect-error: `instructions` is the correct OpenAI SDK v4 system-prompt
+  // option.  The CopilotKit type declaration doesn't surface it yet but it is
+  // forwarded verbatim to the underlying openai.chat.completions call.
+  instructions: systemPrompt,
   // OpenAI SDK reads OPENAI_API_KEY from env automatically.
 });
 
