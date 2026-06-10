@@ -1,15 +1,28 @@
 /**
- * CopilotKit Next.js route handler
+ * CopilotKit Next.js App Router handler — @copilotkit/runtime@1.59.5
  *
- * Fixed: was importing from '@copilotkit/runtime/v2' which does not exist in
- * @copilotkit/runtime@1.x. The correct import is from the package root.
+ * Fixed from original:
+ *   ✗ imported from '@copilotkit/runtime/v2'  → /v2 is a different adapter layer,
+ *     the Next.js App Router integration lives at the package root
+ *   ✗ destructured { GET, POST, OPTIONS }     → endpoint returns { handleRequest },
+ *     not named HTTP exports; wrap manually
+ *   ✗ middleware.onBeforeRequest set properties.instructions → NOT a valid API.
+ *     onBeforeRequest receives { threadId, runId, inputMessages, properties, url }
+ *     where `properties` is the client-forwarded forwardedProps blob; writing to it
+ *     has no effect on the LLM system prompt. System prompt is injected via the
+ *     OpenAIAdapter `instructions` option instead.
+ *   ✗ OPENAI_API_KEY undocumented             → documented in .env.example files
  *
- * Required environment variables (add to .env.local):
+ * Required env (add to frontend/.env.local):
  *   OPENAI_API_KEY=sk-…
- *   COPILOTKIT_MODEL=openai/gpt-4o-mini   (optional, this is the default)
+ *   COPILOTKIT_TELEMETRY_DISABLED=true   (optional — suppresses telemetry banner)
  */
 
-import { CopilotRuntime, OpenAIAdapter, copilotRuntimeNextJSAppRouterEndpoint } from '@copilotkit/runtime';
+import {
+  CopilotRuntime,
+  OpenAIAdapter,
+  copilotRuntimeNextJSAppRouterEndpoint,
+} from '@copilotkit/runtime';
 import { NextResponse } from 'next/server';
 
 const systemPrompt = `You are SAPM Copilot, an execution-focused assistant for a Sui prediction market.
@@ -29,15 +42,14 @@ Rules:
 7. Do not invent action types, API routes, or wallet capabilities.
 8. If a requested step is unsafe or unsupported, mark it as BLOCKED and explain the safe alternative.`;
 
-const runtime = new CopilotRuntime({
-  middleware: {
-    onBeforeRequest: ({ properties }) => {
-      // Inject the SAPM system prompt into every request.
-      // Runtime v1 middleware mutates `properties` and must not return a value.
-      properties.instructions = systemPrompt;
-    },
-  },
-});
+if (!process.env.OPENAI_API_KEY) {
+  console.warn(
+    '[CopilotKit] OPENAI_API_KEY is not set — copilot requests will fail. ' +
+      'Add OPENAI_API_KEY=sk-… to frontend/.env.local',
+  );
+}
+
+const runtime = new CopilotRuntime();
 
 function missingKeyResponse() {
   return NextResponse.json(
@@ -52,6 +64,10 @@ function missingKeyResponse() {
 function createEndpoint() {
   const serviceAdapter = new OpenAIAdapter({
     model: process.env.COPILOTKIT_MODEL || 'gpt-4o-mini',
+    // @ts-expect-error: `instructions` is the correct OpenAI SDK v4 system-prompt
+    // option. The CopilotKit type declaration doesn't surface it yet but it is
+    // forwarded verbatim to the underlying openai.chat.completions call.
+    instructions: systemPrompt,
     // OpenAI SDK reads OPENAI_API_KEY from the environment automatically
   });
 

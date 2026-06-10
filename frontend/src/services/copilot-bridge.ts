@@ -19,7 +19,7 @@ export type CopilotActionType =
   | 'archive-snapshot'
   | 'refresh-integrations';
 
-export type CopilotActionStatus = 'queued' | 'running' | 'completed' | 'failed';
+export type CopilotActionStatus = 'queued' | 'running' | 'completed' | 'failed' | 'blocked';
 
 export type CopilotContext = {
   walletConnected: boolean;
@@ -253,9 +253,9 @@ export class CopilotBridge {
     if (preflightBlock) {
       const blocked: CopilotActionCard = {
         ...action,
-        status: 'failed',
+        status: 'blocked',
         updatedAt: Date.now(),
-        resultMessage: `Preflight blocked: ${preflightBlock}`,
+        resultMessage: `Blocked: ${preflightBlock}`,
       };
       this.queue[index] = blocked;
       this.publish('queue', this.getQueue());
@@ -374,6 +374,7 @@ export class CopilotBridge {
         }
         const actionFinishedAt = Date.now();
         const ok = finalized.status === 'completed';
+        const wasBlocked = finalized.status === 'blocked';
 
         entries.push({
           actionId: finalized.id,
@@ -384,10 +385,13 @@ export class CopilotBridge {
           finishedAt: actionFinishedAt,
           status: finalized.status,
           ok,
-          message: finalized.resultMessage || (ok ? 'Action completed.' : 'Action failed.'),
+          message: finalized.resultMessage || (ok ? 'Action completed.' : wasBlocked ? 'Action blocked by preflight.' : 'Action failed.'),
         });
 
-        if (!ok && stopOnFailure) {
+        // Preflight blocks (e.g. wallet not connected) are not counted as failures
+        // and should not abort a stopOnFailure run — the user can connect their
+        // wallet and re-run the blocked actions individually afterward.
+        if (!ok && !wasBlocked && stopOnFailure) {
           aborted = true;
           break;
         }
@@ -406,7 +410,8 @@ export class CopilotBridge {
 
     const finishedAt = Date.now();
     const completed = entries.filter((entry) => entry.ok).length;
-    const failed = entries.length - completed;
+    const blocked = entries.filter((entry) => entry.status === 'blocked').length;
+    const failed = entries.filter((entry) => !entry.ok && entry.status !== 'blocked').length;
     const transcript: CopilotExecutionTranscript = {
       id: `copilot_run_${finishedAt}`,
       createdAt: finishedAt,
@@ -429,6 +434,7 @@ export class CopilotBridge {
     emitObservabilityEvent('frontend', 'copilot_queue_executed', failed > 0 ? 'warn' : 'info', {
       total: transcript.total,
       completed: transcript.completed,
+      blocked,
       failed: transcript.failed,
       aborted: transcript.aborted,
       stopOnFailure: transcript.stopOnFailure,
@@ -718,9 +724,18 @@ export class CopilotBridge {
         return;
       }
       const parsed = JSON.parse(raw) as Partial<BridgeStateSnapshot>;
+
+      // Only restore actions that have already run (completed, failed, or blocked).
+      // Do NOT restore queued/running actions across sessions — they accumulate
+      // silently (the "17-action queue" problem) and the first stale queued
+      // action always fails on Run All, aborting the entire batch before the
+      // user has a chance to set context (wallet, market IDs, etc.).
       if (Array.isArray(parsed.queue)) {
-        this.queue = parsed.queue.slice(0, 50);
+        this.queue = parsed.queue
+          .filter((item) => item.status === 'completed' || item.status === 'failed' || item.status === 'blocked')
+          .slice(0, 50);
       }
+
       if (Array.isArray(parsed.insights)) {
         this.insights = parsed.insights.slice(0, 20);
       }

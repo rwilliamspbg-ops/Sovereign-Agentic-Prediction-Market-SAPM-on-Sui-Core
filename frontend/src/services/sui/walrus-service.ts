@@ -36,7 +36,11 @@ export type WalrusManifestValidationResult = {
 async function probeEndpoint(url: string): Promise<boolean> {
   try {
     const response = await fetch(url, { method: 'GET' });
-    return response.ok || response.status === 404 || response.status === 405;
+    // Walrus testnet returns 403 on bare GET / (auth required for root) — treat it as
+    // "server reachable" since the endpoint-specific paths (/v1/blobs/…) work fine.
+    // A network-level failure throws and we return false; HTTP error codes mean the
+    // server is up.
+    return response.ok || response.status === 403 || response.status === 404 || response.status === 405;
   } catch {
     return false;
   }
@@ -169,7 +173,15 @@ export class WalrusService {
 
   async publishMarketSnapshot(snapshot: unknown): Promise<WalrusPublishResult> {
     const startedAt = performance.now();
-    const response = await fetch(`${WALRUS_PUBLISHER_URL}/v1/blobs`, {
+    // POST through the Next.js rewrite proxy (/api/walrus/blobs) instead of
+    // directly to the publisher origin, which blocks cross-origin requests from
+    // the browser with CORS 403/CORS-preflight failures.
+    const publishPath =
+      typeof window !== 'undefined'
+        ? '/api/walrus/blobs'
+        : `${WALRUS_PUBLISHER_URL}/v1/blobs`;
+
+    const response = await fetch(publishPath, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
