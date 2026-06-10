@@ -40,10 +40,12 @@ function statusColor(status: CopilotActionCard['status']): string {
       return '#22c55e';
     case 'failed':
       return '#ef4444';
-    case 'running':
+    case 'blocked':
       return '#f59e0b';
-    default:
+    case 'running':
       return '#38bdf8';
+    default:
+      return '#94a3b8';
   }
 }
 
@@ -549,7 +551,12 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
           <div style={{ color: '#cbd5e1', fontSize: '0.82rem', marginBottom: '0.45rem' }}>Action Queue</div>
           {lastTranscript && (
             <div style={{ color: '#94a3b8', fontSize: '0.76rem', marginBottom: '0.45rem' }}>
-              Last run: {lastTranscript.completed}/{lastTranscript.total} completed, {lastTranscript.failed} failed
+              Last run: {lastTranscript.completed}/{lastTranscript.total} completed
+              {lastTranscript.failed > 0 ? `, ${lastTranscript.failed} failed` : ''}
+              {(() => {
+                const blockedCount = lastTranscript.entries?.filter((e) => e.status === 'blocked').length ?? 0;
+                return blockedCount > 0 ? `, ${blockedCount} blocked (wallet/prereq)` : '';
+              })()}
               {lastTranscript.aborted ? ' (stopped on failure)' : ''}
               {!lastTranscript.stopOnFailure ? ' (continue-on-failure mode)' : ''}
               {runState.cancelRequested ? ' (cancel requested)' : ''}
@@ -586,10 +593,10 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
               <div
                 key={action.id}
                 style={{
-                  border: `1px solid ${action.status === 'failed' ? '#7f1d1d' : '#334155'}`,
+                  border: `1px solid ${action.status === 'failed' ? '#7f1d1d' : action.status === 'blocked' ? '#78350f' : '#334155'}`,
                   borderRadius: '0.65rem',
                   padding: '0.58rem',
-                  backgroundColor: action.status === 'failed' ? '#1a0808' : '#020617',
+                  backgroundColor: action.status === 'failed' ? '#1a0808' : action.status === 'blocked' ? '#140d00' : '#020617',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.7rem' }}>
@@ -604,11 +611,11 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
                 {action.resultMessage && (
                   <div style={{
                     marginTop: '0.35rem',
-                    color: action.status === 'failed' ? '#fca5a5' : '#cbd5e1',
+                    color: action.status === 'failed' ? '#fca5a5' : action.status === 'blocked' ? '#fcd34d' : '#cbd5e1',
                     fontSize: '0.76rem',
-                    backgroundColor: action.status === 'failed' ? 'rgba(127,29,29,0.3)' : 'transparent',
+                    backgroundColor: action.status === 'failed' ? 'rgba(127,29,29,0.3)' : action.status === 'blocked' ? 'rgba(120,53,15,0.3)' : 'transparent',
                     borderRadius: '0.35rem',
-                    padding: action.status === 'failed' ? '0.3rem 0.45rem' : '0',
+                    padding: (action.status === 'failed' || action.status === 'blocked') ? '0.3rem 0.45rem' : '0',
                   }}>
                     {action.resultMessage}
                   </div>
