@@ -23,6 +23,8 @@ import {
   OpenAIAdapter,
   copilotRuntimeNextJSAppRouterEndpoint,
 } from '@copilotkit/runtime';
+// BuiltInAgent is exported from the /v2 subpath, not the package root.
+import { BuiltInAgent } from '@copilotkit/runtime/v2';
 import { NextResponse } from 'next/server';
 
 const systemPrompt = `You are SAPM Copilot, an execution-focused assistant for a Sui prediction market.
@@ -49,13 +51,38 @@ if (!process.env.OPENAI_API_KEY) {
   );
 }
 
-const runtime = new CopilotRuntime();
+// Register a "default" agent so the CopilotKit React client's useAgent('default')
+// resolves successfully (it queries the runtime's /info handler for known agents).
+//
+// IMPORTANT: do NOT register the agent by calling a method on `runtime` (no such
+// API exists on CopilotRuntime — `runtime.registerAgent(...)` throws TypeError at
+// import time and breaks every request). Agents are passed via the constructor's
+// `agents` option as a Record<string, AbstractAgent>.
+//
+// BuiltInAgent's constructor is lazy: it only stores `{ model }` and does NOT
+// construct an OpenAI/Anthropic/etc. client until a chat actually runs. This
+// matters because if the agents map were left empty, CopilotRuntime's
+// handleServiceAdapter() auto-registers a default agent by calling
+// `OpenAIAdapter.getLanguageModel()`, which eagerly constructs `new OpenAI()` and
+// THROWS synchronously when OPENAI_API_KEY is unset — crashing the dev server with
+// an unhandled promise rejection and leaving /info with zero agents (which is what
+// produced "useAgent: Agent 'default' not found ... No agents registered.").
+// COPILOTKIT_MODEL is documented/used elsewhere as a bare model name for
+// OpenAIAdapter (e.g. "gpt-4o-mini"). BuiltInAgent instead expects a
+// provider-qualified spec (e.g. "openai/gpt-4o-mini"), so normalize here to
+// avoid a runtime "Unknown provider" error from resolveModel() if someone sets
+// COPILOTKIT_MODEL without a provider prefix.
+const builtInAgentModel = (() => {
+  const configured = process.env.COPILOTKIT_MODEL || 'gpt-4o-mini';
+  return configured.includes('/') ? configured : `openai/${configured}`;
+})();
 
-// Register the default agent for chat functionality
-runtime.registerAgent({
-  name: 'default',
-  description: 'SAPM Copilot - AI assistant for Sui prediction market operations',
-  instructions: systemPrompt,
+const runtime = new CopilotRuntime({
+  agents: {
+    default: new BuiltInAgent({
+      model: builtInAgentModel,
+    }),
+  },
 });
 
 function createEndpoint() {
