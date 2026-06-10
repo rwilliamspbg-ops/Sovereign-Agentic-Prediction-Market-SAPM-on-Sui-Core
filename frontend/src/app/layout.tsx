@@ -2,6 +2,7 @@
 
 import React, { ReactNode } from "react";
 import Link from "next/link";
+import Image from 'next/image';
 import { getWallets } from '@wallet-standard/app';
 import { SUI_MAINNET_CHAIN, SUI_TESTNET_CHAIN } from '@mysten/wallet-standard';
 import { CopilotKit } from '@copilotkit/react-core';
@@ -538,21 +539,17 @@ export default function RootLayout({
                 justifyContent: 'space-between',
                 height: '4rem',
               }}>
-                {/* Logo with SUI Brand */}
-                <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
-                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M16 2L2 9.33L2 22.67L16 30L30 22.67L30 9.33L16 2Z" fill="url(#gradient)" stroke="#06b6d4" strokeWidth="1"/>
-                    <path d="M16 2L16 30M2 9.33L30 22.67M30 9.33L2 22.67" stroke="#06b6d4" strokeWidth="0.5" opacity="0.3"/>
-                    <defs>
-                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style={{ stopColor: '#0ea5e9', stopOpacity: 1 }} />
-                        <stop offset="100%" style={{ stopColor: '#06b6d4', stopOpacity: 1 }} />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ 
-                      fontSize: '1.25rem', 
+                {/* Header brand cluster: SAPM + SUI + DeepBook + Walrus */}
+                <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.48rem', flexShrink: 0 }}>
+                    <Image src="/sapm-logo.svg" alt="SAPM" width={32} height={32} priority />
+                    <Image src="/brand/sui.svg" alt="Sui" width={32} height={32} />
+                    <Image src="/brand/deepbook.svg" alt="DeepBook" width={32} height={32} />
+                    <Image src="/brand/walrus.svg" alt="Walrus" width={32} height={32} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                    <span style={{
+                      fontSize: '1.25rem',
                       fontWeight: '700',
                       background: 'linear-gradient(135deg, #0ea5e9, #06b6d4)',
                       backgroundClip: 'text',
@@ -567,8 +564,9 @@ export default function RootLayout({
                       color: '#64748b',
                       fontWeight: '500',
                       letterSpacing: '0.5px',
+                      whiteSpace: 'nowrap',
                     }}>
-                      on Sui
+                      Sui | DeepBook | Walrus
                     </span>
                   </div>
                 </Link>
