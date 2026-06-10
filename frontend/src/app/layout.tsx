@@ -4,6 +4,8 @@ import React, { ReactNode } from "react";
 import Link from "next/link";
 import { getWallets } from '@wallet-standard/app';
 import { SUI_MAINNET_CHAIN, SUI_TESTNET_CHAIN } from '@mysten/wallet-standard';
+import { CopilotKit } from '@copilotkit/react-core';
+import '@copilotkit/react-ui/styles.css';
 import "./globals.css";
 import { CommandPalette } from '@/components/ui/CommandPalette';
 import { CopilotOpsPanel } from '@/components/a2ui/CopilotOpsPanel';
@@ -43,6 +45,51 @@ function hasSuiFeature(wallet: { features?: Record<string, unknown> | undefined 
 
 function hasConnectFeature(wallet: { features?: Record<string, unknown> | undefined }): boolean {
   return typeof (wallet.features?.['standard:connect'] as { connect?: unknown } | undefined)?.connect === 'function';
+}
+
+function isNightlyWallet(wallet: { id?: string; name?: string }): boolean {
+  const id = String(wallet.id || '').toLowerCase();
+  const name = String(wallet.name || '').toLowerCase();
+  return id.includes('nightly') || name.includes('nightly');
+}
+
+function isLikelySuiWallet(wallet: {
+  id?: string;
+  name?: string;
+  chains?: readonly string[];
+  accounts?: readonly { chains?: readonly string[] }[];
+  features?: Record<string, unknown>;
+}): boolean {
+  return hasSuiChain(wallet) || hasSuiAccountChain(wallet) || hasSuiFeature(wallet);
+}
+
+function pickPreferredWallet<T extends { id?: string; name?: string }>(
+  wallets: T[],
+  explicitWalletId?: string | null,
+  savedWalletId?: string | null,
+): T {
+  const explicit = (explicitWalletId || '').trim();
+  if (explicit) {
+    const byExplicit = wallets.find((item) => (item.id || item.name) === explicit);
+    if (byExplicit) {
+      return byExplicit;
+    }
+  }
+
+  const nightly = wallets.find((item) => isNightlyWallet(item));
+  if (nightly) {
+    return nightly;
+  }
+
+  const saved = (savedWalletId || '').trim();
+  if (saved) {
+    const bySaved = wallets.find((item) => (item.id || item.name) === saved);
+    if (bySaved) {
+      return bySaved;
+    }
+  }
+
+  return wallets[0];
 }
 
 function formatDetectedWallets(wallets: readonly {
@@ -169,24 +216,21 @@ export default function RootLayout({
     try {
       const liveWallets = getWallets().get();
       const connectableWallets = liveWallets.filter((wallet) => hasConnectFeature(wallet));
-      const compatibleWallets = liveWallets.filter((wallet) => hasConnectFeature(wallet)
-        && (hasSuiChain(wallet) || hasSuiAccountChain(wallet) || hasSuiFeature(wallet)));
+      const connectableSuiWallets = connectableWallets.filter((wallet) => isLikelySuiWallet(wallet));
 
       if (connectableWallets.length === 0) {
         throw new Error('No Wallet Standard wallet detected. Ensure your wallet extension is installed, unlocked, and wallet-standard compatible.');
       }
 
-      if (compatibleWallets.length === 0) {
+      if (connectableSuiWallets.length === 0) {
         const detected = formatDetectedWallets(connectableWallets);
-        throw new Error(`No Sui-compatible wallet account detected. Found wallet-standard providers: ${detected}. Install or enable a Sui wallet/account on testnet or mainnet.`);
+        throw new Error(`No Sui-capable wallet detected. Found wallet-standard providers: ${detected}. Select/install a Sui wallet (Nightly/Sui Wallet) and retry.`);
       }
 
-      const candidateWallets = compatibleWallets;
+      const candidateWallets = connectableSuiWallets;
 
       const savedWalletId = localStorage.getItem(LAST_WALLET_ID_KEY);
-      const wallet = candidateWallets.find((item) => (item.id || item.name) === selectedWalletId)
-        || candidateWallets.find((item) => (item.id || item.name) === savedWalletId)
-        || candidateWallets[0];
+      const wallet = pickPreferredWallet(candidateWallets, selectedWalletId, savedWalletId);
 
       const connectFeature = wallet.features['standard:connect'] as
         | { connect: (input?: { silent?: boolean }) => Promise<{ accounts: readonly { address: string }[] }> }
@@ -335,7 +379,7 @@ export default function RootLayout({
       }
 
       const wallet = registry.get().find((item) => (item.id || item.name) === savedWalletId);
-      if (!wallet || !hasConnectFeature(wallet)) {
+      if (!wallet || !hasConnectFeature(wallet) || !isLikelySuiWallet(wallet)) {
         localStorage.removeItem(LAST_WALLET_ID_KEY);
         localStorage.removeItem(LAST_WALLET_ADDRESS_KEY);
         return;
@@ -435,24 +479,16 @@ export default function RootLayout({
 
   React.useEffect(() => {
     const connectableWallets = availableWallets.filter((wallet) => hasConnectFeature(wallet));
-    const compatibleWallets = availableWallets.filter((wallet) => hasConnectFeature(wallet)
-      && (hasSuiChain(wallet) || hasSuiAccountChain(wallet) || hasSuiFeature(wallet)));
+    const connectableSuiWallets = connectableWallets.filter((wallet) => isLikelySuiWallet(wallet));
 
-    if (connectableWallets.length === 0) {
+    if (connectableSuiWallets.length === 0) {
       setSelectedWalletId('');
       return;
     }
 
     const savedWalletId = localStorage.getItem(LAST_WALLET_ID_KEY) || '';
-    if (compatibleWallets.length === 0) {
-      setSelectedWalletId('');
-      return;
-    }
-
-    const candidateWallets = compatibleWallets;
-    const nextSelected = candidateWallets.find((item) => (item.id || item.name) === savedWalletId)
-      || candidateWallets.find((item) => (item.id || item.name) === selectedWalletId)
-      || candidateWallets[0];
+    const candidateWallets = connectableSuiWallets;
+    const nextSelected = pickPreferredWallet(candidateWallets, selectedWalletId, savedWalletId);
 
     setSelectedWalletId(nextSelected.id || nextSelected.name);
   }, [availableWallets, selectedWalletId]);
@@ -465,6 +501,12 @@ export default function RootLayout({
   const connectableWallets = React.useMemo(() => {
     return availableWallets.filter((wallet) => hasConnectFeature(wallet));
   }, [availableWallets]);
+  const connectableSuiWallets = React.useMemo(() => {
+    return connectableWallets.filter((wallet) => isLikelySuiWallet(wallet));
+  }, [connectableWallets]);
+  const walletOptions = React.useMemo(() => {
+    return connectableSuiWallets.length > 0 ? connectableSuiWallets : [];
+  }, [connectableSuiWallets]);
   const explorerBase = network === 'mainnet'
     ? 'https://suiscan.xyz/mainnet/account/'
     : 'https://suiscan.xyz/testnet/account/';
@@ -472,6 +514,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body style={{ margin: 0, padding: 0, backgroundColor: '#0f172a', fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+        <CopilotKit runtimeUrl="/api/copilotkit">
         {/* Main Application Content */}
         <div style={{ position: 'relative' }}>
             
@@ -637,10 +680,11 @@ export default function RootLayout({
                   {/* Wallet Button or Connected State */}
                   {!walletConnected ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: isNarrowScreen ? '190px' : '240px' }}>
-                      {(suiConnectWallets.length > 1 || (suiConnectWallets.length === 0 && connectableWallets.length > 1)) && (
+                      {walletOptions.length > 0 && (
                         <select
                           value={selectedWalletId}
                           onChange={(event) => setSelectedWalletId(event.target.value)}
+                          disabled={isConnecting || walletOptions.length === 1}
                           style={{
                             minHeight: '36px',
                             borderRadius: '0.375rem',
@@ -649,9 +693,10 @@ export default function RootLayout({
                             color: '#e2e8f0',
                             fontSize: '0.8rem',
                             padding: '0.25rem 0.5rem',
+                            opacity: isConnecting || walletOptions.length === 1 ? 0.85 : 1,
                           }}
                         >
-                          {(suiConnectWallets.length > 0 ? suiConnectWallets : connectableWallets).map((wallet) => {
+                          {walletOptions.map((wallet) => {
                               const walletId = wallet.id || wallet.name;
                               return (
                                 <option key={walletId} value={walletId}>
@@ -911,6 +956,7 @@ export default function RootLayout({
               </div>
             </footer>
         </div>
+        </CopilotKit>
       </body>
     </html>
   );

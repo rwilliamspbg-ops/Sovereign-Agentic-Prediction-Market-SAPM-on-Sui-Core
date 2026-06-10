@@ -195,7 +195,7 @@ async function loadOnchainMarkets(context: CopilotContext): Promise<ActionResult
     return {
       id: '',
       ok: false,
-      message: 'No on-chain market object IDs are configured. Set NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS, or load/persist IDs in Trade Execution before loading markets.',
+      message: 'No on-chain market object IDs are configured. Set NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS or NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID, or persist IDs via Trade Execution (sapm.onchainObjectIds) before loading markets.',
     };
   }
 

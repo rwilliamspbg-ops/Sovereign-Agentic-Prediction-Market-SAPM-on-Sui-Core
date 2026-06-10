@@ -10,6 +10,9 @@ import {
   type CopilotRunState,
 } from '@/services/copilot-bridge';
 import { registerCopilotActionHandler } from '@/services/copilot-action-handler';
+import { deepbookService } from '@/services/sui/deepbook-service';
+import { marketDataService } from '@/services/sui/market-data-service';
+import { walrusService } from '@/services/sui/walrus-service';
 
 type CopilotOpsPanelProps = {
   open: boolean;
@@ -22,6 +25,12 @@ type ActiveMarketInsight = {
   yesPrice: number;
   noPrice: number;
   riskLevel: 'Low' | 'Medium' | 'High';
+};
+
+type IntegrationStatus = {
+  deepbookReady: boolean;
+  walrusReady: boolean;
+  checkedAt: string;
 };
 
 const ACTIVE_MARKET_INSIGHT_KEY = 'sapm.activeMarketInsight';
@@ -86,6 +95,90 @@ function syncBridgeContextFromClient(): void {
   });
 }
 
+function isValidSuiHexAddress(value: string): boolean {
+  return /^0x[0-9a-fA-F]{1,64}$/.test(value);
+}
+
+function readOnchainObjectIdsFromStorage(): string[] {
+  const raw = localStorage.getItem('sapm.onchainObjectIds') || '';
+  const ids = raw
+    .split(/[\s,]+/g)
+    .map((id) => id.trim())
+    .filter(Boolean)
+    .filter((id) => isValidSuiHexAddress(id));
+  return Array.from(new Set(ids));
+}
+
+async function hydrateLiveContextIfMissing(): Promise<void> {
+  let activeMarket: ActiveMarketInsight | null = null;
+  let integrationStatus: IntegrationStatus | null = null;
+
+  try {
+    const rawMarket = localStorage.getItem(ACTIVE_MARKET_INSIGHT_KEY);
+    if (rawMarket) {
+      activeMarket = JSON.parse(rawMarket) as ActiveMarketInsight;
+    }
+  } catch {
+    activeMarket = null;
+  }
+
+  try {
+    const rawIntegration = localStorage.getItem(INTEGRATION_STATUS_KEY);
+    if (rawIntegration) {
+      integrationStatus = JSON.parse(rawIntegration) as IntegrationStatus;
+    }
+  } catch {
+    integrationStatus = null;
+  }
+
+  if (!integrationStatus) {
+    try {
+      const [deepbookStatus, walrusStatus] = await Promise.all([
+        deepbookService.getStatus(),
+        walrusService.getStatus(),
+      ]);
+
+      const nextStatus: IntegrationStatus = {
+        deepbookReady: Boolean(deepbookStatus.rpcReachable && deepbookStatus.packageReachable),
+        walrusReady: Boolean(walrusStatus.aggregatorReachable && walrusStatus.publisherReachable),
+        checkedAt: new Date().toISOString(),
+      };
+
+      localStorage.setItem(INTEGRATION_STATUS_KEY, JSON.stringify(nextStatus));
+      window.dispatchEvent(new CustomEvent('sapm:integration-status', { detail: nextStatus }));
+    } catch {
+      // Keep unknown state if probing fails; UI still reflects cached values.
+    }
+  }
+
+  if (!activeMarket) {
+    try {
+      const configuredObjectIds = marketDataService.getConfiguredObjectIds();
+      const storedObjectIds = readOnchainObjectIdsFromStorage();
+      const objectIds = Array.from(new Set([...configuredObjectIds, ...storedObjectIds]));
+
+      if (objectIds.length > 0) {
+        const markets = await marketDataService.getOnchainMarketsFromObjectIds(objectIds);
+        if (markets.length > 0) {
+          const first = markets[0];
+          const nextMarket: ActiveMarketInsight = {
+            id: first.id,
+            question: first.question,
+            yesPrice: first.yesPrice,
+            noPrice: first.noPrice,
+            riskLevel: first.riskLevel,
+          };
+
+          localStorage.setItem(ACTIVE_MARKET_INSIGHT_KEY, JSON.stringify(nextMarket));
+          window.dispatchEvent(new CustomEvent('sapm:active-market-insight', { detail: nextMarket }));
+        }
+      }
+    } catch {
+      // Keep empty market context when no market can be loaded.
+    }
+  }
+}
+
 export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
   const [initialized, setInitialized] = React.useState(false);
   const [prompt, setPrompt] = React.useState('');
@@ -110,6 +203,8 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
       if (!active) {
         return;
       }
+      syncBridgeContextFromClient();
+      await hydrateLiveContextIfMissing();
       syncBridgeContextFromClient();
       setQueue(copilotBridge.getQueue());
       setInsights(copilotBridge.getInsights());

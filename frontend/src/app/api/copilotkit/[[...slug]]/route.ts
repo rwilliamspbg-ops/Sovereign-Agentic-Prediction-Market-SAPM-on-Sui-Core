@@ -23,7 +23,7 @@ import {
   OpenAIAdapter,
   copilotRuntimeNextJSAppRouterEndpoint,
 } from '@copilotkit/runtime';
-import { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 const systemPrompt = `You are SAPM Copilot, an execution-focused assistant for a Sui prediction market.
 
@@ -45,42 +45,57 @@ Rules:
 if (!process.env.OPENAI_API_KEY) {
   console.warn(
     '[CopilotKit] OPENAI_API_KEY is not set — copilot requests will fail. ' +
-      'Add OPENAI_API_KEY=sk-… to frontend/.env.local'
+      'Add OPENAI_API_KEY=sk-… to frontend/.env.local',
   );
 }
 
 const runtime = new CopilotRuntime();
 
-// System prompt is passed to the service adapter, which is where it is
-// actually forwarded to the LLM — not via middleware.onBeforeRequest which
-// only has access to request metadata and cannot inject the system prompt.
-const serviceAdapter = new OpenAIAdapter({
-  model: process.env.COPILOTKIT_MODEL ?? 'gpt-4o-mini',
-  // @ts-expect-error: `instructions` is the correct OpenAI SDK v4 system-prompt
-  // option.  The CopilotKit type declaration doesn't surface it yet but it is
-  // forwarded verbatim to the underlying openai.chat.completions call.
-  instructions: systemPrompt,
-  // OpenAI SDK reads OPENAI_API_KEY from env automatically.
-});
+function missingKeyResponse() {
+  return NextResponse.json(
+    {
+      ok: false,
+      error: 'OPENAI_API_KEY is not configured for Copilot runtime.',
+    },
+    { status: 503 },
+  );
+}
 
-const endpoint = copilotRuntimeNextJSAppRouterEndpoint({
-  runtime,
-  serviceAdapter,
-  endpoint: '/api/copilotkit',
-});
+function createEndpoint() {
+  const serviceAdapter = new OpenAIAdapter({
+    model: process.env.COPILOTKIT_MODEL || 'gpt-4o-mini',
+    // @ts-expect-error: `instructions` is the correct OpenAI SDK v4 system-prompt
+    // option. The CopilotKit type declaration doesn't surface it yet but it is
+    // forwarded verbatim to the underlying openai.chat.completions call.
+    instructions: systemPrompt,
+    // OpenAI SDK reads OPENAI_API_KEY from the environment automatically
+  });
+
+  return copilotRuntimeNextJSAppRouterEndpoint({
+    runtime,
+    serviceAdapter,
+    endpoint: '/api/copilotkit',
+  });
+}
+
+async function handle(request: Request) {
+  if (!process.env.OPENAI_API_KEY) {
+    console.warn('[CopilotKit] OPENAI_API_KEY is not set — copilot requests will return 503 until configured.');
+    return missingKeyResponse();
+  }
+
+  const endpoint = createEndpoint();
+  return endpoint.handleRequest(request);
+}
 
 export async function GET(request: Request) {
-  return endpoint.handleRequest(request);
+  return handle(request);
 }
 
 export async function POST(request: Request) {
-  return endpoint.handleRequest(request);
+  return handle(request);
 }
 
 export async function OPTIONS(request: Request) {
-  return endpoint.handleRequest(request);
-}
-
-export async function middleware(request: NextRequest) {
-  return new Response(null, { status: 200 });
+  return handle(request);
 }

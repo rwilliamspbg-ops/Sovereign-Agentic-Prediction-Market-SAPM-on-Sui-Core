@@ -906,6 +906,11 @@ body {
   overflow: auto;
 }
 
+.copilot-live-chat {
+  min-height: 208px;
+  height: 100%;
+}
+
 .copilot-fallback {
   font-size: 0.84rem;
   color: #bae6fd;
