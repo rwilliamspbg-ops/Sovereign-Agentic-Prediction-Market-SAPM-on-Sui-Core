@@ -2,8 +2,9 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY package*.json ./
-# Install all dependencies (including dev) for Next.js compilation
-RUN npm install --no-audit --no-fund
+# Install dependencies from lockfile for deterministic builds.
+# --legacy-peer-deps avoids npm peer-resolution failures in container builds.
+RUN npm ci --no-audit --no-fund --legacy-peer-deps
 
 COPY . .
 
