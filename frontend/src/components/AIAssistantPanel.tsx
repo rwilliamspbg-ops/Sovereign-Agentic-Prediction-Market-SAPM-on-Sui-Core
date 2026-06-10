@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { CopilotChat } from '@copilotkit/react-ui';
 import { useAgentState, useMarketActions } from '@/hooks/useAgentState';
 
 export default function AIAssistantPanel() {
@@ -12,11 +13,14 @@ export default function AIAssistantPanel() {
     <section className="assistant-panel">
       <h3>AI Co-Pilot Assistant</h3>
       <div className="chat-shell">
-        <div className="copilot-fallback">
-          <strong>Copilot assistant shell</strong>
-          <p>Local dashboard mode is active. The live Copilot UI package is temporarily disabled in this stack because its transitive ESM dependency path fails Next.js compilation here.</p>
-          <p>System health, simulation, and rationale surfaces remain available for dashboard validation.</p>
-        </div>
+        <CopilotChat
+          className="copilot-live-chat"
+          instructions="You are SAPM Copilot. Keep answers concise, operational, and safety-first for Sui prediction market workflows."
+          labels={{
+            title: 'SAPM Copilot',
+            initial: 'Ask for market analysis, action planning, or safe trade execution checks.',
+          }}
+        />
       </div>
 
       <hr className="assistant-divider" />

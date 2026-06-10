@@ -130,6 +130,37 @@ function hasConnectFeature(wallet: WalletLike): boolean {
   return typeof (wallet.features?.['standard:connect'] as { connect?: unknown } | undefined)?.connect === 'function';
 }
 
+function isNightlyWallet(wallet: WalletLike): boolean {
+  const id = String(wallet.id || '').toLowerCase();
+  const name = String(wallet.name || '').toLowerCase();
+  return id.includes('nightly') || name.includes('nightly');
+}
+
+function pickPreferredWallet(wallets: WalletLike[], preferredWalletId?: string | null, savedWalletId?: string | null): WalletLike {
+  const preferred = (preferredWalletId || '').trim();
+  if (preferred) {
+    const matched = wallets.find((item) => (item.id || item.name) === preferred);
+    if (matched) {
+      return matched;
+    }
+  }
+
+  const nightly = wallets.find((item) => isNightlyWallet(item));
+  if (nightly) {
+    return nightly;
+  }
+
+  const saved = (savedWalletId || '').trim();
+  if (saved) {
+    const matched = wallets.find((item) => (item.id || item.name) === saved);
+    if (matched) {
+      return matched;
+    }
+  }
+
+  return wallets[0];
+}
+
 function isSuiChain(chain: string): boolean {
   return chain === SUI_TESTNET_CHAIN || chain === SUI_MAINNET_CHAIN || chain.startsWith('sui:');
 }
@@ -152,14 +183,18 @@ function hasSuiChain(wallet: WalletLike): boolean {
   return false;
 }
 
+function isLikelySuiWallet(wallet: WalletLike): boolean {
+  return hasSuiChain(wallet) || hasSuiFeature(wallet);
+}
+
 export function getCompatibleWallets(): WalletLike[] {
   return getWallets()
     .get()
-    .filter((wallet) => hasConnectFeature(wallet) && (hasSuiChain(wallet) || hasSuiFeature(wallet)));
+    .filter((wallet) => hasConnectFeature(wallet) && isLikelySuiWallet(wallet));
 }
 
 export async function getConnectedWalletContext(preferredWalletId?: string): Promise<WalletExecutionContext> {
-  const walletCandidates = getWallets().get().filter((wallet) => hasConnectFeature(wallet) && (hasSuiChain(wallet) || hasSuiFeature(wallet)));
+  const walletCandidates = getWallets().get().filter((wallet) => hasConnectFeature(wallet) && isLikelySuiWallet(wallet));
   if (walletCandidates.length === 0) {
     throw new Error('No compatible Sui wallet found. Install or enable a Sui wallet with testnet/mainnet support.');
   }
@@ -167,9 +202,7 @@ export async function getConnectedWalletContext(preferredWalletId?: string): Pro
   const savedWalletId = localStorage.getItem(LAST_WALLET_ID_KEY);
   const savedAddress = localStorage.getItem(LAST_WALLET_ADDRESS_KEY);
 
-  const wallet = walletCandidates.find((item) => (item.id || item.name) === preferredWalletId)
-    || walletCandidates.find((item) => (item.id || item.name) === savedWalletId)
-    || walletCandidates[0];
+  const wallet = pickPreferredWallet(walletCandidates, preferredWalletId, savedWalletId);
 
   const connectFeature = wallet.features['standard:connect'] as
     | { connect: (input?: { silent?: boolean }) => Promise<{ accounts: readonly WalletAccount[] }> }
@@ -181,7 +214,7 @@ export async function getConnectedWalletContext(preferredWalletId?: string): Pro
 
   let validWalletAccounts = wallet.accounts.filter((item) => {
     const accountHasSuiChain = Array.isArray(item.chains)
-      ? item.chains.some((chain) => chain === SUI_TESTNET_CHAIN || chain === SUI_MAINNET_CHAIN)
+      ? item.chains.some((chain) => chain === SUI_TESTNET_CHAIN || chain === SUI_MAINNET_CHAIN || chain.startsWith('sui:'))
       : true;
     return accountHasSuiChain && isValidSuiHexAddress(item.address);
   });

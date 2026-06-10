@@ -110,8 +110,14 @@ services:
       - /app/.next
     command: sh -c "find .next -mindepth 1 -maxdepth 1 -exec rm -rf {} + || true; npm run dev"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
       - NEXT_PUBLIC_SUI_RPC=${SUI_RPC:-https://fullnode.testnet.sui.io:443}
+      - NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID=${NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID:-0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee}
+      - NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS=${NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS:-0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - COPILOTKIT_MODEL=${COPILOTKIT_MODEL:-gpt-4o-mini}
+      - NEXT_PUBLIC_WALRUS_AGGREGATOR_URL=${NEXT_PUBLIC_WALRUS_AGGREGATOR_URL:-https://aggregator.walrus-testnet.walrus.space}
+      - NEXT_PUBLIC_WALRUS_PUBLISHER_URL=${NEXT_PUBLIC_WALRUS_PUBLISHER_URL:-https://publisher.walrus-testnet.walrus.space}
     restart: unless-stopped
 
 volumes:

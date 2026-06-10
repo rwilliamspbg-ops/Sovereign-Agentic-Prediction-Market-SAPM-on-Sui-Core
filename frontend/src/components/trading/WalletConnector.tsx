@@ -76,6 +76,41 @@ function hasSuiFeature(wallet: WalletLike): boolean {
   return Object.keys(wallet.features || {}).some((feature) => feature.startsWith('sui:'));
 }
 
+function isNightlyWallet(wallet: WalletLike): boolean {
+  const id = String(wallet.id || '').toLowerCase();
+  const name = String(wallet.name || '').toLowerCase();
+  return id.includes('nightly') || name.includes('nightly');
+}
+
+function isLikelySuiWallet(wallet: WalletLike): boolean {
+  return hasSuiChain(wallet) || hasSuiAccountChain(wallet) || hasSuiFeature(wallet);
+}
+
+function pickPreferredWallet(wallets: WalletLike[], explicitWalletId?: string | null, savedWalletId?: string | null): WalletLike {
+  const explicit = (explicitWalletId || '').trim();
+  if (explicit) {
+    const byExplicit = wallets.find((item) => (item.id || item.name) === explicit);
+    if (byExplicit) {
+      return byExplicit;
+    }
+  }
+
+  const nightly = wallets.find((item) => isNightlyWallet(item));
+  if (nightly) {
+    return nightly;
+  }
+
+  const saved = (savedWalletId || '').trim();
+  if (saved) {
+    const bySaved = wallets.find((item) => (item.id || item.name) === saved);
+    if (bySaved) {
+      return bySaved;
+    }
+  }
+
+  return wallets[0];
+}
+
 function isWalletExtensionConnectTimeoutMessage(input: unknown): boolean {
   const message = typeof input === 'string'
     ? input
@@ -121,16 +156,15 @@ export const WalletConnector: React.FC<{ onConnect?: () => void }> = ({ onConnec
         }
 
         const hasConnect = typeof (wallet.features?.['standard:connect'] as { connect?: unknown } | undefined)?.connect === 'function';
-        return hasConnect && (hasSuiChain(wallet) || hasSuiAccountChain(wallet) || hasSuiFeature(wallet));
+        return hasConnect && isLikelySuiWallet(wallet);
       });
 
     setAvailableWallets(discovered);
 
     const rememberedWallet = localStorage.getItem(LAST_WALLET_ID_KEY);
-    if (rememberedWallet && discovered.some((wallet) => (wallet.id || wallet.name) === rememberedWallet)) {
-      setSelectedWalletId(rememberedWallet);
-    } else if (!selectedWalletId && discovered.length > 0) {
-      setSelectedWalletId(discovered[0].id || discovered[0].name);
+    if (discovered.length > 0) {
+      const preferred = pickPreferredWallet(discovered, selectedWalletId, rememberedWallet);
+      setSelectedWalletId(preferred.id || preferred.name);
     }
   }, [selectedWalletId]);
 
@@ -212,7 +246,8 @@ export const WalletConnector: React.FC<{ onConnect?: () => void }> = ({ onConnec
         throw new Error('No Sui wallet found');
       }
 
-      const wallet = availableWallets.find((item) => (item.id || item.name) === selectedWalletId) || availableWallets[0];
+      const rememberedWallet = localStorage.getItem(LAST_WALLET_ID_KEY);
+      const wallet = pickPreferredWallet(availableWallets, selectedWalletId, rememberedWallet);
       await connectToWallet(wallet, false);
     } catch (err) {
       setError(getFriendlyError(err));

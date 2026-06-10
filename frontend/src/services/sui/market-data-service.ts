@@ -70,10 +70,16 @@ export class MarketDataService {
   }
 
   getConfiguredObjectIds(): string[] {
-    return (process.env.NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS || '')
+    const fromMarketObjectIds = (process.env.NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS || '')
       .split(',')
       .map((id) => id.trim())
       .filter((id) => isValidSuiHexAddress(id));
+
+    const fromRegistryObjectId = [process.env.NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID || '']
+      .map((id) => id.trim())
+      .filter((id) => isValidSuiHexAddress(id));
+
+    return Array.from(new Set([...fromMarketObjectIds, ...fromRegistryObjectId]));
   }
 
   normalizeObjectIds(rawIds: string[]): string[] {
