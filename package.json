@@ -4,6 +4,10 @@
     "version": "1.0.0",
     "scripts": {
         "build": "npm --prefix frontend run build",
+        "docker:full": "bash scripts/full_stack_docker.sh up",
+        "docker:down": "bash scripts/full_stack_docker.sh down",
+        "docker:logs": "bash scripts/full_stack_docker.sh logs",
+        "docker:status": "bash scripts/full_stack_docker.sh status",
         "install:all": "npm ci --audit=false && npm --prefix agents/trader ci --audit=false && npm --prefix agents/aggregator ci --audit=false && npm --prefix agents/orchestrator ci --audit=false && npm --prefix frontend ci --audit=false",
         "test:trader": "npm --prefix agents/trader test",
         "test:aggregator": "npm --prefix agents/aggregator test",
