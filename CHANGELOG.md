@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Frontend CI Validation + Judge Demo Hardening (June 11, 2026)
+
+#### CI and Local Release Checks
+- Added `scripts/ci_frontend_validation.sh` to run frontend type-check, unit tests, and production build from repo root in one command.
+
+#### Documentation Reliability Updates
+- Updated `README.md` Judge demo instructions with fail-proof preflight checks, wallet/network alignment guidance, and deterministic verification steps.
+- Added explicit guidance that `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` must only contain `PredictionMarket` object IDs.
+- Corrected deployment guidance to prevent using the shared registry object ID as a trade market object.
+
+#### Frontend Runtime/Test Stability
+- Updated Copilot runtime route to align with installed `@copilotkit/runtime` OpenAI adapter typings.
+- Fixed Judge Mode action handler fallback so explicit/cached market IDs are preserved instead of forcing unnecessary auto-create paths.
+- Confirmed frontend validation pass locally (`type-check`, `jest`, `next build`) via root command script.
+
 ### Added - Phase 1: Data Infrastructure & AI Reasoning (June 5, 2026)
 
 #### Market Data Integration (`market-data/`)

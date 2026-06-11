@@ -379,9 +379,11 @@ async function runJudgeMode(
   const preferredNetwork = resolvePreferredNetwork();
 
   if (marketId) {
-    const tradeableMarket = await marketDataService.getOnchainMarketsFromObjectIds([marketId]);
-    if (tradeableMarket.length === 0) {
-      marketId = null;
+    try {
+      await marketDataService.getOnchainMarketsFromObjectIds([marketId]);
+    } catch {
+      // Preserve explicit/cached market IDs and let executeTrade surface validity errors.
+      // Auto-market creation should only run when no market ID is available.
     }
   }
 

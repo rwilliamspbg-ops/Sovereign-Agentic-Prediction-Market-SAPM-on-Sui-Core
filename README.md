@@ -72,9 +72,10 @@ Use these values in `frontend/.env.local`:
 
 ```bash
 NEXT_PUBLIC_SUI_PACKAGE_ID=0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188
-NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS=0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee
 NEXT_PUBLIC_SUI_NETWORK=testnet
 ```
+
+Set `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` only with actual `PredictionMarket` object IDs. Do not use the shared registry object ID for trading flows. If you do not have market IDs yet, leave `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` unset and let Judge Mode auto-create one.
 
 [![Video: Click thumbnail to play](https://img.youtube.com/vi/CEEmdBJklB0/hqdefault.jpg)](https://www.youtube.com/watch?v=CEEmdBJklB0)
 
@@ -82,9 +83,13 @@ NEXT_PUBLIC_SUI_NETWORK=testnet
 
 ## Demo — Watch This First
 
-1. Open the app and connect a Sui wallet.
-2. Paste a market object ID and click **Run Judge Mode**.
-3. Verify outputs: Sui transaction digest + Walrus blob readback.
+1. From repo root, run `./scripts/ci_frontend_validation.sh` and confirm it passes.
+2. Open the app, switch to the intended Sui network, and connect a funded wallet.
+3. Confirm `NEXT_PUBLIC_SUI_PACKAGE_ID` and `NEXT_PUBLIC_SUI_NETWORK` in `frontend/.env.local`.
+4. Set `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` only to valid `PredictionMarket` object IDs, or leave it unset for auto-create.
+5. Click **Run Judge Mode** and confirm a successful trade digest is returned.
+6. Click **Archive Snapshot** and confirm a Walrus `blobId` is returned.
+7. Independently verify the digest on Sui Explorer and snapshot payload via Walrus readback.
 
 ## Architecture At A Glance
 
@@ -107,14 +112,24 @@ NEXT_PUBLIC_SUI_NETWORK=testnet
 ## Judge Quickstart (Copy/Paste)
 
 ```bash
+./scripts/ci_frontend_validation.sh
 cd frontend
 npm ci
 cp ../.env.example .env.local
-# edit frontend/.env.local with deployed IDs
+# set NEXT_PUBLIC_SUI_PACKAGE_ID and NEXT_PUBLIC_SUI_NETWORK
+# set NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS only to PredictionMarket object IDs
+# or leave NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS unset for Judge auto-create
 npm run dev
 ```
 
-Then open `http://localhost:3000`, connect wallet, paste market object ID, and run Judge Mode.
+Then open `http://localhost:3000`, connect wallet, run Judge Mode, and archive snapshot.
+
+Fail-proof demo checks:
+
+1. If Judge Mode fails preflight, reconnect wallet and verify network alignment.
+2. If on-chain market loading fails, unset `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` and retry Judge Mode.
+3. If archive fails, run Judge Mode once more so `sapm.judgeMode.lastResult` is refreshed.
+4. After any `.env.local` change, restart the frontend server.
 
 ---
 
@@ -139,6 +154,8 @@ SAPM is a sovereign, agentic prediction market stack built natively on Sui. It c
 ## Live Demo — Judge Mode
 
 > **The fastest path to verification:** open the app, connect a Sui wallet, paste a market object ID, and click **Run Judge Mode**. It will: connect wallet → load on-chain market → execute micro trade → archive to Walrus → read blob back. Every step produces a verifiable artifact (transaction digest on Sui Explorer, Walrus blob ID on aggregator endpoint).
+
+> **Fail-proof usage:** use only valid `PredictionMarket` object IDs in `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS`, or leave it unset to allow Judge Mode to auto-create a market.
 
 The UI includes a built-in **Judge Script** modal with timestamped demo cues.
 
@@ -232,6 +249,18 @@ cd agents/aggregator && npm ci && npm test
 cd agents/orchestrator && npm ci && npm test
 ```
 
+### CI-style frontend validation from repo root
+
+```bash
+./scripts/ci_frontend_validation.sh
+```
+
+This single command runs:
+
+1. Frontend type-check
+2. Frontend unit tests
+3. Frontend production build
+
 ### Run the frontend
 
 ```bash
@@ -260,7 +289,9 @@ bash scripts/full_stack_docker.sh up
 cd agents/onchain-registry
 sui client publish --gas-budget 100000000
 # capture REGISTRY_PACKAGE_ID and PUBKEY_REGISTRY_OBJ from output
-# set them in frontend/.env.local as NEXT_PUBLIC_SUI_PACKAGE_ID and NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS
+# set NEXT_PUBLIC_SUI_PACKAGE_ID to REGISTRY_PACKAGE_ID
+# do not set NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS to PUBKEY_REGISTRY_OBJ
+# set NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS only with PredictionMarket object IDs
 ```
 
 ---

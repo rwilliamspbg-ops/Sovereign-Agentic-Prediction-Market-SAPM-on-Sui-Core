@@ -25,6 +25,7 @@ import {
 } from '@copilotkit/runtime';
 // BuiltInAgent is exported from the /v2 subpath, not the package root.
 import { BuiltInAgent } from '@copilotkit/runtime/v2';
+import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
 
 function resolveOpenAIKey(): string | undefined {
@@ -101,15 +102,16 @@ const runtime = new CopilotRuntime({
 function createEndpoint() {
   const apiKey = resolveOpenAIKey();
 
-  const serviceAdapter = new OpenAIAdapter({
+  const serviceAdapterConfig: ConstructorParameters<typeof OpenAIAdapter>[0] = {
     model: process.env.COPILOTKIT_MODEL || 'gpt-4o-mini',
-    apiKey,
-    // @ts-expect-error: `instructions` is the correct OpenAI SDK v4 system-prompt
-    // option. The CopilotKit type declaration doesn't surface it yet but it is
-    // forwarded verbatim to the underlying openai.chat.completions call.
-    instructions: systemPrompt,
-    // OpenAI SDK reads OPENAI_API_KEY from the environment automatically
-  });
+  };
+
+  if (apiKey) {
+    // Provide an explicit OpenAI client when a key is configured.
+    serviceAdapterConfig.openai = new OpenAI({ apiKey });
+  }
+
+  const serviceAdapter = new OpenAIAdapter(serviceAdapterConfig);
 
   return copilotRuntimeNextJSAppRouterEndpoint({
     runtime,
