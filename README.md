@@ -109,14 +109,42 @@ Fail-proof demo checks:
 
 ## Architecture At A Glance
 
-| Layer | Responsibility | Primary Paths |
-|---|---|---|
-| Frontend | Wallet connect, judge flow, trade execution UI | `frontend/src/app/`, `frontend/src/components/` |
-| Agent Plane | Discovery, forecasting, orchestration, consensus | `agents/trader/`, `agents/aggregator/`, `agents/orchestrator/` |
-| On-chain Core | Registry, incentives, reputation, slashing | `agents/onchain-registry/` |
-| Market Data + Execution | DeepBook integration and PTB execution | `frontend/src/services/sui/deepbook-service.ts`, `frontend/src/components/trading/TradeExecution.tsx` |
-| Verifiable Storage | Snapshot archival and retrieval | `frontend/src/services/sui/walrus-service.ts` |
-| Formal Methods | Safety, liveness, aggregation, PQC proofs | `formal_verification/` |
+```mermaid
+graph TB
+    subgraph SAPM_Monorepo [SAPM Monorepo]
+        direction TB
+
+        %% Frontend Node
+        Frontend["Next.js Frontend (frontend/)<br>• Market board<br>• Wallet connect<br>• Judge Mode<br>• DeepBook status<br>• Walrus snapshot<br>• Observability"]
+
+        %% Middle Layer Nodes
+        Agents["Agents<br>(trader/, aggregator/, orchestr.)"]
+        
+        Sui["Sui Network<br>• Move contracts<br>• Registry + Incentives"]
+        
+        Walrus["Walrus<br>• publishMarketSnapshot<br>(manifest v1)"]
+
+        %% Bottom Layer Node
+        FormalVerification["Formal Verification (formal_verification/)<br>• Lean 4<br>• BFT safety<br>• Multi-Krum<br>• PQC proofs"]
+
+        %% Future Note Node
+        Networking[/"Networking layer (future):<br>AF_XDP zero-copy kernel bypass<br>for cross-node aggregation<br>(Rust datapath scaffolded)"/]
+
+        %% Relationships
+        Frontend -->|@mysten/sui SDK| Sui
+        Frontend -.-> Agents
+        Frontend -.-> Walrus
+        Sui -->|DeepBook PTBs| FormalVerification
+    end
+
+    %% Styles
+    style SAPM_Monorepo fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    style Frontend fill:#e1f5fe,stroke:#0288d1,stroke-width:1px;
+    style Agents fill:#fff3e0,stroke:#f57c00,stroke-width:1px;
+    style Sui fill:#e8f5e9,stroke:#388e3c,stroke-width:1px;
+    style Walrus fill:#ede7f6,stroke:#5e35b1,stroke-width:1px;
+    style FormalVerification fill:#ffebee,stroke:#c62828,stroke-width:1px;
+    style Networking fill:#eceff1,stroke:#455a64,stroke-width:1px,stroke-dasharray: 5 5;
 
 ## Verification And Security Artifacts
 
@@ -124,7 +152,8 @@ Fail-proof demo checks:
 - [Threat Model](docs/THREAT_MODEL.md)
 - [Formal Verification README](formal_verification/README.md)
 - [Proof Obligations Tracker](formal_verification/OBLIGATIONS.md)
-
+...
+    end
 
 ---
 
