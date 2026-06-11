@@ -1,9 +1,11 @@
 # SAPM — Sovereign Agentic Prediction Market on Sui
-
+<img width="2816" height="1536" alt="SAPM on SUI" src="https://github.com/user-attachments/assets/09386498-c833-4f65-92cb-33a373f7f3ce" />
 ## Platform
 [![Node >=18](https://img.shields.io/badge/node-%3E%3D18-blue.svg?logo=node.js)](https://nodejs.org/) 
 [![Sui Testnet](https://img.shields.io/badge/Sui-Testnet-blue?logo=sui)](https://suiexplorer.com/?network=testnet) 
 [![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+## Validation
 [![Release Gate](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=Release%20Gate)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci.yml)
 [![Stack Validation](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci_validation.yml?branch=main&style=for-the-badge&logo=docker&logoColor=white&label=Stack%20Validation)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci_validation.yml)
 [![Lean Verification](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/lean-verification.yml?branch=main&style=for-the-badge&logo=leanpub&logoColor=white&label=Lean%20Verification)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/lean-verification.yml)
@@ -43,9 +45,6 @@ graph TB
     style Networking fill:#eceff1,stroke:#455a64,stroke-width:1px,stroke-dasharray: 5 5;
 ```
 ---
-
-<img width="2816" height="1536" alt="SAPM on SUI" src="https://github.com/user-attachments/assets/09386498-c833-4f65-92cb-33a373f7f3ce" />
-
 
 ## SAPM is a sovereign, high-performance prediction market aggregator built natively on Sui. By combining low-latency agentic orchestration, mathematical formal verification, and Byzantine fault tolerance, SAPM delivers a resilient, quantum-resistant infrastructure tailored for decentralized AI agents and predictive routing.
 
