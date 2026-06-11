@@ -1,7 +1,8 @@
 import React from 'react';
 import { AgentHealthMetrics } from '@/types/agent-health';
 import { HealthBadge } from './health-badge';
-import { Button } from './button';
+import { Button } from './Button';
+import { cn } from '@/lib/utils';
 
 interface AgentHealthCardProps {
   agent: AgentHealthMetrics;

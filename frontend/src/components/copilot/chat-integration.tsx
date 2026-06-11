@@ -8,7 +8,7 @@ export const CopilotChatHealthIndicator: React.FC = () => {
   if (loading || !healthData) return null;
 
   const topAgents = Object.values(healthData.agents)
-    .sort((a, b) => b.reputationScore - a.reputationScore)
+    .sort((a, b) => (b.reputationScore ?? 0) - (a.reputationScore ?? 0))
     .slice(0, 3);
 
   return (
@@ -46,7 +46,7 @@ export const CopilotChatHealthIndicator: React.FC = () => {
             className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-900/80 border border-gray-800 cursor-pointer hover:border-teal-500/50 transition-colors"
           >
             <span className="text-xs text-gray-400">{idx + 1}.</span>
-            <HealthBadge score={agent.reputationScore} size="sm" />
+            <HealthBadge score={agent.reputationScore ?? 50} size="sm" />
             <span className="text-xs text-gray-300 truncate max-w-[80px]">
               @{agent.agentId.slice(0, 6)}...
             </span>
