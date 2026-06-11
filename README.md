@@ -42,7 +42,7 @@ Sui Overflow 2026 Target Tracks: Agentic Web (Core), DeFi & Payments (Core), Dee
 <a href="https://docs.wal.app" target="_blank" rel="noopener noreferrer">
   <img src="frontend/public/walrus-logo.svg" alt="Walrus" height="42" />
 </a>
----
+
 ## Problem
 
 Prediction markets require too much manual operation, too much centralized trust, and no verifiable audit trail. Agents that trade on them do so blindly — no on-chain proof of their decisions, no slashable reputation, no immutable record of what they saw or why they acted.
@@ -58,7 +58,7 @@ SAPM is a sovereign, agentic prediction market stack built natively on Sui. It c
 - **Lean 4 formal verification** — BFT safety/liveness theorems, Multi-Krum aggregation correctness, hybrid PQC security proofs, and oracle contract invariants
 
 **Why Sui?** The object model makes agent staking natural (each `AgentStake` is an owned object), PTBs let a single transaction atomically execute a trade and update reputation, shared objects give the registry global visibility, and DeepBook + Walrus as first-class Sui primitives mean every layer of the stack is composable without bridging.
----
+
 ## Full Functionality Evidence (2026-06-11)
 
 Evidence artifact: [docs/artifacts/full-functionality-evidence-2026-06-11.txt](docs/artifacts/full-functionality-evidence-2026-06-11.txt)
