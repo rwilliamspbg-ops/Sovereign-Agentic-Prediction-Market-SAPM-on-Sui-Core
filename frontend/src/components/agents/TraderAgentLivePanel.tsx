@@ -162,7 +162,7 @@ export function TraderAgentLivePanel() {
         {decisions.map((entry) => (
           <div key={entry.id} style={{ border: '1px solid #26544a', borderRadius: '0.5rem', padding: '0.45rem' }}>
             <p style={{ margin: 0, color: '#d8fff8', fontSize: '0.79rem' }}>
-              [{new Date(entry.ts).toLocaleTimeString()}] {entry.agentId.toUpperCase()} -> {entry.decision.toUpperCase()} ({Math.round(entry.confidence * 100)}%)
+              [{new Date(entry.ts).toLocaleTimeString()}] {entry.agentId.toUpperCase()} {'->'} {entry.decision.toUpperCase()} ({Math.round(entry.confidence * 100)}%)
             </p>
             <p style={{ margin: '0.25rem 0 0', color: '#9ddace', fontSize: '0.74rem' }}>
               {entry.marketId} | stake ${entry.stakeUsd.toLocaleString()} | {entry.marketTitle}
