@@ -145,6 +145,7 @@ graph TB
     style Walrus fill:#ede7f6,stroke:#5e35b1,stroke-width:1px;
     style FormalVerification fill:#ffebee,stroke:#c62828,stroke-width:1px;
     style Networking fill:#eceff1,stroke:#455a64,stroke-width:1px,stroke-dasharray: 5 5;
+```
 
 ---
 
