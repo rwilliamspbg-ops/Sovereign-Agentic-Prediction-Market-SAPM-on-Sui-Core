@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { TraderAgentLivePanel } from '@/components/agents/TraderAgentLivePanel';
 
 type MarketStatus = 'live' | 'new' | 'closing-soon';
 type MarketCategory = 'Politics' | 'Crypto' | 'Macro' | 'Sports' | 'Tech';
@@ -476,10 +477,10 @@ export default function MarketExperienceBoard() {
               <p style={{ margin: 0, color: '#90cfc3', fontSize: '0.73rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Activity Feed
               </p>
-              <p style={{ margin: '0.48rem 0 0', color: '#d8fff8', fontSize: '0.84rem' }}>Large sweep: YES on SUI {'>'} $4.50 (+$82K)</p>
-              <p style={{ margin: '0.42rem 0 0', color: '#d8fff8', fontSize: '0.84rem' }}>Market maker tightened spread to 2c on CPI event</p>
-              <p style={{ margin: '0.42rem 0 0', color: '#d8fff8', fontSize: '0.84rem' }}>Alert: Fed event market moved +3.1% in 15m</p>
+              <p style={{ margin: '0.48rem 0 0', color: '#d8fff8', fontSize: '0.84rem' }}>Live desk feed moved to Trader Agent Live Feed below.</p>
             </div>
+
+            <TraderAgentLivePanel />
           </aside>
         </div>
       </section>

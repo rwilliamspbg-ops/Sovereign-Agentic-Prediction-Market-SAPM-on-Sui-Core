@@ -371,6 +371,7 @@ export function CommandPalette({ actions, compact = false }: CommandPaletteProps
   return (
     <>
       <button
+        suppressHydrationWarning
         type="button"
         onClick={() => setIsOpen(true)}
         style={{
@@ -486,6 +487,7 @@ export function CommandPalette({ actions, compact = false }: CommandPaletteProps
                       const isSelected = index === selectedIndex;
                       return (
                         <button
+                          suppressHydrationWarning
                           key={action.id}
                           type="button"
                           onMouseEnter={() => setSelectedIndex(index)}

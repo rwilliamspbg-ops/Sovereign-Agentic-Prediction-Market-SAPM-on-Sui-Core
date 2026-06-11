@@ -35,6 +35,7 @@ type IntegrationStatus = {
 
 const ACTIVE_MARKET_INSIGHT_KEY = 'sapm.activeMarketInsight';
 const INTEGRATION_STATUS_KEY = 'sapm.integrationStatus';
+const PROMPT_DRAFT_KEY = 'sapm.copilot.promptDraft';
 
 const quickPrompts = [
   'Prepare judge mode run with proof artifacts',
@@ -194,6 +195,56 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
   const [runState, setRunState] = React.useState<CopilotRunState>(copilotBridge.getRunState());
 
   React.useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    try {
+      const savedDraft = localStorage.getItem(PROMPT_DRAFT_KEY);
+      if (savedDraft) {
+        setPrompt(savedDraft);
+      }
+    } catch {
+      // Ignore draft restore failures.
+    }
+  }, [open]);
+
+  React.useEffect(() => {
+    try {
+      if (!prompt.trim()) {
+        localStorage.removeItem(PROMPT_DRAFT_KEY);
+        return;
+      }
+      localStorage.setItem(PROMPT_DRAFT_KEY, prompt);
+    } catch {
+      // Ignore draft persistence failures.
+    }
+  }, [prompt]);
+
+  React.useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', onKeydown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeydown);
+    };
+  }, [open, onClose]);
+
+  React.useEffect(() => {
     let active = true;
 
     const boot = async () => {
@@ -283,6 +334,7 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
         priority: 'high',
       });
       setPrompt('');
+      localStorage.removeItem(PROMPT_DRAFT_KEY);
       setInsights(copilotBridge.getInsights());
       setQueue(copilotBridge.getQueue());
     } finally {
@@ -364,6 +416,9 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
         }}
       />
       <aside
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="copilot-ops-title"
         style={{
           position: 'absolute',
           top: 0,
@@ -386,11 +441,12 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
             <div style={{ color: '#67e8f9', fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               Copilot Ops
             </div>
-            <h3 style={{ color: '#f8fafc', margin: '0.35rem 0 0 0', fontSize: '1.15rem' }}>Agentic Action Control</h3>
+            <h3 id="copilot-ops-title" style={{ color: '#f8fafc', margin: '0.35rem 0 0 0', fontSize: '1.15rem' }}>Agentic Action Control</h3>
           </div>
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close Copilot Ops panel"
             style={{
               border: '1px solid #334155',
               backgroundColor: '#0f172a',
@@ -528,6 +584,13 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
           <textarea
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
+            onKeyDown={(event) => {
+              if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                event.preventDefault();
+                void handleGenerate(prompt);
+              }
+            }}
+            aria-label="Describe what Copilot should execute"
             placeholder="Describe what Copilot should execute..."
             style={{
               width: '100%',
