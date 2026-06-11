@@ -1,6 +1,7 @@
 import React from 'react';
 import { AgentHealthMetrics } from '@/types/agent-health';
 import { HealthBadge } from '@/components/ui/health-badge';
+import { cn } from '@/lib/utils';
 
 interface AgentHealthDetailsProps {
   agent: AgentHealthMetrics;

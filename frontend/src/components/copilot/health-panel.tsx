@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAgentHealth } from '@/providers/agent-health-provider';
 import { AgentHealthCard } from '@/components/ui/agent-health-card';
 import { HealthBadge } from '@/components/ui/health-badge';
+import { cn } from '@/lib/utils';
 
 export const CopilotHealthPanel: React.FC = () => {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
