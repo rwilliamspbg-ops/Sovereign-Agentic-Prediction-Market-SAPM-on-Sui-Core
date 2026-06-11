@@ -59,40 +59,6 @@ SAPM is a sovereign, agentic prediction market stack built natively on Sui. It c
 
 **Why Sui?** The object model makes agent staking natural (each `AgentStake` is an owned object), PTBs let a single transaction atomically execute a trade and update reputation, shared objects give the registry global visibility, and DeepBook + Walrus as first-class Sui primitives mean every layer of the stack is composable without bridging.
 
-## Full Functionality Evidence (2026-06-11)
-
-Evidence artifact: [docs/artifacts/full-functionality-evidence-2026-06-11.txt](docs/artifacts/full-functionality-evidence-2026-06-11.txt)
-
-Validated in this artifact:
-
-- Docker stack is healthy (`sui-local`, `sapm-aggregator`, `sapm-frontend`, `aggregator-proxy`, `agent-sample`).
-- Frontend health check returns HTTP 200.
-- Walrus publish through local Next.js proxy (`/api/walrus/blobs`) succeeds with `PUT` and returns a `blobId`.
-- Registry object type is confirmed on testnet (`registry::PubkeyRegistry`), proving the guardrail against using registry IDs as market trade objects.
-
-## Verified Live Deployment (Sui Testnet)
-
-> **Verified live deployment on Sui testnet with full tx artifacts.**
-
-| Artifact | Value | Explorer |
-|---|---|---|
-| Faucet transfer digest | `6UiX2pc2kRPAY7e3nJ7o4wjK2QZJaQaAsJtEExgNuyfD` | https://suiexplorer.com/txblock/6UiX2pc2kRPAY7e3nJ7o4wjK2QZJaQaAsJtEExgNuyfD?network=testnet |
-| Publish digest | `EqyVmTFegJVTSkLmf2v2VMC8o1cz17dKSGtQKjTuBwak` | https://suiexplorer.com/txblock/EqyVmTFegJVTSkLmf2v2VMC8o1cz17dKSGtQKjTuBwak?network=testnet |
-| Package ID | `0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188` | https://suiexplorer.com/object/0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188?network=testnet |
-| init_registry digest | `AsXALc619zQEBmTc9sf9d1LbQnhDqEYozimnP6D1AwxL` | https://suiexplorer.com/txblock/AsXALc619zQEBmTc9sf9d1LbQnhDqEYozimnP6D1AwxL?network=testnet |
-| Shared registry object ID | `0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee` | https://suiexplorer.com/object/0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee?network=testnet |
-| add_key digest | `CKyf9c453r5t6asfGaabbgNCpCgUktW7rEgrNZjtzCwy` | https://suiexplorer.com/txblock/CKyf9c453r5t6asfGaabbgNCpCgUktW7rEgrNZjtzCwy?network=testnet |
-
-Post-mutation verification:
-- `pubkeys` includes `AQIDBA==` (bytes `[1,2,3,4]`) on testnet.
-
-Use these values in `frontend/.env.local`:
-
-```bash
-NEXT_PUBLIC_SUI_PACKAGE_ID=0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188
-NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS=0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee
-NEXT_PUBLIC_SUI_NETWORK=testnet
-```
 
 [![Video: Click thumbnail to play](https://img.youtube.com/vi/CEEmdBJklB0/hqdefault.jpg)](https://www.youtube.com/watch?v=CEEmdBJklB0)
 
@@ -172,7 +138,40 @@ The UI includes a built-in **Judge Script** modal with timestamped demo cues.
 │  for cross-node aggregation (Rust datapath scaffolded)         │
 └─────────────────────────────────────────────────────────────┘
 ```
+## Full Functionality Evidence (2026-06-11)
 
+Evidence artifact: [docs/artifacts/full-functionality-evidence-2026-06-11.txt](docs/artifacts/full-functionality-evidence-2026-06-11.txt)
+
+Validated in this artifact:
+
+- Docker stack is healthy (`sui-local`, `sapm-aggregator`, `sapm-frontend`, `aggregator-proxy`, `agent-sample`).
+- Frontend health check returns HTTP 200.
+- Walrus publish through local Next.js proxy (`/api/walrus/blobs`) succeeds with `PUT` and returns a `blobId`.
+- Registry object type is confirmed on testnet (`registry::PubkeyRegistry`), proving the guardrail against using registry IDs as market trade objects.
+
+## Verified Live Deployment (Sui Testnet)
+
+> **Verified live deployment on Sui testnet with full tx artifacts.**
+
+| Artifact | Value | Explorer |
+|---|---|---|
+| Faucet transfer digest | `6UiX2pc2kRPAY7e3nJ7o4wjK2QZJaQaAsJtEExgNuyfD` | https://suiexplorer.com/txblock/6UiX2pc2kRPAY7e3nJ7o4wjK2QZJaQaAsJtEExgNuyfD?network=testnet |
+| Publish digest | `EqyVmTFegJVTSkLmf2v2VMC8o1cz17dKSGtQKjTuBwak` | https://suiexplorer.com/txblock/EqyVmTFegJVTSkLmf2v2VMC8o1cz17dKSGtQKjTuBwak?network=testnet |
+| Package ID | `0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188` | https://suiexplorer.com/object/0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188?network=testnet |
+| init_registry digest | `AsXALc619zQEBmTc9sf9d1LbQnhDqEYozimnP6D1AwxL` | https://suiexplorer.com/txblock/AsXALc619zQEBmTc9sf9d1LbQnhDqEYozimnP6D1AwxL?network=testnet |
+| Shared registry object ID | `0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee` | https://suiexplorer.com/object/0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee?network=testnet |
+| add_key digest | `CKyf9c453r5t6asfGaabbgNCpCgUktW7rEgrNZjtzCwy` | https://suiexplorer.com/txblock/CKyf9c453r5t6asfGaabbgNCpCgUktW7rEgrNZjtzCwy?network=testnet |
+
+Post-mutation verification:
+- `pubkeys` includes `AQIDBA==` (bytes `[1,2,3,4]`) on testnet.
+
+Use these values in `frontend/.env.local`:
+
+```bash
+NEXT_PUBLIC_SUI_PACKAGE_ID=0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188
+NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS=0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee
+NEXT_PUBLIC_SUI_NETWORK=testnet
+```
 ---
 
 ## Sui Integration Summary
