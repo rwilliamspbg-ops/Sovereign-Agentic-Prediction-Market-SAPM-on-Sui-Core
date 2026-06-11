@@ -131,10 +131,10 @@ graph TB
         Networking[/"Networking layer (future):<br>AF_XDP zero-copy kernel bypass<br>for cross-node aggregation<br>(Rust datapath scaffolded)"/]
 
         %% Relationships
-        Frontend -->|@mysten/sui SDK| Sui
+        Frontend -->|"@mysten/sui SDK"| Sui
         Frontend -.-> Agents
         Frontend -.-> Walrus
-        Sui -->|DeepBook PTBs| FormalVerification
+        Sui -->|"DeepBook PTBs"| FormalVerification
     end
 
     %% Styles
