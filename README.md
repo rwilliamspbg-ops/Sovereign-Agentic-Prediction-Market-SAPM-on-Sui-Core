@@ -1,5 +1,6 @@
 # SAPM — Sovereign Agentic Prediction Market on Sui
 <img width="2816" height="1536" alt="SAPM on SUI" src="https://github.com/user-attachments/assets/09386498-c833-4f65-92cb-33a373f7f3ce" />
+---
 ## Platform
 [![Node >=18](https://img.shields.io/badge/node-%3E%3D18-blue.svg?logo=node.js)](https://nodejs.org/) 
 [![Sui Testnet](https://img.shields.io/badge/Sui-Testnet-blue?logo=sui)](https://suiexplorer.com/?network=testnet) 
