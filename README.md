@@ -147,37 +147,7 @@ graph TB
     style Networking fill:#eceff1,stroke:#455a64,stroke-width:1px,stroke-dasharray: 5 5;
 ```
 
----
 
-
-## Architecture
-
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                     SAPM Monorepo                               │
-│                                                                 │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │               Next.js Frontend (frontend/)              │   │
-│  │  Market board · Wallet connect · Judge Mode            │   │
-│  │  DeepBook status · Walrus snapshot · Observability     │   │
-│  └────────────────────────┬────────────────────────────────┘   │
-│                           │ @mysten/sui SDK                     │
-│  ┌────────────┐  ┌────────▼──────────┐  ┌────────────────┐    │
-│  │  Agents    │  │   Sui Network     │  │   Walrus       │    │
-│  │ trader/    │  │ Move contracts    │  │ publishMarket  │    │
-│  │ aggregator/│  │ Registry +        │  │ Snapshot       │    │
-│  │ orchestr.  │  │ Incentives        │  │ (manifest v1)  │    │
-│  └────────────┘  └────────┬──────────┘  └────────────────┘    │
-│                           │ DeepBook PTBs                       │
-│  ┌─────────────────────────▼───────────────────────────────┐   │
-│  │  Formal Verification (formal_verification/)              │   │
-│  │  Lean 4 · BFT safety · Multi-Krum · PQC proofs         │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                                                                 │
-│  Networking layer (future): AF_XDP zero-copy kernel bypass     │
-│  for cross-node aggregation (Rust datapath scaffolded)         │
-└─────────────────────────────────────────────────────────────┘
-```
 ## Full Functionality Evidence (2026-06-11)
 
 Evidence artifact: [docs/artifacts/full-functionality-evidence-2026-06-11.txt](docs/artifacts/full-functionality-evidence-2026-06-11.txt)
