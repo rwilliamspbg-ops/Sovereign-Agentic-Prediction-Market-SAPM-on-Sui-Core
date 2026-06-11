@@ -102,6 +102,8 @@ npx next dev
 ```
 
 Then open `http://localhost:3000`, connect wallet, paste market object ID, and run Judge Mode.
+<img width="1733" height="1049" alt="Screenshot 2026-06-11 071231" src="https://github.com/user-attachments/assets/3aa7b037-6bef-4cb7-b9d4-d2fcd26e6ec8" />
+<img width="660" height="978" alt="Screenshot 2026-06-11 071152" src="https://github.com/user-attachments/assets/5444dff0-4cec-47c9-a5fe-d5b4def34534" />
 
 ---
 
