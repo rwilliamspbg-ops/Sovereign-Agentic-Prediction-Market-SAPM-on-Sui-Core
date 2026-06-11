@@ -116,8 +116,8 @@ const formatUsd = (value: number): string => {
 
 const formatPercent = (value: number): string => `${(value * 100).toFixed(1)}%`;
 
-const formatCloseIn = (isoDate: string): string => {
-  const now = Date.now();
+const formatCloseIn = (isoDate: string, now: number | null): string => {
+  if (now === null) return 'Closes soon';
   const end = new Date(isoDate).getTime();
   const diff = Math.max(end - now, 0);
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -140,6 +140,7 @@ export default function MarketExperienceBoard() {
   const [selectedMarketId, setSelectedMarketId] = useState<string>(FALLBACK_MARKETS[0]?.id || '');
   const [selectedSide, setSelectedSide] = useState<'yes' | 'no'>('yes');
   const [tradeAmount, setTradeAmount] = useState<number>(250);
+  const [hydratedNow, setHydratedNow] = useState<number | null>(null);
 
   const fetchMarkets = async () => {
     setIsLoading(true);
@@ -177,6 +178,10 @@ export default function MarketExperienceBoard() {
 
   useEffect(() => {
     fetchMarkets();
+  }, []);
+
+  useEffect(() => {
+    setHydratedNow(Date.now());
   }, []);
 
   const categories = useMemo(() => ['All', ...Array.from(new Set(markets.map((m) => m.category)))], [markets]);
@@ -245,7 +250,7 @@ export default function MarketExperienceBoard() {
             <span style={{ fontSize: '0.76rem', color: '#88c9bc' }}>
               {isLoading ? 'Syncing market feed...' : `Last sync: ${lastSync ? new Date(lastSync).toLocaleTimeString() : 'n/a'}`}
             </span>
-            <button type="button" className="liquid-status-pill" onClick={fetchMarkets} disabled={isLoading}>
+            <button type="button" className="liquid-status-pill" onClick={fetchMarkets} disabled={isLoading} suppressHydrationWarning>
               {isLoading ? 'Refreshing...' : 'Refresh Markets'}
             </button>
           </div>
@@ -266,6 +271,7 @@ export default function MarketExperienceBoard() {
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search events, assets, topics, or resolution sources..."
                 className="liquid-input"
+                suppressHydrationWarning
               />
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -275,6 +281,7 @@ export default function MarketExperienceBoard() {
                     type="button"
                     onClick={() => setCategory(item as 'All' | MarketCategory)}
                     className={`liquid-chip ${category === item ? 'active' : ''}`}
+                    suppressHydrationWarning
                   >
                     {item}
                   </button>
@@ -293,6 +300,7 @@ export default function MarketExperienceBoard() {
                     type="button"
                     onClick={() => setStatus(item.value as 'all' | MarketStatus)}
                     className={`liquid-status-pill ${status === item.value ? 'active' : ''}`}
+                    suppressHydrationWarning
                   >
                     {item.label}
                   </button>
@@ -302,6 +310,7 @@ export default function MarketExperienceBoard() {
                   value={sortBy}
                   onChange={(event) => setSortBy(event.target.value as 'volume' | 'change' | 'liquidity')}
                   className="liquid-select"
+                  suppressHydrationWarning
                 >
                   <option value="volume">Sort: 24h volume</option>
                   <option value="change">Sort: biggest move</option>
@@ -335,6 +344,7 @@ export default function MarketExperienceBoard() {
                         }}
                         className={`liquid-watch ${watchlist[market.id] ? 'active' : ''}`}
                         aria-label={`Toggle ${market.title} in watchlist`}
+                        suppressHydrationWarning
                       >
                         ★
                       </button>
@@ -349,6 +359,7 @@ export default function MarketExperienceBoard() {
                           setSelectedSide('yes');
                         }}
                         className="liquid-trade-btn yes"
+                        suppressHydrationWarning
                       >
                         YES {yesPercent}c
                       </button>
@@ -360,6 +371,7 @@ export default function MarketExperienceBoard() {
                           setSelectedSide('no');
                         }}
                         className="liquid-trade-btn no"
+                        suppressHydrationWarning
                       >
                         NO {noPercent}c
                       </button>
@@ -382,7 +394,7 @@ export default function MarketExperienceBoard() {
                       </div>
                       <div className="liquid-metric">
                         <span>TIME</span>
-                        <strong>{formatCloseIn(market.closeAt)}</strong>
+                        <strong>{formatCloseIn(market.closeAt, hydratedNow)}</strong>
                       </div>
                     </div>
 
@@ -421,6 +433,7 @@ export default function MarketExperienceBoard() {
                 type="button"
                 className={`liquid-side-btn ${selectedSide === 'yes' ? 'active-yes' : ''}`}
                 onClick={() => setSelectedSide('yes')}
+                suppressHydrationWarning
               >
                 Buy YES
               </button>
@@ -428,6 +441,7 @@ export default function MarketExperienceBoard() {
                 type="button"
                 className={`liquid-side-btn ${selectedSide === 'no' ? 'active-no' : ''}`}
                 onClick={() => setSelectedSide('no')}
+                suppressHydrationWarning
               >
                 Buy NO
               </button>
@@ -443,6 +457,7 @@ export default function MarketExperienceBoard() {
                 value={tradeAmount}
                 onChange={(event) => setTradeAmount(Number(event.target.value))}
                 className="liquid-range"
+                suppressHydrationWarning
               />
               <input
                 type="number"
@@ -450,6 +465,7 @@ export default function MarketExperienceBoard() {
                 value={tradeAmount}
                 onChange={(event) => setTradeAmount(Math.max(Number(event.target.value) || 0, 1))}
                 className="liquid-input"
+                suppressHydrationWarning
               />
             </label>
 
@@ -460,7 +476,7 @@ export default function MarketExperienceBoard() {
               <div className="liquid-ticket-row"><span>Est. profit</span><strong>{formatUsd(estimatedProfit)}</strong></div>
             </div>
 
-            <button type="button" className="liquid-place-order-btn" style={{ marginTop: '0.8rem' }}>
+            <button type="button" className="liquid-place-order-btn" style={{ marginTop: '0.8rem' }} suppressHydrationWarning>
               Place Simulated Order
             </button>
 
