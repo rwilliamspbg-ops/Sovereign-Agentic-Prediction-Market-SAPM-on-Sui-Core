@@ -1,4 +1,5 @@
 # SAPM — Sovereign Agentic Prediction Market on Sui
+<img width="2816" height="1536" alt="SAPM on SUI" src="https://github.com/user-attachments/assets/09386498-c833-4f65-92cb-33a373f7f3ce" />
 
 SAPM is a sovereign, high-performance prediction market aggregator built natively on Sui. By combining low-latency agentic orchestration, mathematical formal verification, and Byzantine fault tolerance, SAPM delivers a resilient, quantum-resistant infrastructure tailored for decentralized AI agents and predictive routing.
 
