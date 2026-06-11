@@ -65,7 +65,6 @@ SAPM is a sovereign, agentic prediction market stack built natively on Sui. It c
 **Why Sui?** The object model makes agent staking natural (each `AgentStake` is an owned object), PTBs let a single transaction atomically execute a trade and update reputation, shared objects give the registry global visibility, and DeepBook + Walrus as first-class Sui primitives mean every layer of the stack is composable without bridging.
 
 
-Set `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` only with actual `PredictionMarket` object IDs. Do not use the shared registry object ID for trading flows. If you do not have market IDs yet, leave `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` unset and let Judge Mode auto-create one.
 
 [![Video: Click thumbnail to play](https://img.youtube.com/vi/CEEmdBJklB0/hqdefault.jpg)](https://www.youtube.com/watch?v=CEEmdBJklB0)
 
@@ -99,7 +98,16 @@ Set `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` only with actual `PredictionMarket` obje
 - [Formal Verification README](formal_verification/README.md)
 - [Proof Obligations Tracker](formal_verification/OBLIGATIONS.md)
 
-## Judge Quickstart (Copy/Paste)
+## Live Demo — Judge Mode
+
+> **The fastest path to verification:** open the app, connect a Sui wallet, paste a market object ID, and click **Run Judge Mode**. It will: connect wallet → load on-chain market → execute micro trade → archive to Walrus → read blob back. Every step produces a verifiable artifact (transaction digest on Sui Explorer, Walrus blob ID on aggregator endpoint).
+
+> **Fail-proof usage:** use only valid `PredictionMarket` object IDs in `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS`, or leave it unset to allow Judge Mode to auto-create a market.
+
+The UI includes a built-in **Judge Script** modal with timestamped demo cues.
+Then open `http://localhost:3000`, connect wallet, paste market object ID, and run Judge Mode.
+<img width="1733" height="1049" alt="Screenshot 2026-06-11 071231" src="https://github.com/user-attachments/assets/3aa7b037-6bef-4cb7-b9d4-d2fcd26e6ec8" />
+<img width="660" height="978" alt="Screenshot 2026-06-11 071152" src="https://github.com/user-attachments/assets/5444dff0-4cec-47c9-a5fe-d5b4def34534" />
 
 ```bash
 ./scripts/ci_frontend_validation.sh
