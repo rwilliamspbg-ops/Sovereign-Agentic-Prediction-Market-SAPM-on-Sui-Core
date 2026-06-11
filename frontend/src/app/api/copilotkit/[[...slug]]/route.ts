@@ -94,21 +94,14 @@ const runtime = new CopilotRuntime({
   agents: {
     default: new BuiltInAgent({
       model: builtInAgentModel,
+      prompt: systemPrompt,
     }),
   },
 });
 
 function createEndpoint() {
-  const apiKey = resolveOpenAIKey();
-
   const serviceAdapter = new OpenAIAdapter({
     model: process.env.COPILOTKIT_MODEL || 'gpt-4o-mini',
-    apiKey,
-    // @ts-expect-error: `instructions` is the correct OpenAI SDK v4 system-prompt
-    // option. The CopilotKit type declaration doesn't surface it yet but it is
-    // forwarded verbatim to the underlying openai.chat.completions call.
-    instructions: systemPrompt,
-    // OpenAI SDK reads OPENAI_API_KEY from the environment automatically
   });
 
   return copilotRuntimeNextJSAppRouterEndpoint({
