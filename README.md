@@ -146,15 +146,6 @@ graph TB
     style FormalVerification fill:#ffebee,stroke:#c62828,stroke-width:1px;
     style Networking fill:#eceff1,stroke:#455a64,stroke-width:1px,stroke-dasharray: 5 5;
 
-## Verification And Security Artifacts
-
-- [Security Audit Report](docs/SECURITY_AUDIT_REPORT.md)
-- [Threat Model](docs/THREAT_MODEL.md)
-- [Formal Verification README](formal_verification/README.md)
-- [Proof Obligations Tracker](formal_verification/OBLIGATIONS.md)
-...
-    end
-
 ---
 
 
