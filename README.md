@@ -100,20 +100,17 @@ cp ../.env.example .env.local
 # edit frontend/.env.local with deployed IDs
 npx next dev
 ```
+## Live Demo — Judge Mode
 
+> **The fastest path to verification:** open the app, connect a Sui wallet, paste a market object ID, and click **Run Judge Mode**. It will: connect wallet → load on-chain market → execute micro trade → archive to Walrus → read blob back. Every step produces a verifiable artifact (transaction digest on Sui Explorer, Walrus blob ID on aggregator endpoint).
+
+The UI includes a built-in **Judge Script** modal with timestamped demo cues.
 Then open `http://localhost:3000`, connect wallet, paste market object ID, and run Judge Mode.
 <img width="1733" height="1049" alt="Screenshot 2026-06-11 071231" src="https://github.com/user-attachments/assets/3aa7b037-6bef-4cb7-b9d4-d2fcd26e6ec8" />
 <img width="660" height="978" alt="Screenshot 2026-06-11 071152" src="https://github.com/user-attachments/assets/5444dff0-4cec-47c9-a5fe-d5b4def34534" />
 
 ---
 
-## Live Demo — Judge Mode
-
-> **The fastest path to verification:** open the app, connect a Sui wallet, paste a market object ID, and click **Run Judge Mode**. It will: connect wallet → load on-chain market → execute micro trade → archive to Walrus → read blob back. Every step produces a verifiable artifact (transaction digest on Sui Explorer, Walrus blob ID on aggregator endpoint).
-
-The UI includes a built-in **Judge Script** modal with timestamped demo cues.
-
----
 
 ## Architecture
 
