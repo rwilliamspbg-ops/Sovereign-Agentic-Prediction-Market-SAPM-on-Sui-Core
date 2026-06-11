@@ -4,6 +4,13 @@ function isValidSuiHexAddress(value: string): boolean {
   return /^0x[0-9a-fA-F]{1,64}$/.test(value);
 }
 
+function isPredictionMarketObjectType(typeName: string | null | undefined): boolean {
+  if (!typeName) {
+    return false;
+  }
+  return typeName.includes('::prediction_market::PredictionMarket');
+}
+
 export interface OnchainMarketRecord {
   id: string;
   question: string;
@@ -75,11 +82,7 @@ export class MarketDataService {
       .map((id) => id.trim())
       .filter((id) => isValidSuiHexAddress(id));
 
-    const fromRegistryObjectId = [process.env.NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID || '']
-      .map((id) => id.trim())
-      .filter((id) => isValidSuiHexAddress(id));
-
-    return Array.from(new Set([...fromMarketObjectIds, ...fromRegistryObjectId]));
+    return Array.from(new Set(fromMarketObjectIds));
   }
 
   normalizeObjectIds(rawIds: string[]): string[] {
@@ -117,9 +120,10 @@ export class MarketDataService {
 
       const object = result.value;
       const objectId = object.data?.objectId;
+      const objectType = object.data?.type;
       const fields = (object.data?.content as { fields?: Record<string, unknown> } | null)?.fields || {};
 
-      if (!objectId) {
+      if (!objectId || !isPredictionMarketObjectType(objectType)) {
         continue;
       }
 

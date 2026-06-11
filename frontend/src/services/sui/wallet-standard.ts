@@ -264,6 +264,8 @@ export async function signAndExecuteWalletTransaction(context: WalletExecutionCo
   const targetChain = chain === 'mainnet' ? SUI_MAINNET_CHAIN : SUI_TESTNET_CHAIN;
   let result: { digest?: string } | null = null;
   let lastExecutionError: unknown = null;
+  const hasExecuteFeature = typeof (context.wallet.features['sui:signAndExecuteTransaction'] as { signAndExecuteTransaction?: unknown } | undefined)?.signAndExecuteTransaction === 'function'
+    || typeof (context.wallet.features['sui:signAndExecuteTransactionBlock'] as { signAndExecuteTransactionBlock?: unknown } | undefined)?.signAndExecuteTransactionBlock === 'function';
 
   if (Array.isArray(context.account.chains) && context.account.chains.length > 0) {
     const supportsTargetChain = context.account.chains.includes(targetChain)
@@ -339,7 +341,7 @@ export async function signAndExecuteWalletTransaction(context: WalletExecutionCo
       | { signTransaction?: unknown }
       | undefined;
 
-    if (isBlindSigningFallbackEnabled() && typeof signFeature?.signTransaction === 'function') {
+    if (!hasExecuteFeature && isBlindSigningFallbackEnabled() && typeof signFeature?.signTransaction === 'function') {
       try {
         result = await executeWithBlindSigningFallback(context, tx, chain);
       } catch (error) {

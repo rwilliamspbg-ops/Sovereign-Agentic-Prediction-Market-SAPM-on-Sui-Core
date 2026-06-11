@@ -23,6 +23,35 @@
 [![Repo Size](https://img.shields.io/github/repo-size/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core)
 [![Live Testnet Verified](https://img.shields.io/badge/Live%20Testnet-Verified-00A86B?style=for-the-badge&logo=sui&logoColor=white)](#verified-live-deployment-sui-testnet)
 
+## Integrated Ecosystem
+
+<a href="https://deepsurge.ai" target="_blank" rel="noopener noreferrer">
+  <img src="docs/assets/deepsurge-logo.svg" alt="DeepSurge" height="42" />
+</a>
+&nbsp;&nbsp;
+<a href="https://sui.io" target="_blank" rel="noopener noreferrer">
+  <img src="frontend/public/sui-logo.svg" alt="Sui" height="42" />
+</a>
+&nbsp;&nbsp;
+<a href="https://docs.sui.io/onchain-finance/deepbookv3/deepbook" target="_blank" rel="noopener noreferrer">
+  <img src="frontend/public/deepbook-logo.svg" alt="DeepBook" height="42" />
+</a>
+&nbsp;&nbsp;
+<a href="https://docs.wal.app" target="_blank" rel="noopener noreferrer">
+  <img src="frontend/public/walrus-logo.svg" alt="Walrus" height="42" />
+</a>
+
+## Full Functionality Evidence (2026-06-11)
+
+Evidence artifact: [docs/artifacts/full-functionality-evidence-2026-06-11.txt](docs/artifacts/full-functionality-evidence-2026-06-11.txt)
+
+Validated in this artifact:
+
+- Docker stack is healthy (`sui-local`, `sapm-aggregator`, `sapm-frontend`, `aggregator-proxy`, `agent-sample`).
+- Frontend health check returns HTTP 200.
+- Walrus publish through local Next.js proxy (`/api/walrus/blobs`) succeeds with `PUT` and returns a `blobId`.
+- Registry object type is confirmed on testnet (`registry::PubkeyRegistry`), proving the guardrail against using registry IDs as market trade objects.
+
 ## Verified Live Deployment (Sui Testnet)
 
 > **Verified live deployment on Sui testnet with full tx artifacts.**
