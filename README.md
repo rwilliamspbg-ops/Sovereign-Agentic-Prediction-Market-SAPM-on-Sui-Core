@@ -98,7 +98,7 @@ cd frontend
 npm ci
 cp ../.env.example .env.local
 # edit frontend/.env.local with deployed IDs
-npm run dev
+npx next dev
 ```
 
 Then open `http://localhost:3000`, connect wallet, paste market object ID, and run Judge Mode.
