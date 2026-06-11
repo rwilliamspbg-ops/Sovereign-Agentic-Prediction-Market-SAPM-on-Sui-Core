@@ -30,20 +30,21 @@
 ## Integrated Ecosystem
 
 <a href="https://deepsurge.ai" target="_blank" rel="noopener noreferrer">
-  <img src="docs/assets/deepsurge-logo.svg" alt="DeepSurge" height="42" />
+  <img src="docs/assets/deepsurge-logo.svg" alt="DeepSurge" height="48" />
 </a>
 &nbsp;&nbsp;
 <a href="https://sui.io" target="_blank" rel="noopener noreferrer">
-  <img src="frontend/public/sui-logo.svg" alt="Sui" height="42" />
+  <img src="frontend/public/sui-logo.svg" alt="Sui" height="48" />
 </a>
 &nbsp;&nbsp;
 <a href="https://docs.sui.io/onchain-finance/deepbookv3/deepbook" target="_blank" rel="noopener noreferrer">
-  <img src="frontend/public/deepbook-logo.svg" alt="DeepBook" height="42" />
+  <img src="frontend/public/deepbook-logo.svg" alt="DeepBook" height="48" />
 </a>
 &nbsp;&nbsp;
 <a href="https://docs.wal.app" target="_blank" rel="noopener noreferrer">
-  <img src="frontend/public/walrus-logo.svg" alt="Walrus" height="42" />
+  <img src="frontend/public/walrus-logo.svg" alt="Walrus" height="48" />
 </a>
+
 
 Sui Overflow 2026 Target Tracks: Agentic Web (Core), DeFi & Payments (Core), DeepBook, and Walrus.
 
@@ -62,6 +63,7 @@ SAPM is a sovereign, agentic prediction market stack built natively on Sui. It c
 - **Walrus archival** — every market snapshot and trade decision is published to Walrus as a verifiable blob with SHA-256 manifest and lineage tracking
 - **Lean 4 formal verification** — BFT safety/liveness theorems, Multi-Krum aggregation correctness, hybrid PQC security proofs, and oracle contract invariants
 
+
 **Why Sui?** The object model makes agent staking natural (each `AgentStake` is an owned object), PTBs let a single transaction atomically execute a trade and update reputation, shared objects give the registry global visibility, and DeepBook + Walrus as first-class Sui primitives mean every layer of the stack is composable without bridging.
 
 
@@ -76,10 +78,10 @@ SAPM is a sovereign, agentic prediction market stack built natively on Sui. It c
 
 > **Fail-proof usage:** use only valid `PredictionMarket` object IDs in `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS`, or leave it unset to allow Judge Mode to auto-create a market.
 
+
 The UI includes a built-in **Judge Script** modal with timestamped demo cues.
 Then open `http://localhost:3000`, connect wallet, paste market object ID, and run Judge Mode.
-<img width="1733" height="1049" alt="Screenshot 2026-06-11 071231" src="https://github.com/user-attachments/assets/3aa7b037-6bef-4cb7-b9d4-d2fcd26e6ec8" />
-<img width="660" height="978" alt="Screenshot 2026-06-11 071152" src="https://github.com/user-attachments/assets/5444dff0-4cec-47c9-a5fe-d5b4def34534" />
+
 
 ```bash
 ./scripts/ci_frontend_validation.sh
@@ -100,6 +102,10 @@ Fail-proof demo checks:
 2. If on-chain market loading fails, unset `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` and retry Judge Mode.
 3. If archive fails, run Judge Mode once more so `sapm.judgeMode.lastResult` is refreshed.
 4. After any `.env.local` change, restart the frontend server.
+
+
+<img width="1733" height="1049" alt="Screenshot 2026-06-11 071231" src="https://github.com/user-attachments/assets/3aa7b037-6bef-4cb7-b9d4-d2fcd26e6ec8" />
+<img width="660" height="978" alt="Screenshot 2026-06-11 071152" src="https://github.com/user-attachments/assets/5444dff0-4cec-47c9-a5fe-d5b4def34534" />
 
 ## Architecture At A Glance
 
