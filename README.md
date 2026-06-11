@@ -43,6 +43,8 @@ SAPM is a sovereign, high-performance prediction market aggregator built nativel
   <img src="frontend/public/walrus-logo.svg" alt="Walrus" height="42" />
 </a>
 Sui Overflow 2026 Target Tracks: Agentic Web (Core), DeFi & Payments (Core), DeepBook, and Walrus.
+
+
 ## Problem
 
 Prediction markets require too much manual operation, too much centralized trust, and no verifiable audit trail. Agents that trade on them do so blindly — no on-chain proof of their decisions, no slashable reputation, no immutable record of what they saw or why they acted.
