@@ -34,6 +34,7 @@
             --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
             --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
             --shadow-lg: 0 10px 40px rgba(0,0,0,0.5);
+            --shadow-glow: 0 0 0 1px rgba(45, 212, 191, 0.15), 0 16px 50px rgba(0, 0, 0, 0.35);
         }
 
         * {
@@ -127,15 +128,66 @@
             border-bottom: 1px solid var(--border-subtle);
         }
 
-        .nav-logo {
+        .brand-logos {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .brand-logos .brand-main {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: inherit;
+            min-width: 0;
+        }
+
+        .brand-logos .brand-main:hover .brand-title,
+        .brand-logos .brand-main:hover .brand-subtitle {
+            color: var(--text-primary);
+        }
+
+        .brand-mark {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .brand-copy {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .brand-title {
             font-family: var(--font-mono);
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 700;
             letter-spacing: -0.03em;
             color: var(--text-primary);
+            line-height: 1.05;
+        }
+
+        .brand-subtitle {
+            font-family: var(--font-mono);
+            font-size: 0.66rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 0.18rem;
+        }
+
+        .protocol-badges {
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
         .nav-logo::before {
@@ -185,6 +237,36 @@
             width: 100%;
         }
 
+        .protocol-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.4rem 0.65rem;
+            border-radius: 999px;
+            border: 1px solid var(--border-medium);
+            background: rgba(19, 26, 36, 0.72);
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+            white-space: nowrap;
+        }
+
+        .protocol-badge:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-bright);
+            background: rgba(26, 35, 48, 0.88);
+            box-shadow: var(--shadow-glow);
+            color: var(--text-primary);
+        }
+
+        .protocol-badge img,
+        .logo-strip img {
+            display: block;
+        }
+
         /* ========================== HERO ========================= */
         .hero {
             position: relative;
@@ -195,12 +277,68 @@
             align-items: center;
             z-index: 2;
             padding: 8rem 2rem 4rem;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(180deg, rgba(8, 12, 18, 0.26) 0%, rgba(8, 12, 18, 0.58) 45%, rgba(8, 12, 18, 0.78) 100%),
+                radial-gradient(circle at center, rgba(19, 26, 36, 0.42) 0%, rgba(8, 12, 18, 0.08) 48%, transparent 78%);
+            pointer-events: none;
+            z-index: 0;
         }
 
         .hero-content {
             text-align: center;
             max-width: 820px;
             width: 100%;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            padding: 2.25rem 2.4rem 2.1rem;
+            border-radius: var(--radius-lg);
+            background: rgba(8, 12, 18, 0.48);
+            border: 1px solid rgba(100, 200, 220, 0.12);
+            backdrop-filter: blur(12px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .hero-logo-strip {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.75rem;
+        }
+
+        .logo-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.8rem;
+            border-radius: 999px;
+            border: 1px solid var(--border-medium);
+            background: rgba(19, 26, 36, 0.74);
+            box-shadow: var(--shadow-sm);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo-chip img {
+            width: 24px;
+            height: 24px;
+        }
+
+        .logo-chip span {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 600;
         }
 
         .hero-badge {
@@ -254,11 +392,127 @@
             font-size: clamp(1rem, 1.8vw, 1.2rem);
             font-weight: 400;
             color: var(--text-secondary);
-            line-height: 1.7;
+            line-height: 1.8;
             margin-bottom: 2.5rem;
-            max-width: 640px;
+            max-width: 720px;
             margin-left: auto;
             margin-right: auto;
+        }
+
+        .hero-demos {
+            margin-top: 1.25rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            max-width: 760px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .demo-video-panel,
+        .demo-card {
+            text-align: left;
+            padding: 1rem 1.1rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-medium);
+            background: rgba(19, 26, 36, 0.72);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .demo-video-panel {
+            display: block;
+            padding: 0;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            transition: transform 0.22s ease, box-shadow 0.22s ease;
+        }
+
+        .demo-video-panel:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .demo-thumbnail {
+            position: relative;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(45, 212, 191, 0.12), rgba(56, 189, 248, 0.12));
+        }
+
+        .demo-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            filter: saturate(1.05) contrast(1.02);
+        }
+
+        .demo-play {
+            position: absolute;
+            inset: 50% auto auto 50%;
+            transform: translate(-50%, -50%);
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(8, 12, 18, 0.78);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(8px);
+        }
+
+        .demo-play::before {
+            content: '';
+            display: block;
+            margin-left: 0.2rem;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-left: 16px solid var(--accent-cyan);
+        }
+
+        .demo-card {
+            min-height: 100%;
+        }
+
+        .demo-card h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--accent-cyan);
+            margin-bottom: 0.55rem;
+        }
+
+        .demo-card p {
+            font-size: 0.94rem;
+            color: var(--text-secondary);
+            line-height: 1.65;
+            margin-bottom: 0.9rem;
+        }
+
+        .demo-card a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .demo-card a:hover {
+            color: var(--accent-cyan);
+        }
+
+        .demo-card a,
+        .demo-video-panel,
+        .protocol-badge,
+        .hero-cta .btn {
+            cursor: pointer;
         }
 
         .hero-cta {
@@ -304,6 +558,18 @@
 
         .btn-secondary:hover {
             background: rgba(26, 35, 48, 0.8);
+            border-color: var(--border-bright);
+            transform: translateY(-2px);
+        }
+
+        .btn-video {
+            background: rgba(19, 26, 36, 0.72);
+            color: var(--text-primary);
+            border: 1px solid var(--border-medium);
+        }
+
+        .btn-video:hover {
+            background: rgba(26, 35, 48, 0.88);
             border-color: var(--border-bright);
             transform: translateY(-2px);
         }
@@ -822,10 +1088,25 @@
 
         @media (max-width: 640px) {
             .nav {
-                padding: 1rem 1.25rem;
+                padding: 1rem 1rem;
+                align-items: flex-start;
+                gap: 0.75rem;
             }
             .nav-links {
                 display: none;
+            }
+            .brand-logos {
+                gap: 0.55rem;
+            }
+            .brand-mark {
+                width: 38px;
+                height: 38px;
+            }
+            .brand-title {
+                font-size: 1rem;
+            }
+            .brand-subtitle {
+                letter-spacing: 0.12em;
             }
             section {
                 padding: 4rem 1.25rem;
@@ -857,6 +1138,23 @@
                 max-width: 280px;
                 justify-content: center;
             }
+            .hero-logo-strip {
+                gap: 0.5rem;
+            }
+            .hero-content {
+                padding: 1.5rem 1rem 1.35rem;
+            }
+            .logo-chip {
+                width: 100%;
+                justify-content: center;
+            }
+            .hero-demos {
+                grid-template-columns: 1fr;
+            }
+            .demo-video-panel,
+            .demo-card {
+                padding: 0.9rem;
+            }
             body {
                 cursor: auto;
             }
@@ -878,7 +1176,7 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: radial-gradient(ellipse at center, rgba(8, 12, 18, 0.85) 0%, rgba(8, 12, 18, 0.4) 60%, transparent 100%);
+            background: radial-gradient(ellipse at center, rgba(8, 12, 18, 0.78) 0%, rgba(8, 12, 18, 0.48) 62%, transparent 100%);
             border-radius: var(--radius-lg);
             z-index: -1;
             pointer-events: none;
@@ -1382,7 +1680,29 @@
 
     <!-- Navigation -->
     <nav class="nav">
-        <div class="nav-logo">SAPM</div>
+        <div class="brand-logos">
+            <a class="brand-main" href="#top" aria-label="SAPM home">
+                <img class="brand-mark" src="frontend/public/sapm-logo.svg" alt="SAPM" />
+                <div class="brand-copy">
+                    <span class="brand-title">SAPM</span>
+                    <span class="brand-subtitle">Sovereign Agentic Prediction Market</span>
+                </div>
+            </a>
+            <div class="protocol-badges" aria-label="Protocol documentation links">
+                <a class="protocol-badge" href="https://docs.sui.io/" target="_blank" rel="noopener noreferrer">
+                    <img src="frontend/public/brand/sui.svg" alt="Sui" width="20" height="20" />
+                    <span>Sui Docs</span>
+                </a>
+                <a class="protocol-badge" href="https://docs.sui.io/onchain-finance/deepbookv3/deepbook" target="_blank" rel="noopener noreferrer">
+                    <img src="frontend/public/brand/deepbook.svg" alt="DeepBook" width="20" height="20" />
+                    <span>DeepBook</span>
+                </a>
+                <a class="protocol-badge" href="https://docs.wal.app/" target="_blank" rel="noopener noreferrer">
+                    <img src="frontend/public/brand/walrus.svg" alt="Walrus" width="20" height="20" />
+                    <span>Walrus</span>
+                </a>
+            </div>
+        </div>
         <ul class="nav-links">
             <li><a href="#architecture">Architecture</a></li>
             <li><a href="#features">Features</a></li>
@@ -1393,8 +1713,14 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero">
+    <section class="hero" id="top">
         <div class="hero-content">
+            <div class="hero-logo-strip" aria-label="SAPM and protocol logos">
+                <div class="logo-chip"><img src="frontend/public/sapm-logo.svg" alt="SAPM" /><span>SAPM</span></div>
+                <div class="logo-chip"><img src="frontend/public/brand/sui.svg" alt="Sui" /><span>Sui</span></div>
+                <div class="logo-chip"><img src="frontend/public/brand/deepbook.svg" alt="DeepBook" /><span>DeepBook</span></div>
+                <div class="logo-chip"><img src="frontend/public/brand/walrus.svg" alt="Walrus" /><span>Walrus</span></div>
+            </div>
             <div class="hero-badge">Live on Sui Testnet</div>
             <h1><span class="accent">SAPM</span></h1>
             <p class="hero-subtitle">
@@ -1404,6 +1730,25 @@
             <div class="hero-cta">
                 <a href="https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core" class="btn btn-primary" target="_blank">View on GitHub</a>
                 <a href="#architecture" class="btn btn-secondary">Explore Architecture</a>
+                <a href="https://www.youtube.com/watch?v=CEEmdBJklB0" class="btn btn-video" target="_blank" rel="noopener noreferrer">Watch Demo Video</a>
+            </div>
+            <div class="hero-demos">
+                <a class="demo-video-panel" href="https://www.youtube.com/watch?v=CEEmdBJklB0" target="_blank" rel="noopener noreferrer" aria-label="Open SAPM demo video on YouTube">
+                    <div class="demo-thumbnail">
+                        <img src="https://img.youtube.com/vi/CEEmdBJklB0/hqdefault.jpg" alt="SAPM demo video thumbnail" />
+                        <div class="demo-play" aria-hidden="true"></div>
+                    </div>
+                    <div class="demo-card">
+                        <h3>Demo Video</h3>
+                        <p>Open the walkthrough video for a concise product overview and judge-facing narrative flow.</p>
+                        <span>YouTube demo link &rarr;</span>
+                    </div>
+                </a>
+                <div class="demo-card">
+                    <h3>Reference Links</h3>
+                    <p>Use these protocol docs while reviewing the interface: Sui, DeepBook, and Walrus.</p>
+                    <a href="https://docs.sui.io/" target="_blank" rel="noopener noreferrer">Open protocol docs &rarr;</a>
+                </div>
             </div>
         </div>
         <div class="scroll-indicator">
@@ -1609,13 +1954,27 @@
         <div class="footer-content">
             <div class="footer-brand">
                 <div class="logo">SAPM</div>
+                <div class="protocol-badges" style="margin: 1rem 0 1.15rem;">
+                    <a class="protocol-badge" href="https://docs.sui.io/" target="_blank" rel="noopener noreferrer">
+                        <img src="frontend/public/brand/sui.svg" alt="Sui" width="20" height="20" />
+                        <span>Sui Docs</span>
+                    </a>
+                    <a class="protocol-badge" href="https://docs.sui.io/onchain-finance/deepbookv3/deepbook" target="_blank" rel="noopener noreferrer">
+                        <img src="frontend/public/brand/deepbook.svg" alt="DeepBook" width="20" height="20" />
+                        <span>DeepBook</span>
+                    </a>
+                    <a class="protocol-badge" href="https://docs.wal.app/" target="_blank" rel="noopener noreferrer">
+                        <img src="frontend/public/brand/walrus.svg" alt="Walrus" width="20" height="20" />
+                        <span>Walrus</span>
+                    </a>
+                </div>
                 <p>Sovereign Agentic Prediction Market built natively on Sui. Combining autonomous AI agents, formal verification, and Byzantine fault tolerance.</p>
             </div>
             <div class="footer-col">
                 <h4>Project</h4>
                 <a href="https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core" target="_blank">GitHub</a>
                 <a href="https://suiexplorer.com/object/0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188?network=testnet" target="_blank">Sui Explorer</a>
-                <a href="#">Documentation</a>
+                <a href="https://www.youtube.com/watch?v=CEEmdBJklB0" target="_blank" rel="noopener noreferrer">Demo Video</a>
             </div>
             <div class="footer-col">
                 <h4>Agents</h4>

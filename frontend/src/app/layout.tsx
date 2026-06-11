@@ -209,6 +209,16 @@ export default function RootLayout({
     testnet: { label: 'Sui Testnet', color: '#fbbf24', bg: '#78350f', badge: 'TESTNET' },
     mainnet: { label: 'Sui Mainnet', color: '#34d399', bg: '#064e3b', badge: 'MAINNET' },
   };
+  const PROJECT_LINKS = [
+    { label: 'Docs', href: '/docs', internal: true },
+    { label: 'Resource Hub', href: '/resource-hub', internal: true },
+    { label: 'GitHub', href: 'https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core', internal: false },
+  ];
+  const PROTOCOL_LINKS = [
+    { label: 'Sui', href: 'https://docs.sui.io/', logo: '/brand/sui.svg' },
+    { label: 'DeepBook', href: 'https://docs.sui.io/onchain-finance/deepbookv3/deepbook', logo: '/brand/deepbook.svg' },
+    { label: 'Walrus', href: 'https://docs.wal.app/', logo: '/brand/walrus.svg' },
+  ];
 
   // Handle wallet connection
   const handleConnectWallet = async () => {
@@ -511,6 +521,28 @@ export default function RootLayout({
   const explorerBase = network === 'mainnet'
     ? 'https://suiscan.xyz/mainnet/account/'
     : 'https://suiscan.xyz/testnet/account/';
+  const handleProtocolPillMouseEnter = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.currentTarget.style.backgroundColor = 'rgba(14, 165, 233, 0.18)';
+    event.currentTarget.style.borderColor = '#38bdf8';
+    event.currentTarget.style.transform = 'translateY(-1px)';
+  };
+  const handleProtocolPillMouseLeave = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.currentTarget.style.backgroundColor = 'rgba(15, 23, 42, 0.82)';
+    event.currentTarget.style.borderColor = '#334155';
+    event.currentTarget.style.transform = 'translateY(0)';
+  };
+  const handleProjectPillMouseEnter = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.currentTarget.style.backgroundColor = 'rgba(14, 165, 233, 0.22)';
+    event.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.8)';
+    event.currentTarget.style.color = '#e0f2fe';
+    event.currentTarget.style.transform = 'translateY(-1px)';
+  };
+  const handleProjectPillMouseLeave = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.currentTarget.style.backgroundColor = 'rgba(14, 165, 233, 0.12)';
+    event.currentTarget.style.borderColor = 'rgba(14, 165, 233, 0.32)';
+    event.currentTarget.style.color = '#bae6fd';
+    event.currentTarget.style.transform = 'translateY(0)';
+  };
 
   return (
     <html lang="en">
@@ -533,56 +565,164 @@ export default function RootLayout({
               <nav style={{
                 maxWidth: '1280px',
                 margin: '0 auto',
-                padding: '0 1rem',
+                padding: isNarrowScreen ? '0.5rem 0.75rem' : '0.5rem 1rem',
                 display: 'flex',
-                alignItems: 'center',
+                flexDirection: isNarrowScreen ? 'column' : 'row',
+                alignItems: isNarrowScreen ? 'stretch' : 'center',
                 justifyContent: 'space-between',
-                height: '4rem',
+                minHeight: isNarrowScreen ? 'auto' : '4.6rem',
+                gap: isNarrowScreen ? '0.52rem' : '0.85rem',
               }}>
-                {/* Header brand cluster: SAPM + SUI + DeepBook + Walrus */}
-                <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.48rem', flexShrink: 0 }}>
-                    <Image src="/sapm-logo.svg" alt="SAPM" width={32} height={32} priority />
-                    <Image src="/brand/sui.svg" alt="Sui" width={32} height={32} />
-                    <Image src="/brand/deepbook.svg" alt="DeepBook" width={32} height={32} />
-                    <Image src="/brand/walrus.svg" alt="Walrus" width={32} height={32} />
+                <div style={{
+                  display: 'flex',
+                  alignItems: isNarrowScreen ? 'flex-start' : 'center',
+                  flexDirection: isNarrowScreen ? 'column' : 'row',
+                  minWidth: 0,
+                  gap: isNarrowScreen ? '0.4rem' : '0.7rem',
+                  flex: 1,
+                  width: isNarrowScreen ? '100%' : undefined,
+                }}>
+                  <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', textDecoration: 'none', minWidth: 0, flexShrink: 0, maxWidth: '100%' }}>
+                    <Image src="/sapm-logo.svg" alt="SAPM" width={42} height={42} priority />
+                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                      <span style={{
+                        fontSize: isNarrowScreen ? '1.12rem' : '1.35rem',
+                        fontWeight: '800',
+                        background: 'linear-gradient(135deg, #22d3ee, #0ea5e9)',
+                        backgroundClip: 'text',
+                        WebkitBackgroundClip: 'text',
+                        color: 'transparent',
+                        lineHeight: '1',
+                        letterSpacing: '0.02em',
+                      }}>
+                        SAPM Intelligence
+                      </span>
+                      <span style={{
+                        fontSize: '0.67rem',
+                        color: '#94a3b8',
+                        fontWeight: '600',
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        Prediction Market on Sui
+                      </span>
+                    </div>
+                  </Link>
+
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.42rem',
+                    flexWrap: isNarrowScreen ? 'nowrap' : 'wrap',
+                    overflowX: isNarrowScreen ? 'auto' : 'visible',
+                    width: isNarrowScreen ? '100%' : undefined,
+                    paddingBottom: isNarrowScreen ? '0.15rem' : 0,
+                  }}>
+                    {PROTOCOL_LINKS.map((item) => (
+                      <a
+                        key={item.label}
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`${item.label} docs`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.28rem',
+                          padding: isNarrowScreen ? '0.22rem 0.35rem' : '0.3rem 0.45rem',
+                          borderRadius: '999px',
+                          border: '1px solid #334155',
+                          backgroundColor: 'rgba(15, 23, 42, 0.82)',
+                          textDecoration: 'none',
+                          color: '#cbd5e1',
+                          fontSize: '0.67rem',
+                          fontWeight: 700,
+                          lineHeight: 1,
+                          transition: 'background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease',
+                          whiteSpace: 'nowrap',
+                        }}
+                        onMouseEnter={handleProtocolPillMouseEnter}
+                        onMouseLeave={handleProtocolPillMouseLeave}
+                      >
+                        <Image src={item.logo} alt={item.label} width={isNarrowScreen ? 18 : 20} height={isNarrowScreen ? 18 : 20} />
+                        {!isNarrowScreen && <span>{item.label}</span>}
+                      </a>
+                    ))}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                    <span style={{
-                      fontSize: '1.25rem',
-                      fontWeight: '700',
-                      background: 'linear-gradient(135deg, #0ea5e9, #06b6d4)',
-                      backgroundClip: 'text',
-                      WebkitBackgroundClip: 'text',
-                      color: 'transparent',
-                      lineHeight: '1',
-                    }}>
-                      SAPM
-                    </span>
-                    <span style={{
-                      fontSize: '0.625rem',
-                      color: '#64748b',
-                      fontWeight: '500',
-                      letterSpacing: '0.5px',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      Sui | DeepBook | Walrus
-                    </span>
-                  </div>
-                </Link>
+
+                  {!isNarrowScreen && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      {PROJECT_LINKS.map((item) => (
+                        item.internal ? (
+                          <Link
+                            key={item.label}
+                            href={item.href}
+                            style={{
+                              padding: '0.28rem 0.5rem',
+                              borderRadius: '0.45rem',
+                              textDecoration: 'none',
+                              backgroundColor: 'rgba(14, 165, 233, 0.12)',
+                              border: '1px solid rgba(14, 165, 233, 0.32)',
+                              color: '#bae6fd',
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              transition: 'background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease',
+                            }}
+                            onMouseEnter={handleProjectPillMouseEnter}
+                            onMouseLeave={handleProjectPillMouseLeave}
+                          >
+                            {item.label}
+                          </Link>
+                        ) : (
+                          <a
+                            key={item.label}
+                            href={item.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              padding: '0.28rem 0.5rem',
+                              borderRadius: '0.45rem',
+                              textDecoration: 'none',
+                              backgroundColor: 'rgba(14, 165, 233, 0.12)',
+                              border: '1px solid rgba(14, 165, 233, 0.32)',
+                              color: '#bae6fd',
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              transition: 'background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease',
+                            }}
+                            onMouseEnter={handleProjectPillMouseEnter}
+                            onMouseLeave={handleProjectPillMouseLeave}
+                          >
+                            {item.label}
+                          </a>
+                        )
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {/* Navigation Links */}
-                <div style={{ display: 'flex', gap: '0.9rem', alignItems: 'center' }}>
+                <div style={{
+                  display: 'flex',
+                  gap: isNarrowScreen ? '0.5rem' : '0.9rem',
+                  alignItems: 'center',
+                  justifyContent: isNarrowScreen ? 'space-between' : 'flex-end',
+                  flexWrap: isNarrowScreen ? 'wrap' : 'nowrap',
+                  width: isNarrowScreen ? '100%' : undefined,
+                }}>
                   {!isNarrowScreen && <CommandPalette />}
 
-                  <AgentInsightButton onClick={() => setShowCopilotPanel(true)} />
+                  {!isNarrowScreen && <AgentInsightButton onClick={() => setShowCopilotPanel(true)} />}
+
+                  {isNarrowScreen && <CommandPalette compact />}
 
                   {/* Network Switcher */}
                   <div style={{ position: 'relative' }}>
                     <button
                       onClick={() => setShowNetworkMenu(!showNetworkMenu)}
                       style={{
-                        padding: '0.4rem 0.75rem',
+                        padding: isNarrowScreen ? '0.45rem 0.68rem' : '0.4rem 0.75rem',
                         backgroundColor: currentNetworkConfig.bg,
                         color: currentNetworkConfig.color,
                         border: `1px solid ${currentNetworkConfig.color}`,
@@ -592,11 +732,11 @@ export default function RootLayout({
                         fontWeight: '600',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.4rem',
+                        gap: '0.32rem',
                         transition: 'all 0.2s',
                       }}
                     >
-                      🌐 {currentNetworkConfig.badge}
+                      {!isNarrowScreen && '🌐 '} {currentNetworkConfig.badge}
                       <span style={{ fontSize: '0.9rem' }}>▼</span>
                     </button>
 
@@ -647,37 +787,39 @@ export default function RootLayout({
                   </div>
 
                   {/* Notifications */}
-                  <button style={{
-                    position: 'relative',
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '1.25rem',
-                    cursor: 'pointer',
-                    padding: '0.5rem',
-                  }}>
-                    🔔
-                    <span style={{
-                      position: 'absolute',
-                      top: '0px',
-                      right: '0px',
-                      width: '16px',
-                      height: '16px',
-                      backgroundColor: '#ef4444',
-                      borderRadius: '9999px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      fontSize: '0.65rem',
-                      fontWeight: 'bold',
+                  {!isNarrowScreen && (
+                    <button style={{
+                      position: 'relative',
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '1.25rem',
+                      cursor: 'pointer',
+                      padding: '0.5rem',
                     }}>
-                      2
-                    </span>
-                  </button>
+                      🔔
+                      <span style={{
+                        position: 'absolute',
+                        top: '0px',
+                        right: '0px',
+                        width: '16px',
+                        height: '16px',
+                        backgroundColor: '#ef4444',
+                        borderRadius: '9999px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontSize: '0.65rem',
+                        fontWeight: 'bold',
+                      }}>
+                        2
+                      </span>
+                    </button>
+                  )}
 
                   {/* Wallet Button or Connected State */}
                   {!walletConnected ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: isNarrowScreen ? '190px' : '240px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: isNarrowScreen ? '158px' : '240px', flex: isNarrowScreen ? 1 : undefined }}>
                       {walletOptions.length > 0 && (
                         <select
                           value={selectedWalletId}
@@ -713,7 +855,7 @@ export default function RootLayout({
                             ? 'No wallet-standard wallet detected. Install/unlock wallet extension and click again.'
                             : 'Connect wallet'}
                           style={{
-                            padding: '0.6rem 1.5rem',
+                            padding: isNarrowScreen ? '0.55rem 0.85rem' : '0.6rem 1.5rem',
                             background: 'linear-gradient(135deg, #0ea5e9, #06b6d4)',
                             color: 'white',
                             borderRadius: '0.375rem',
@@ -724,13 +866,11 @@ export default function RootLayout({
                             transition: 'all 0.2s',
                             boxShadow: '0 4px 15px rgba(6, 182, 212, 0.2)',
                             opacity: isConnecting ? 0.7 : 1,
-                            flex: isNarrowScreen ? 1 : undefined,
+                            minWidth: isNarrowScreen ? '138px' : undefined,
                           }}
                         >
                           {isConnecting ? '🔗 Connecting...' : connectableWallets.length === 0 ? 'Install Wallet' : '💼 Connect Wallet'}
                         </button>
-
-                        {isNarrowScreen && <CommandPalette compact />}
                       </div>
 
                       {walletError && (
@@ -740,25 +880,25 @@ export default function RootLayout({
                       )}
                     </div>
                   ) : (
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.42rem' }}>
-                      {isNarrowScreen && <CommandPalette compact />}
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.42rem', flex: isNarrowScreen ? 1 : undefined }}>
 
                       <button
                         onClick={() => setShowWalletMenu(!showWalletMenu)}
                         style={{
-                          padding: '0.6rem 1.5rem',
+                          padding: isNarrowScreen ? '0.56rem 0.82rem' : '0.6rem 1.5rem',
                           background: 'linear-gradient(135deg, #34d399, #10b981)',
                           color: 'white',
                           borderRadius: '0.375rem',
                           border: 'none',
                           fontWeight: '600',
                           cursor: 'pointer',
-                          fontSize: '0.85rem',
+                          fontSize: isNarrowScreen ? '0.8rem' : '0.85rem',
                           transition: 'all 0.2s',
                           boxShadow: '0 4px 15px rgba(52, 211, 153, 0.2)',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.5rem',
+                          minWidth: isNarrowScreen ? '138px' : undefined,
                         }}
                       >
                         ✓ {formatAddress(walletAddress!)}
@@ -870,7 +1010,7 @@ export default function RootLayout({
             </header>
 
             {/* Main Content */}
-            <main style={{ paddingTop: '4rem', minHeight: '100vh' }}>
+            <main style={{ paddingTop: isNarrowScreen ? '8.9rem' : '5.25rem', minHeight: '100vh' }}>
               {children}
             </main>
 
