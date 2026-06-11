@@ -1,4 +1,8 @@
 # SAPM — Sovereign Agentic Prediction Market on Sui
+<img width="2816" height="1536" alt="SAPM on SUI" src="https://github.com/user-attachments/assets/09386498-c833-4f65-92cb-33a373f7f3ce" />
+
+SAPM is a sovereign, high-performance prediction market aggregator built natively on Sui. By combining low-latency agentic orchestration, mathematical formal verification, and Byzantine fault tolerance, SAPM delivers a resilient, quantum-resistant infrastructure tailored for decentralized AI agents and predictive routing.
+
 
 <!-- markdownlint-disable MD060 -->
 
@@ -17,8 +21,6 @@
 [![Last Commit](https://img.shields.io/github/last-commit/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/commits/main)
 [![Contributors](https://img.shields.io/github/contributors/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/graphs/contributors)
 [![Stars](https://img.shields.io/github/stars/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/stargazers)
-[![Forks](https://img.shields.io/github/forks/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/network/members)
-[![Open Issues](https://img.shields.io/github/issues/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/issues)
 [![Open PRs](https://img.shields.io/github/issues-pr/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/pulls)
 [![Repo Size](https://img.shields.io/github/repo-size/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core)
 [![Live Testnet Verified](https://img.shields.io/badge/Live%20Testnet-Verified-00A86B?style=for-the-badge&logo=sui&logoColor=white)](#verified-live-deployment-sui-testnet)
@@ -41,39 +43,25 @@
   <img src="frontend/public/walrus-logo.svg" alt="Walrus" height="42" />
 </a>
 
-## Full Functionality Evidence (2026-06-11)
+Sui Overflow 2026 Target Tracks: Agentic Web (Core), DeFi & Payments (Core), DeepBook, and Walrus.
 
-Evidence artifact: [docs/artifacts/full-functionality-evidence-2026-06-11.txt](docs/artifacts/full-functionality-evidence-2026-06-11.txt)
 
-Validated in this artifact:
+## Problem
 
-- Docker stack is healthy (`sui-local`, `sapm-aggregator`, `sapm-frontend`, `aggregator-proxy`, `agent-sample`).
-- Frontend health check returns HTTP 200.
-- Walrus publish through local Next.js proxy (`/api/walrus/blobs`) succeeds with `PUT` and returns a `blobId`.
-- Registry object type is confirmed on testnet (`registry::PubkeyRegistry`), proving the guardrail against using registry IDs as market trade objects.
+Prediction markets require too much manual operation, too much centralized trust, and no verifiable audit trail. Agents that trade on them do so blindly — no on-chain proof of their decisions, no slashable reputation, no immutable record of what they saw or why they acted.
 
-## Verified Live Deployment (Sui Testnet)
+## What SAPM Does
 
-> **Verified live deployment on Sui testnet with full tx artifacts.**
+SAPM is a sovereign, agentic prediction market stack built natively on Sui. It combines:
 
-| Artifact | Value | Explorer |
-|---|---|---|
-| Faucet transfer digest | `6UiX2pc2kRPAY7e3nJ7o4wjK2QZJaQaAsJtEExgNuyfD` | https://suiexplorer.com/txblock/6UiX2pc2kRPAY7e3nJ7o4wjK2QZJaQaAsJtEExgNuyfD?network=testnet |
-| Publish digest | `EqyVmTFegJVTSkLmf2v2VMC8o1cz17dKSGtQKjTuBwak` | https://suiexplorer.com/txblock/EqyVmTFegJVTSkLmf2v2VMC8o1cz17dKSGtQKjTuBwak?network=testnet |
-| Package ID | `0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188` | https://suiexplorer.com/object/0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188?network=testnet |
-| init_registry digest | `AsXALc619zQEBmTc9sf9d1LbQnhDqEYozimnP6D1AwxL` | https://suiexplorer.com/txblock/AsXALc619zQEBmTc9sf9d1LbQnhDqEYozimnP6D1AwxL?network=testnet |
-| Shared registry object ID | `0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee` | https://suiexplorer.com/object/0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee?network=testnet |
-| add_key digest | `CKyf9c453r5t6asfGaabbgNCpCgUktW7rEgrNZjtzCwy` | https://suiexplorer.com/txblock/CKyf9c453r5t6asfGaabbgNCpCgUktW7rEgrNZjtzCwy?network=testnet |
+- **Autonomous AI agents** (trader, aggregator, orchestrator) that discover markets, forecast outcomes, and execute trades using Sui's PTB transaction model
+- **On-chain reputation and incentives** — Move contracts that stake agents, slash Byzantine behavior, and reward accurate reports via `incentives.move`
+- **DeepBook integration** — limit order placement, cancel/replace, open-order queries, and preflight balance checks against DeepBook's on-chain orderbook
+- **Walrus archival** — every market snapshot and trade decision is published to Walrus as a verifiable blob with SHA-256 manifest and lineage tracking
+- **Lean 4 formal verification** — BFT safety/liveness theorems, Multi-Krum aggregation correctness, hybrid PQC security proofs, and oracle contract invariants
 
-Post-mutation verification:
-- `pubkeys` includes `AQIDBA==` (bytes `[1,2,3,4]`) on testnet.
+**Why Sui?** The object model makes agent staking natural (each `AgentStake` is an owned object), PTBs let a single transaction atomically execute a trade and update reputation, shared objects give the registry global visibility, and DeepBook + Walrus as first-class Sui primitives mean every layer of the stack is composable without bridging.
 
-Use these values in `frontend/.env.local`:
-
-```bash
-NEXT_PUBLIC_SUI_PACKAGE_ID=0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188
-NEXT_PUBLIC_SUI_NETWORK=testnet
-```
 
 Set `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` only with actual `PredictionMarket` object IDs. Do not use the shared registry object ID for trading flows. If you do not have market IDs yet, leave `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` unset and let Judge Mode auto-create one.
 
@@ -133,24 +121,6 @@ Fail-proof demo checks:
 
 ---
 
-## Problem
-
-Prediction markets require too much manual operation, too much centralized trust, and no verifiable audit trail. Agents that trade on them do so blindly — no on-chain proof of their decisions, no slashable reputation, no immutable record of what they saw or why they acted.
-
-## What SAPM Does
-
-SAPM is a sovereign, agentic prediction market stack built natively on Sui. It combines:
-
-- **Autonomous AI agents** (trader, aggregator, orchestrator) that discover markets, forecast outcomes, and execute trades using Sui's PTB transaction model
-- **On-chain reputation and incentives** — Move contracts that stake agents, slash Byzantine behavior, and reward accurate reports via `incentives.move`
-- **DeepBook integration** — limit order placement, cancel/replace, open-order queries, and preflight balance checks against DeepBook's on-chain orderbook
-- **Walrus archival** — every market snapshot and trade decision is published to Walrus as a verifiable blob with SHA-256 manifest and lineage tracking
-- **Lean 4 formal verification** — BFT safety/liveness theorems, Multi-Krum aggregation correctness, hybrid PQC security proofs, and oracle contract invariants
-
-**Why Sui?** The object model makes agent staking natural (each `AgentStake` is an owned object), PTBs let a single transaction atomically execute a trade and update reputation, shared objects give the registry global visibility, and DeepBook + Walrus as first-class Sui primitives mean every layer of the stack is composable without bridging.
-
----
-
 ## Live Demo — Judge Mode
 
 > **The fastest path to verification:** open the app, connect a Sui wallet, paste a market object ID, and click **Run Judge Mode**. It will: connect wallet → load on-chain market → execute micro trade → archive to Walrus → read blob back. Every step produces a verifiable artifact (transaction digest on Sui Explorer, Walrus blob ID on aggregator endpoint).
@@ -158,8 +128,12 @@ SAPM is a sovereign, agentic prediction market stack built natively on Sui. It c
 > **Fail-proof usage:** use only valid `PredictionMarket` object IDs in `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS`, or leave it unset to allow Judge Mode to auto-create a market.
 
 The UI includes a built-in **Judge Script** modal with timestamped demo cues.
+Then open `http://localhost:3000`, connect wallet, paste market object ID, and run Judge Mode.
+<img width="1733" height="1049" alt="Screenshot 2026-06-11 071231" src="https://github.com/user-attachments/assets/3aa7b037-6bef-4cb7-b9d4-d2fcd26e6ec8" />
+<img width="660" height="978" alt="Screenshot 2026-06-11 071152" src="https://github.com/user-attachments/assets/5444dff0-4cec-47c9-a5fe-d5b4def34534" />
 
 ---
+
 
 ## Architecture
 
@@ -189,7 +163,40 @@ The UI includes a built-in **Judge Script** modal with timestamped demo cues.
 │  for cross-node aggregation (Rust datapath scaffolded)         │
 └─────────────────────────────────────────────────────────────┘
 ```
+## Full Functionality Evidence (2026-06-11)
 
+Evidence artifact: [docs/artifacts/full-functionality-evidence-2026-06-11.txt](docs/artifacts/full-functionality-evidence-2026-06-11.txt)
+
+Validated in this artifact:
+
+- Docker stack is healthy (`sui-local`, `sapm-aggregator`, `sapm-frontend`, `aggregator-proxy`, `agent-sample`).
+- Frontend health check returns HTTP 200.
+- Walrus publish through local Next.js proxy (`/api/walrus/blobs`) succeeds with `PUT` and returns a `blobId`.
+- Registry object type is confirmed on testnet (`registry::PubkeyRegistry`), proving the guardrail against using registry IDs as market trade objects.
+
+## Verified Live Deployment (Sui Testnet)
+
+> **Verified live deployment on Sui testnet with full tx artifacts.**
+
+| Artifact | Value | Explorer |
+|---|---|---|
+| Faucet transfer digest | `6UiX2pc2kRPAY7e3nJ7o4wjK2QZJaQaAsJtEExgNuyfD` | https://suiexplorer.com/txblock/6UiX2pc2kRPAY7e3nJ7o4wjK2QZJaQaAsJtEExgNuyfD?network=testnet |
+| Publish digest | `EqyVmTFegJVTSkLmf2v2VMC8o1cz17dKSGtQKjTuBwak` | https://suiexplorer.com/txblock/EqyVmTFegJVTSkLmf2v2VMC8o1cz17dKSGtQKjTuBwak?network=testnet |
+| Package ID | `0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188` | https://suiexplorer.com/object/0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188?network=testnet |
+| init_registry digest | `AsXALc619zQEBmTc9sf9d1LbQnhDqEYozimnP6D1AwxL` | https://suiexplorer.com/txblock/AsXALc619zQEBmTc9sf9d1LbQnhDqEYozimnP6D1AwxL?network=testnet |
+| Shared registry object ID | `0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee` | https://suiexplorer.com/object/0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee?network=testnet |
+| add_key digest | `CKyf9c453r5t6asfGaabbgNCpCgUktW7rEgrNZjtzCwy` | https://suiexplorer.com/txblock/CKyf9c453r5t6asfGaabbgNCpCgUktW7rEgrNZjtzCwy?network=testnet |
+
+Post-mutation verification:
+- `pubkeys` includes `AQIDBA==` (bytes `[1,2,3,4]`) on testnet.
+
+Use these values in `frontend/.env.local`:
+
+```bash
+NEXT_PUBLIC_SUI_PACKAGE_ID=0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188
+NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS=0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee
+NEXT_PUBLIC_SUI_NETWORK=testnet
+```
 ---
 
 ## Sui Integration Summary

@@ -95,6 +95,7 @@ const runtime = new CopilotRuntime({
   agents: {
     default: new BuiltInAgent({
       model: builtInAgentModel,
+      prompt: systemPrompt,
     }),
   },
 });
