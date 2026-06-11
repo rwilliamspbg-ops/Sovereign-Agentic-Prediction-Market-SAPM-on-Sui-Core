@@ -1,6 +1,7 @@
 'use client';
 
 import { emitObservabilityEvent } from '@/lib/observability';
+import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 import { deepbookService } from '@/services/sui/deepbook-service';
 import { marketDataService } from '@/services/sui/market-data-service';
 import { suiIntegration } from '@/services/sui/sui-integration';
@@ -62,6 +63,72 @@ type ActionHandlerOptions = {
 
 function isValidSuiHexAddress(value: string): boolean {
   return /^0x[0-9a-fA-F]{1,64}$/.test(value);
+}
+
+function resolvePreferredNetwork(): 'testnet' | 'mainnet' {
+  const saved = window.localStorage.getItem('preferredNetwork');
+  return saved === 'mainnet' ? 'mainnet' : 'testnet';
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function findCreatedPredictionMarketIdFromDigest(
+  digest: string,
+  preferredNetwork: 'testnet' | 'mainnet',
+): Promise<string | null> {
+  if (!digest) {
+    return null;
+  }
+
+  // Transaction indexing can lag briefly, and users may have a stale preferred
+  // network in localStorage. Probe both networks with bounded retries.
+  const networks: Array<'testnet' | 'mainnet'> = preferredNetwork === 'testnet'
+    ? ['testnet', 'mainnet']
+    : ['mainnet', 'testnet'];
+
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    for (const network of networks) {
+      try {
+        const client = new SuiClient({ url: getFullnodeUrl(network) });
+        const tx = await client.getTransactionBlock({
+          digest,
+          options: {
+            showObjectChanges: true,
+          },
+        });
+
+        const created = tx.objectChanges?.find((change) => {
+          if (change.type !== 'created') {
+            return false;
+          }
+          const objectType = (change as { objectType?: string }).objectType || '';
+          return objectType.includes('::prediction_market::PredictionMarket');
+        }) as { objectId?: string } | undefined;
+
+        if (created?.objectId) {
+          return created.objectId;
+        }
+      } catch {
+        // Ignore transient "digest not found"/RPC errors and retry.
+      }
+    }
+
+    await delay(900 * (attempt + 1));
+  }
+
+  return null;
+}
+
+function persistOnchainObjectId(id: string): void {
+  if (!isValidSuiHexAddress(id)) {
+    return;
+  }
+
+  const existing = getLocalOnchainObjectIds();
+  const merged = Array.from(new Set([...existing.validIds, id]));
+  window.localStorage.setItem(LOCAL_ONCHAIN_OBJECT_IDS_KEY, merged.join(','));
 }
 
 function readJson<T>(key: string): T | null {
@@ -154,9 +221,8 @@ function resolveOnchainMarketObjectIds(context: CopilotContext): {
   const configured = getConfiguredMarketObjectIds();
   const local = getLocalOnchainObjectIds();
   const contextActiveId = context.activeMarketId?.trim() || '';
-  const registryObjectId = (process.env.NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID || '').trim();
 
-  const contextualIds = [contextActiveId, registryObjectId].filter(Boolean);
+  const contextualIds = [contextActiveId].filter(Boolean);
   const contextualValidIds = Array.from(new Set(contextualIds.filter((id) => isValidSuiHexAddress(id))));
   const contextualInvalidIds = Array.from(new Set(contextualIds.filter((id) => !isValidSuiHexAddress(id))));
 
@@ -172,9 +238,6 @@ function resolveOnchainMarketObjectIds(context: CopilotContext): {
   }
   if (contextActiveId && isValidSuiHexAddress(contextActiveId)) {
     sourceLabels.push('context:activeMarketId');
-  }
-  if (registryObjectId && isValidSuiHexAddress(registryObjectId)) {
-    sourceLabels.push('env:NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID');
   }
 
   return { validIds, invalidIds, sourceLabels };
@@ -195,7 +258,7 @@ async function loadOnchainMarkets(context: CopilotContext): Promise<ActionResult
     return {
       id: '',
       ok: false,
-      message: 'No on-chain market object IDs are configured. Set NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS or NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID, or persist IDs via Trade Execution (sapm.onchainObjectIds) before loading markets.',
+      message: 'No on-chain market object IDs are configured. Set NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS, or persist IDs via Trade Execution (sapm.onchainObjectIds) before loading markets.',
     };
   }
 
@@ -299,14 +362,7 @@ async function runJudgeMode(
   context: CopilotContext,
   getWalletContext: typeof getConnectedWalletContext,
 ): Promise<ActionResultPayload> {
-  const marketId = resolveMarketId(payload, context);
-  if (!marketId) {
-    return {
-      id: '',
-      ok: false,
-      message: 'Select a market before running Judge Mode.',
-    };
-  }
+  let marketId = resolveMarketId(payload, context);
 
   const amount = Number(payload.amount ?? 0.01);
   const side = payload.side === 'no' ? 'no' : 'yes';
@@ -320,6 +376,37 @@ async function runJudgeMode(
 
   await suiIntegration.initialize();
   const walletContext = await getWalletContext(typeof payload.walletId === 'string' ? payload.walletId : undefined);
+  const preferredNetwork = resolvePreferredNetwork();
+
+  if (marketId) {
+    const tradeableMarket = await marketDataService.getOnchainMarketsFromObjectIds([marketId]);
+    if (tradeableMarket.length === 0) {
+      marketId = null;
+    }
+  }
+
+  if (!marketId) {
+    const autoQuestion = `SAPM Judge Mode Market ${new Date().toISOString()}`;
+    const resolutionDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    const creation = await suiIntegration.createMarket(autoQuestion, resolutionDate, walletContext);
+    const createdMarketId = await findCreatedPredictionMarketIdFromDigest(
+      String(creation?.digest || ''),
+      preferredNetwork,
+    );
+
+    if (!createdMarketId) {
+      return {
+        id: '',
+        ok: false,
+        message: 'Judge Mode created a market transaction but could not resolve the new PredictionMarket object ID from transaction effects. Retry once, then set NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS with a valid PredictionMarket object ID.',
+      };
+    }
+
+    marketId = createdMarketId;
+    persistOnchainObjectId(createdMarketId);
+  }
+
   const execution = await suiIntegration.executeTrade(marketId, side, amount, walletContext);
 
   const judgeResult: JudgeModeResult = {

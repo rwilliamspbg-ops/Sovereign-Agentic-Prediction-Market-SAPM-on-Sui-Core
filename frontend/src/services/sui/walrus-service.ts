@@ -173,7 +173,7 @@ export class WalrusService {
 
   async publishMarketSnapshot(snapshot: unknown): Promise<WalrusPublishResult> {
     const startedAt = performance.now();
-    // POST through the Next.js rewrite proxy (/api/walrus/blobs) instead of
+    // PUT through the Next.js rewrite proxy (/api/walrus/blobs) instead of
     // directly to the publisher origin, which blocks cross-origin requests from
     // the browser with CORS 403/CORS-preflight failures.
     const publishPath =
@@ -181,12 +181,14 @@ export class WalrusService {
         ? '/api/walrus/blobs'
         : `${WALRUS_PUBLISHER_URL}/v1/blobs`;
 
+    const snapshotBytes = new TextEncoder().encode(JSON.stringify(snapshot));
+
     const response = await fetch(publishPath, {
-      method: 'POST',
+      method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/octet-stream',
       },
-      body: JSON.stringify(snapshot),
+      body: snapshotBytes,
     });
 
     const text = await response.text();

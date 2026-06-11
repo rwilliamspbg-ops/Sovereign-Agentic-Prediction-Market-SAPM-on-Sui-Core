@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" role="img" aria-label="DeepSurge logo">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#22d3ee" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="520" height="120" rx="16" fill="#0b1220" />
+  <circle cx="60" cy="60" r="28" fill="none" stroke="url(#g)" stroke-width="10" />
+  <path d="M60 32 L60 88" stroke="url(#g)" stroke-width="10" stroke-linecap="round" />
+  <path d="M40 60 L80 60" stroke="url(#g)" stroke-width="10" stroke-linecap="round" />
+  <text x="110" y="73" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" fill="#e2f7ff">DeepSurge</text>
+</svg>

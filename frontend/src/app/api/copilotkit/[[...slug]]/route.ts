@@ -27,6 +27,19 @@ import {
 import { BuiltInAgent } from '@copilotkit/runtime/v2';
 import { NextResponse } from 'next/server';
 
+function resolveOpenAIKey(): string | undefined {
+  return (
+    process.env.OPENAI_API_KEY ||
+    process.env.COPILOTKIT_OPENAI_API_KEY ||
+    process.env.OPENAI_KEY
+  );
+}
+
+function hasUsableOpenAIKey(): boolean {
+  const key = resolveOpenAIKey();
+  return Boolean(key && !key.includes('TODO_REPLACE_WITH_YOUR_OPENAI_KEY'));
+}
+
 const systemPrompt = `You are SAPM Copilot, an execution-focused assistant for a Sui prediction market.
 
 Rules:
@@ -44,7 +57,7 @@ Rules:
 7. Do not invent action types, API routes, or wallet capabilities.
 8. If a requested step is unsafe or unsupported, mark it as BLOCKED and explain the safe alternative.`;
 
-if (!process.env.OPENAI_API_KEY) {
+if (!hasUsableOpenAIKey()) {
   console.warn(
     '[CopilotKit] OPENAI_API_KEY is not set — copilot requests will fail. ' +
       'Add OPENAI_API_KEY=sk-… to frontend/.env.local',
@@ -86,8 +99,11 @@ const runtime = new CopilotRuntime({
 });
 
 function createEndpoint() {
+  const apiKey = resolveOpenAIKey();
+
   const serviceAdapter = new OpenAIAdapter({
     model: process.env.COPILOTKIT_MODEL || 'gpt-4o-mini',
+    apiKey,
     // @ts-expect-error: `instructions` is the correct OpenAI SDK v4 system-prompt
     // option. The CopilotKit type declaration doesn't surface it yet but it is
     // forwarded verbatim to the underlying openai.chat.completions call.
@@ -103,7 +119,7 @@ function createEndpoint() {
 }
 
 async function handle(request: Request) {
-  if (!process.env.OPENAI_API_KEY) {
+  if (!hasUsableOpenAIKey()) {
     console.warn('[CopilotKit] OPENAI_API_KEY is not set — runtime info will still load, but chat requests will fail until configured.');
   }
 

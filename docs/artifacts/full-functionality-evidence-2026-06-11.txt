@@ -1,0 +1,22 @@
+# Functional Evidence Snapshot (2026-06-11)
+
+## Git Head
+1df014c
+
+## Docker Services
+NAME               IMAGE                                                                     COMMAND                  SERVICE            CREATED          STATUS                    PORTS
+agent-sample       docker-agent-sample                                                       "docker-entrypoint.s…"   agent-sample       28 minutes ago   Up 26 minutes             
+aggregator-proxy   sha256:c80940ec0b90064e9804322ed38c25dd685769041c8e0c32b2f2abb16418c5a7   "/bin/sh /entrypoint…"   aggregator-proxy   28 minutes ago   Up 26 minutes (healthy)   0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp
+sapm-aggregator    node:20-bullseye                                                          "docker-entrypoint.s…"   aggregator         28 minutes ago   Up 26 minutes (healthy)   
+sapm-frontend      docker-frontend                                                           "docker-entrypoint.s…"   frontend           27 minutes ago   Up 5 minutes              0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp
+sui-local          docker-sui-local                                                          "/bin/sh /opt/sui/en…"   sui-local          28 minutes ago   Up 26 minutes (healthy)   0.0.0.0:9000-9001->9000-9001/tcp, [::]:9000-9001->9000-9001/tcp, 9184/tcp
+
+## Frontend Health
+HTTP 200
+25595 /tmp/frontend_health.html
+
+## Walrus Proxy Publish (PUT)
+{"newlyCreated":{"blobObject":{"id":"0x73950e815ba87ae3389595b5f07979d8a19ae5dbd6109dfcce7c105c8455e07d","registeredEpoch":425,"blobId":"--lrVXuf6WrSNyi97xBCY6MCW3CMmT9sdPdIMgJ1jeM","size":67,"encodingType":"RS2","certifiedEpoch":null,"storage":{"id":"0xe326b83f4cd653c4f9bebd7105f851b9ba83a57b2a0af525bd0572378d702b60","startEpoch":425,"endEpoch":426,"storageSize":66034000},"deletable":true},"resourceOperation":{"registerFromScratch":{"encodedLength":66034000,"epochsAhead":1}},"cost":582876}}
+
+## Registry Object Type Verification
+0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188::registry::PubkeyRegistry

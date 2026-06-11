@@ -38,10 +38,11 @@ interface TradeHistory {
 export type TradeLifecycleStage = 'approval' | 'submitted' | 'confirmed' | 'finalized' | 'failed';
 
 const SUI_MIST = 1_000_000_000;
+const DEFAULT_GAS_BUDGET_MIST = 5_000_000;
 const TRADE_RETRY_ATTEMPTS = 2;
 const BASE_RETRY_DELAY_MS = 500;
 const MAX_NOTIONAL_SUI = 100_000;
-const CONFIGURED_TRADE_TARGET = process.env.NEXT_PUBLIC_SUI_TRADE_TARGET || `${SUI_PACKAGE_ID}::registry::add_key`;
+const CONFIGURED_TRADE_TARGET = process.env.NEXT_PUBLIC_SUI_TRADE_TARGET || `${SUI_PACKAGE_ID}::prediction_market::open_position`;
 const CONFIGURED_REGISTRY_OBJECT_ID = process.env.NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID || '';
 const CONFIGURED_MARKET_OBJECT_IDS = (process.env.NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS || '')
   .split(',')
@@ -277,6 +278,18 @@ export function buildTradeArgumentPreview(input: {
     ];
   }
 
+  if (parsedTarget.moduleName === 'prediction_market' && parsedTarget.functionName === 'open_position') {
+    if (!isValidSuiHexAddress(trade.marketId)) {
+      throw new Error('prediction_market::open_position requires marketId as a valid 0x... market object ID.');
+    }
+
+    return [
+      { kind: 'object', value: trade.marketId },
+      { kind: 'u64', value: trade.side === 'yes' ? 1 : 2 },
+      { kind: 'u64', value: Math.ceil(trade.amount * SUI_MIST) },
+    ];
+  }
+
   if (parsedTarget.moduleName === 'pool' && parsedTarget.functionName === 'place_limit_order') {
     if (!deepbookPoolObjectId || !isValidSuiHexAddress(deepbookPoolObjectId)) {
       throw new Error('DeepBook argument mapping requires a valid pool object ID.');
@@ -359,6 +372,12 @@ export function getTradePreflightIssues(marketId: string): string[] {
     }
     if (!isValidSuiHexAddress(CONFIGURED_SUI_CLOCK_OBJECT_ID)) {
       issues.push('Invalid NEXT_PUBLIC_SUI_CLOCK_OBJECT_ID (expected Sui object id, default 0x6).');
+    }
+  }
+
+  if (parsed.moduleName === 'prediction_market' && parsed.functionName === 'open_position') {
+    if (!isValidSuiHexAddress(marketId)) {
+      issues.push('prediction_market::open_position requires marketId as a 0x... market object ID.');
     }
   }
 
@@ -571,7 +590,7 @@ export function useTradeExecution() {
     for (let attempt = 0; attempt <= TRADE_RETRY_ATTEMPTS; attempt += 1) {
       try {
         const tx = new Transaction();
-        tx.setGasBudget(100_000); // 0.0001 SUI — wallet can estimate and approve
+        tx.setGasBudget(DEFAULT_GAS_BUDGET_MIST);
 
         let args: ReturnType<typeof tx.object | typeof tx.pure.string | typeof tx.pure.u64 | typeof tx.pure.vector>[] = [];
 
@@ -586,6 +605,20 @@ export function useTradeExecution() {
           args = [
             tx.object(validatedRegistryObjectId),
             tx.pure.vector('u8', keyBytes),
+          ];
+        } else if (parsedTarget.moduleName === 'prediction_market' && parsedTarget.functionName === 'open_position') {
+          if (!isValidSuiHexAddress(trade.marketId)) {
+            throw new Error('prediction_market::open_position requires marketId as a valid 0x... market object ID.');
+          }
+
+          const sideValue = trade.side === 'yes' ? 1 : 2;
+          const amountMist = Math.ceil(trade.amount * SUI_MIST);
+          const [stakeCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(amountMist)]);
+
+          args = [
+            tx.object(trade.marketId),
+            tx.pure.u8(sideValue),
+            stakeCoin,
           ];
         } else if (parsedTarget.moduleName === 'pool' && parsedTarget.functionName === 'place_limit_order') {
           if (!isValidSuiHexAddress(CONFIGURED_DEEPBOOK_POOL_OBJECT_ID)) {

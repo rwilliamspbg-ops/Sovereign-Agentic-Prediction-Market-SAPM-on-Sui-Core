@@ -13,6 +13,7 @@ import { signAndExecuteWalletTransaction, type WalletExecutionContext } from '@/
 type Chain = 'testnet' | 'mainnet';
 
 const DEFAULT_TIMEOUT_MS = 10_000;
+const DEFAULT_GAS_BUDGET_MIST = 5_000_000;
 
 export class SuiIntegrationService {
   private suiClient: SuiClient | null = null;
@@ -82,7 +83,7 @@ export class SuiIntegrationService {
     }
 
     const tx = new Transaction();
-    tx.setGasBudget(100_000); // 0.0001 SUI — wallet can estimate and approve
+    tx.setGasBudget(DEFAULT_GAS_BUDGET_MIST);
 
     const target = process.env.NEXT_PUBLIC_SUI_CREATE_MARKET_TARGET || `${this.packageId}::prediction_market::create_market`;
 
@@ -166,7 +167,7 @@ export class SuiIntegrationService {
     }
 
     const tx = new Transaction();
-    tx.setGasBudget(100_000); // 0.0001 SUI — wallet can estimate and approve
+    tx.setGasBudget(DEFAULT_GAS_BUDGET_MIST);
     // Correct target: prediction_market::open_position is the entry for YES/NO stake
     const target = process.env.NEXT_PUBLIC_SUI_TRADE_TARGET || `${this.packageId}::prediction_market::open_position`;
 
