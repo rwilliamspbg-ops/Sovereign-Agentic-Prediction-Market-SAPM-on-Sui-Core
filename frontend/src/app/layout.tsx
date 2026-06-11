@@ -720,6 +720,7 @@ export default function RootLayout({
                   {/* Network Switcher */}
                   <div style={{ position: 'relative' }}>
                     <button
+                      suppressHydrationWarning
                       onClick={() => setShowNetworkMenu(!showNetworkMenu)}
                       style={{
                         padding: isNarrowScreen ? '0.45rem 0.68rem' : '0.4rem 0.75rem',
@@ -755,6 +756,7 @@ export default function RootLayout({
                       }}>
                         {Object.entries(NETWORKS).map(([key, config]) => (
                           <button
+                            suppressHydrationWarning
                             key={key}
                             onClick={() => handleNetworkChange(key as 'testnet' | 'mainnet')}
                             style={{
@@ -788,7 +790,9 @@ export default function RootLayout({
 
                   {/* Notifications */}
                   {!isNarrowScreen && (
-                    <button style={{
+                    <button
+                      suppressHydrationWarning
+                      style={{
                       position: 'relative',
                       background: 'none',
                       border: 'none',
@@ -849,6 +853,7 @@ export default function RootLayout({
 
                       <div style={{ display: 'flex', gap: '0.42rem', alignItems: 'center' }}>
                         <button
+                          suppressHydrationWarning
                           onClick={handleConnectWallet}
                           disabled={isConnecting}
                           title={connectableWallets.length === 0
@@ -883,6 +888,7 @@ export default function RootLayout({
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.42rem', flex: isNarrowScreen ? 1 : undefined }}>
 
                       <button
+                        suppressHydrationWarning
                         onClick={() => setShowWalletMenu(!showWalletMenu)}
                         style={{
                           padding: isNarrowScreen ? '0.56rem 0.82rem' : '0.6rem 1.5rem',
@@ -937,6 +943,7 @@ export default function RootLayout({
                           </div>
 
                           <button
+                            suppressHydrationWarning
                             onClick={() => {
                               navigator.clipboard.writeText(walletAddress!);
                               alert('Address copied to clipboard!');
@@ -960,6 +967,7 @@ export default function RootLayout({
                           </button>
 
                           <button
+                            suppressHydrationWarning
                             onClick={() => {
                               window.open(`${explorerBase}${walletAddress}`, '_blank');
                               setShowWalletMenu(false);
@@ -983,6 +991,7 @@ export default function RootLayout({
                           </button>
 
                           <button
+                            suppressHydrationWarning
                             onClick={handleDisconnectWallet}
                             style={{
                               width: '100%',
@@ -1104,6 +1113,7 @@ export default function RootLayout({
 function AgentInsightButton({ onClick }: { onClick: () => void }) {
   return (
     <button
+      suppressHydrationWarning
       type="button"
       onClick={onClick}
       style={{

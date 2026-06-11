@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Trader Agent Live Visibility Upgrade (June 11, 2026)
+
+#### Markets UI Real-Time Observability
+- Added server-sent events endpoint `frontend/src/app/api/trader/stream/route.ts` for live trader decision streaming.
+- Wired Markets page live feed to backend stream via `frontend/src/components/agents/TraderAgentLivePanel.tsx`.
+- Added start/stop stream controls and cadence switching from UI (2.0s / 3.5s / 5.0s).
+
+#### Adapter-Backed Decision Pipeline
+- Stream now attempts to load `agents/trader/forecast_to_trade.js` and invoke `ForecastToTradeAdapter` internals for each agent tick.
+- Decision direction uses adapter `_determineDecision(edge, confidence)` semantics.
+- Decision rationale uses adapter `_generateRationale(confidence, edge, decision)` for audit-style explanations.
+- Stake sizing attempts adapter `_calculateStake(...)` in dry-run mode with safe fallback sizing if unavailable.
+
+#### Runtime Safety and Fallback
+- Added robust fallback mode when adapter module is unavailable: stream remains live with deterministic server runtime logic.
+- Status events now indicate whether stream is running in adapter-backed or fallback mode.
+- Live feed entries now include decision `source` metadata for operator verification.
+
 ### Added - Frontend CI Validation + Judge Demo Hardening (June 11, 2026)
 
 #### CI and Local Release Checks
