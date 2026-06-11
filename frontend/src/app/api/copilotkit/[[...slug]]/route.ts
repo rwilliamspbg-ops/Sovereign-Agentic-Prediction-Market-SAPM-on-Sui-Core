@@ -25,6 +25,7 @@ import {
 } from '@copilotkit/runtime';
 // BuiltInAgent is exported from the /v2 subpath, not the package root.
 import { BuiltInAgent } from '@copilotkit/runtime/v2';
+import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
 
 function resolveOpenAIKey(): string | undefined {
@@ -100,9 +101,18 @@ const runtime = new CopilotRuntime({
 });
 
 function createEndpoint() {
-  const serviceAdapter = new OpenAIAdapter({
+  const apiKey = resolveOpenAIKey();
+
+  const serviceAdapterConfig: ConstructorParameters<typeof OpenAIAdapter>[0] = {
     model: process.env.COPILOTKIT_MODEL || 'gpt-4o-mini',
-  });
+  };
+
+  if (apiKey) {
+    // Provide an explicit OpenAI client when a key is configured.
+    serviceAdapterConfig.openai = new OpenAI({ apiKey });
+  }
+
+  const serviceAdapter = new OpenAIAdapter(serviceAdapterConfig);
 
   return copilotRuntimeNextJSAppRouterEndpoint({
     runtime,
