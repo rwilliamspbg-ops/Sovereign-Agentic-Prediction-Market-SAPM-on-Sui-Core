@@ -435,4 +435,48 @@ describe('Orchestrator Security Hardening', () => {
       spy.mockRestore();
     }
   });
+
+  test('returns true when cgroup-v2 effective cpuset is narrower than online CPUs', () => {
+    const orchestrator = new Orchestrator({ requireCpuPinning: true });
+    const spy = jest.spyOn(fs, 'readFileSync').mockImplementation((targetPath) => {
+      if (targetPath === '/proc/self/status') {
+        return 'Name:\ttest\nCpus_allowed_list:\t0-7\n';
+      }
+      if (targetPath === '/sys/devices/system/cpu/online') {
+        return '0-7\n';
+      }
+      if (targetPath === '/sys/fs/cgroup/cpuset.cpus.effective') {
+        return '2-3\n';
+      }
+      throw new Error(`Unexpected read path: ${targetPath}`);
+    });
+
+    try {
+      expect(orchestrator.networkHandler._checkCPUPinning()).toBe(true);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  test('returns false when cgroup-v2 effective cpuset matches all online CPUs', () => {
+    const orchestrator = new Orchestrator({ requireCpuPinning: true });
+    const spy = jest.spyOn(fs, 'readFileSync').mockImplementation((targetPath) => {
+      if (targetPath === '/proc/self/status') {
+        return 'Name:\ttest\nCpus_allowed_list:\t0-7\n';
+      }
+      if (targetPath === '/sys/devices/system/cpu/online') {
+        return '0-7\n';
+      }
+      if (targetPath === '/sys/fs/cgroup/cpuset.cpus.effective') {
+        return '0-7\n';
+      }
+      throw new Error(`Unexpected read path: ${targetPath}`);
+    });
+
+    try {
+      expect(orchestrator.networkHandler._checkCPUPinning()).toBe(false);
+    } finally {
+      spy.mockRestore();
+    }
+  });
 });

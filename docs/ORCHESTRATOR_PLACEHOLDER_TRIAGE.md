@@ -73,7 +73,7 @@ Wave objective: close the highest risk security and cryptographic gaps before br
 Current regression evidence from orchestrator suite:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 128 tests, 128 passed (2026-06-12)
+- Result: 7 suites, 130 tests, 130 passed (2026-06-12)
 
 | ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
 | --- | --- | --- | --- |
@@ -84,7 +84,7 @@ Current regression evidence from orchestrator suite:
 | ORCH-005 | Covered | security-hardening covers revoked fingerprint rejection plus trusted-root accept/reject policy enforcement | Add full chain-to-root multi-cert test vector fixture in CI |
 | ORCH-006 | Covered | security-hardening now covers unreachable endpoint plus explicit 200/404 reachable and 503 unreachable probe semantics | Extend matrix only if probe policy changes |
 | ORCH-007 | Covered | security-hardening now covers below-threshold fail, threshold-met pass, and zero-free-pages fail variants | Extend only if hugepage policy adds more profile dimensions |
-| ORCH-008 | Covered | security-hardening cpuset fixture validates unpinned detection path | Add cgroup-v2 specific regression fixture |
+| ORCH-008 | Covered | security-hardening now covers unpinned cpuset detection plus cgroup-v2 effective cpuset accept/reject paths | Extend only if CPU affinity policy adds more cgroup sources |
 | ORCH-009 | Partial | discovery-manager tests now cover successful key confirmation and digest-mismatch fail-closed behavior | Integrate audited hybrid provider path and key confirmation handshake beyond placeholder-design derivation |
 
 ## 2026-06-12 Regression Expansion Update
@@ -191,6 +191,24 @@ Validation evidence:
 
 - Command: npm --prefix agents/orchestrator test
 - Result: 7 suites, 128 tests, 128 passed
+
+## 2026-06-12 ORCH-008 Cgroup-v2 Pinning Update
+
+Implemented cgroup-v2-aware CPU pinning evaluation for ORCH-008 in `agents/orchestrator/core/orchestrator.js`:
+
+- when `/proc/self/status` shows the full online CPU set, the orchestrator now checks `cpuset.cpus.effective` and `cpuset.cpus`
+- a narrower cgroup-v2 effective cpuset is treated as pinned
+- a cgroup cpuset matching the full online set remains unpinned
+
+Added explicit regression coverage in `agents/orchestrator/test/security-hardening.test.js`:
+
+- cgroup-v2 effective cpuset narrower than online CPUs passes
+- cgroup-v2 effective cpuset equal to online CPUs fails
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 130 tests, 130 passed
 
 ## 2026-06-12 ORCH-001 Provider-Seam Update
 

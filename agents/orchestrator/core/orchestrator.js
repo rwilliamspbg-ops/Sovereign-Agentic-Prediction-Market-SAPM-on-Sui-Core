@@ -672,11 +672,40 @@ class NetworkHandler {
 
       // A comma/hyphen list smaller than all online CPUs is treated as pinned.
       const online = fs.readFileSync('/sys/devices/system/cpu/online', 'utf8').trim();
-      return list !== online;
+      if (list !== online) {
+        return true;
+      }
+
+      const cgroupCpuset = this._readEffectiveCpuset();
+      if (!cgroupCpuset) {
+        return false;
+      }
+
+      return cgroupCpuset !== online;
     } catch (err) {
       console.warn('[NetworkHandler] CPU pinning check failed:', err.message);
       return false;
     }
+  }
+
+  _readEffectiveCpuset() {
+    const candidates = [
+      '/sys/fs/cgroup/cpuset.cpus.effective',
+      '/sys/fs/cgroup/cpuset.cpus',
+    ];
+
+    for (const candidate of candidates) {
+      try {
+        const value = fs.readFileSync(candidate, 'utf8').trim();
+        if (value) {
+          return value;
+        }
+      } catch (err) {
+        // Ignore missing cgroup cpuset files and fall through to the next candidate.
+      }
+    }
+
+    return '';
   }
 }
 

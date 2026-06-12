@@ -173,6 +173,8 @@ WS-3.3 implementation notes:
 - Updated orchestrator regression baseline after ORCH-006 coverage wave: 7 suites, 126 tests, 126 passed.
 - Added ORCH-007 hugepage threshold variant coverage for below-threshold, threshold-met, and zero-free-pages cases.
 - Updated orchestrator regression baseline after ORCH-007 coverage wave: 7 suites, 128 tests, 128 passed.
+- Implemented ORCH-008 cgroup-v2-aware CPU pinning evaluation and added matching regression coverage.
+- Updated orchestrator regression baseline after ORCH-008 coverage wave: 7 suites, 130 tests, 130 passed.
 
 ### Testing + Readiness
 
@@ -241,3 +243,4 @@ WS-4.1 status notes:
 - 2026-06-12: Added ORCH-003 live registry-style endpoint regression coverage and raised orchestrator regression evidence baseline to 125/125 pass.
 - 2026-06-12: Added ORCH-006 reachability status-code matrix regression coverage and raised orchestrator regression evidence baseline to 126/126 pass.
 - 2026-06-12: Added ORCH-007 hugepage threshold variant coverage and raised orchestrator regression evidence baseline to 128/128 pass.
+- 2026-06-12: Added ORCH-008 cgroup-v2 CPU pinning coverage and raised orchestrator regression evidence baseline to 130/130 pass.
