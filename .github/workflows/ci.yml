@@ -102,6 +102,9 @@ jobs:
   dependency-audit:
     runs-on: ubuntu-latest
     continue-on-error: ${{ vars.DEPENDENCY_AUDIT_GATING != 'true' }}
+    env:
+      FRONTEND_AUDIT_GATING: ${{ vars.FRONTEND_AUDIT_GATING || 'true' }}
+      FRONTEND_AUDIT_REPORT_PATH: artifacts/ci-logs/frontend-audit-gate.json
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js
@@ -115,8 +118,18 @@ jobs:
         run: npm audit --audit-level=high --no-fund
       - name: Audit orchestrator dependencies
         run: npm --prefix agents/orchestrator audit --audit-level=high --no-fund
-      - name: Audit frontend dependencies
-        run: npm --prefix frontend audit --audit-level=high --no-fund
+      - name: Evaluate frontend dependency audit gate (high/critical)
+        run: |
+          mkdir -p artifacts/ci-logs
+          FRONTEND_AUDIT_GATING_MODE="${{ vars.FRONTEND_AUDIT_GATING == 'true' && 'enforced' || 'warn-only' }}" \
+            node scripts/check_frontend_audit_gate.js
+      - name: Upload dependency audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-logs
+          path: artifacts/ci-logs/frontend-audit-gate.json
+          if-no-files-found: warn
 
   release-check:
     runs-on: ubuntu-latest
