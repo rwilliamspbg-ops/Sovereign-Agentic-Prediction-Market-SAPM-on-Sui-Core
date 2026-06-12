@@ -171,6 +171,33 @@ describe('Orchestrator Security Hardening', () => {
       .toThrow('Attestation certificate is revoked');
   });
 
+  test('accepts attestation certificate when root fingerprint is explicitly trusted', async () => {
+    const certPath = path.join(__dirname, '../../aggregator/certs/server.crt.pem');
+    const certPem = fs.readFileSync(certPath, 'utf8');
+    const cert = new crypto.X509Certificate(certPem);
+
+    const orchestrator = new Orchestrator({
+      attestationTrustedRoots: cert.fingerprint256,
+    });
+
+    await expect(orchestrator.attestationClient.verifyCertChain(certPem))
+      .resolves
+      .toBe(true);
+  });
+
+  test('rejects attestation certificate when trusted root fingerprint does not match chain root', async () => {
+    const certPath = path.join(__dirname, '../../aggregator/certs/server.crt.pem');
+    const certPem = fs.readFileSync(certPath, 'utf8');
+
+    const orchestrator = new Orchestrator({
+      attestationTrustedRoots: '00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff',
+    });
+
+    await expect(orchestrator.attestationClient.verifyCertChain(certPem))
+      .rejects
+      .toThrow('Attestation root certificate is not trusted');
+  });
+
   test('loads staging attestation fixture and preserves audited digest', async () => {
     const fixturePath = path.join(__dirname, 'fixtures/attestation-staging-valid.json');
     const fixture = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));

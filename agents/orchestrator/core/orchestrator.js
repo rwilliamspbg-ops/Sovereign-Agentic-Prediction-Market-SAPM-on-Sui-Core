@@ -585,6 +585,18 @@ class AttestationClient {
       }
     }
 
+    const trustedRoots = (this.config.attestationTrustedRoots || process.env.ATTESTATION_TRUSTED_ROOTS || '')
+      .split(',')
+      .map((value) => value.trim().replace(/:/g, '').toLowerCase())
+      .filter(Boolean);
+
+    if (trustedRoots.length > 0) {
+      const rootFingerprint = certificates[certificates.length - 1].fingerprint256.replace(/:/g, '').toLowerCase();
+      if (!trustedRoots.includes(rootFingerprint)) {
+        throw new Error('Attestation root certificate is not trusted');
+      }
+    }
+
     return true;
   }
 }

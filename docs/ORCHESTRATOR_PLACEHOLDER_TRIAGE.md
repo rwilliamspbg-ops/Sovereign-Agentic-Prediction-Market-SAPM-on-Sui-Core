@@ -50,7 +50,7 @@ Current implementation status was reconciled against orchestrator code paths in:
 | ORCH-002 | Closed-in-code | Key derivation proof now verified and fails on tampering | Keep deterministic failure-mode tests in CI (already present) |
 | ORCH-003 | Closed-in-code | Peer-key fetch supports signed payload verification and fail-closed behavior | Add integration fixture for live registry endpoint auth semantics |
 | ORCH-004 | Partial | TPM path now supports validated staging attestation fixture ingestion with digest fail-closed checks in addition to direct measurement reads | Hardware-backed attestation evidence still required for staging closure |
-| ORCH-005 | Closed-in-code | Certificate chain checks include validity, issuer/signature chain, and optional revocation denylist | Add staging evidence for full root trust policy |
+| ORCH-005 | Closed-in-code | Certificate chain checks now include validity, issuer/signature chain, revocation denylist, and optional trusted-root fingerprint enforcement | Add staging evidence for full root trust policy |
 | ORCH-006 | Closed-in-code | Reachability check performs active HTTP/S probe with timeout handling | Add multi-endpoint degraded-network matrix scenarios |
 | ORCH-007 | Closed-in-code | Hugepage check reads procfs and enforces minimum availability threshold | Add production profile threshold variants |
 | ORCH-008 | Closed-in-code | CPU pinning check validates cpuset against online CPU list | Add cgroup-v2 specific regression fixture |
@@ -73,7 +73,7 @@ Wave objective: close the highest risk security and cryptographic gaps before br
 Current regression evidence from orchestrator suite:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 121 tests, 121 passed (2026-06-12)
+- Result: 7 suites, 123 tests, 123 passed (2026-06-12)
 
 | ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
 | --- | --- | --- | --- |
@@ -81,7 +81,7 @@ Current regression evidence from orchestrator suite:
 | ORCH-002 | Covered | security-hardening MAC tamper test fails proof verification as expected | Add explicit negative-path test for missing attestation digest |
 | ORCH-003 | Covered | security-hardening signed peer-key accept/reject + timeout + invalid JSON + missing key payload tests | Add integration fixture for live registry endpoint auth semantics |
 | ORCH-004 | Partial | security-hardening now covers validated staging attestation fixture ingestion and digest-mismatch fail-closed behavior | Capture hardware-backed staging evidence artifact and verify real TPM/TEE measurement ingestion |
-| ORCH-005 | Covered | security-hardening revoked certificate fingerprint test | Add full chain-to-root test vector fixture in CI |
+| ORCH-005 | Covered | security-hardening covers revoked fingerprint rejection plus trusted-root accept/reject policy enforcement | Add full chain-to-root multi-cert test vector fixture in CI |
 | ORCH-006 | Covered | security-hardening reachability negative-path fixture validates false on unreachable endpoint | Add unit tests for explicit status-code matrix |
 | ORCH-007 | Covered | security-hardening procfs fixture validates hugepage threshold fail path | Add production profile threshold variants |
 | ORCH-008 | Covered | security-hardening cpuset fixture validates unpinned detection path | Add cgroup-v2 specific regression fixture |
@@ -121,6 +121,24 @@ Validation evidence:
 
 - Command: npm --prefix agents/orchestrator test
 - Result: 7 suites, 121 tests, 121 passed
+
+## 2026-06-12 ORCH-005 Trusted-Root Policy Update
+
+Implemented trusted-root enforcement for ORCH-005 in `agents/orchestrator/core/orchestrator.js`:
+
+- `AttestationClient.verifyCertChain` now accepts configured root fingerprints via `attestationTrustedRoots` / `ATTESTATION_TRUSTED_ROOTS`.
+- When configured, the terminal certificate in the provided chain must match an allowed root fingerprint.
+- Non-matching roots fail closed.
+
+Added deterministic regression coverage in `agents/orchestrator/test/security-hardening.test.js`:
+
+- trusted root fingerprint accepts current certificate chain
+- non-matching trusted root fingerprint rejects current certificate chain
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 123 tests, 123 passed
 
 ## 2026-06-12 ORCH-001 Provider-Seam Update
 
