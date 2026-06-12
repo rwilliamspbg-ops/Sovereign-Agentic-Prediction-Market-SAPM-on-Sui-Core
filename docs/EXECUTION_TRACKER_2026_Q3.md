@@ -154,6 +154,9 @@ WS-3.3 implementation notes:
 - Implemented ORCH-009 discovery key-confirmation guard and fail-closed mismatch handling in discovery manager.
 - Added dedicated discovery-manager regression tests for key-confirmation success and mismatch failure.
 - Updated orchestrator regression baseline after discovery hardening: 7 suites, 117 tests, 117 passed.
+- Implemented ORCH-001 hybrid KEX provider seam with strict session material validation and fail-closed behavior.
+- Added deterministic security-hardening tests for provider seam success path and invalid-session fail-closed path.
+- Updated orchestrator regression baseline after ORCH-001 seam wave: 7 suites, 119 tests, 119 passed.
 
 ### Testing + Readiness
 
@@ -207,3 +210,4 @@ WS-4.1 status notes:
 - 2026-06-12: Completed WS-3.3 by mapping ORCH items to regression coverage and recording current orchestrator test baseline (109/109 pass).
 - 2026-06-12: Added WS-3 regression expansion fixtures and updated orchestrator test evidence baseline to 115/115 pass.
 - 2026-06-12: Added ORCH-009 discovery key-confirmation hardening and raised orchestrator regression evidence baseline to 117/117 pass.
+- 2026-06-12: Added ORCH-001 hybrid-provider integration seam and raised orchestrator regression evidence baseline to 119/119 pass.

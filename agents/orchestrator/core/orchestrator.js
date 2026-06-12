@@ -184,6 +184,7 @@ class Orchestrator {
 class CryptoProvider {
   constructor(config) {
     this.config = config;
+    this.hybridProvider = this._resolveHybridProvider();
   }
 
   async hybridKeyExchange(attestationData, peerPubKey) {
@@ -194,6 +195,16 @@ class CryptoProvider {
 
     const peerPublicKey = this._decodePeerKeyMaterial(peerPubKey);
     const attestationDigest = Buffer.from(attestationData.measurements.sha256, 'base64');
+
+    if (this.hybridProvider) {
+      const providerResult = await this.hybridProvider.deriveSession({
+        attestationDigest,
+        peerPublicKey,
+        algorithm: 'x25519-mlkem768',
+      });
+      return this._normalizeProviderSession(providerResult, attestationDigest, peerPublicKey);
+    }
+
     const nonce = crypto.randomBytes(32);
     const eccMix = crypto.createHash('sha256').update(Buffer.concat([nonce, peerPublicKey])).digest();
     const pqcMix = crypto.createHash('sha256').update(Buffer.concat([peerPublicKey, nonce])).digest();
@@ -348,6 +359,91 @@ class CryptoProvider {
     }
 
     throw new Error('Peer public key format is not supported');
+  }
+
+  _resolveHybridProvider() {
+    if (this.config.hybridKexProvider && typeof this.config.hybridKexProvider.deriveSession === 'function') {
+      return this.config.hybridKexProvider;
+    }
+
+    const providerPath = (this.config.hybridKexProviderPath || process.env.HYBRID_KEX_PROVIDER_PATH || '').trim();
+    if (!providerPath) {
+      return null;
+    }
+
+    const absolutePath = path.isAbsolute(providerPath)
+      ? providerPath
+      : path.resolve(process.cwd(), providerPath);
+    const loaded = require(absolutePath);
+    const provider = loaded && loaded.default ? loaded.default : loaded;
+    if (!provider || typeof provider.deriveSession !== 'function') {
+      throw new Error(`Hybrid KEX provider at ${absolutePath} must export deriveSession(context)`);
+    }
+    return provider;
+  }
+
+  _normalizeProviderSession(providerResult, attestationDigest, peerPublicKey) {
+    if (!providerResult || typeof providerResult !== 'object') {
+      throw new Error('Hybrid KEX provider returned invalid session payload');
+    }
+
+    const sessionKey = this._decodeProviderMaterial(providerResult.sessionKey, 'sessionKey');
+    if (sessionKey.length !== 32) {
+      throw new Error('Hybrid KEX provider must return a 32-byte sessionKey');
+    }
+
+    const nonce = this._decodeProviderMaterial(providerResult.nonce, 'nonce');
+    if (nonce.length === 0) {
+      throw new Error('Hybrid KEX provider nonce must not be empty');
+    }
+
+    const peerKeyDigest = providerResult.peerKeyDigest
+      ? String(providerResult.peerKeyDigest)
+      : crypto.createHash('sha256').update(peerPublicKey).digest('hex');
+
+    const proofMac = providerResult.proofMac
+      ? this._decodeProviderMaterial(providerResult.proofMac, 'proofMac')
+      : crypto.createHmac('sha256', sessionKey)
+        .update(Buffer.concat([attestationDigest, nonce, Buffer.from(peerKeyDigest, 'utf8')]))
+        .digest();
+
+    if (proofMac.length === 0) {
+      throw new Error('Hybrid KEX provider proofMac must not be empty');
+    }
+
+    return {
+      algorithm: providerResult.algorithm || 'x25519-mlkem768-provider',
+      establishedAt: providerResult.establishedAt || new Date().toISOString(),
+      nonce: nonce.toString('base64'),
+      sessionKey: sessionKey.toString('base64'),
+      peerKeyDigest,
+      proof: {
+        type: providerResult.proofType || 'hmac-sha256',
+        mac: proofMac.toString('base64'),
+      },
+    };
+  }
+
+  _decodeProviderMaterial(value, fieldName) {
+    if (Buffer.isBuffer(value)) {
+      return value;
+    }
+    if (typeof value !== 'string' || value.trim().length === 0) {
+      throw new Error(`Hybrid KEX provider field ${fieldName} must be non-empty`);
+    }
+
+    const normalized = value.trim();
+    if (/^[A-Za-z0-9+/=]+$/.test(normalized)) {
+      const base64 = Buffer.from(normalized, 'base64');
+      if (base64.length > 0) return base64;
+    }
+
+    const hex = normalized.startsWith('0x') ? normalized.slice(2) : normalized;
+    if (/^[0-9a-fA-F]+$/.test(hex) && hex.length % 2 === 0) {
+      return Buffer.from(hex, 'hex');
+    }
+
+    throw new Error(`Hybrid KEX provider field ${fieldName} is not valid base64 or hex`);
   }
 }
 

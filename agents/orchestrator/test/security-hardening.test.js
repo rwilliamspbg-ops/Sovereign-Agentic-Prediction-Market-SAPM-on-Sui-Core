@@ -93,6 +93,70 @@ describe('Orchestrator Security Hardening', () => {
     expect(invalid).toBe(false);
   });
 
+  test('uses injected hybrid KEX provider for deterministic session derivation', async () => {
+    const attestationDigest = crypto.randomBytes(32);
+    const providerSessionKey = crypto.randomBytes(32);
+    const providerNonce = crypto.randomBytes(32);
+    const peerKeyDigest = crypto.createHash('sha256').update(Buffer.from('peer-public-key')).digest('hex');
+    const providerProofMac = crypto.createHmac('sha256', providerSessionKey)
+      .update(Buffer.concat([attestationDigest, providerNonce, Buffer.from(peerKeyDigest, 'utf8')]))
+      .digest();
+
+    const deriveSession = jest.fn().mockResolvedValue({
+      algorithm: 'x25519-mlkem768-audited-fixture',
+      sessionKey: providerSessionKey,
+      nonce: providerNonce,
+      peerKeyDigest,
+      proofMac: providerProofMac,
+    });
+
+    const orchestrator = new Orchestrator({
+      hybridKexProvider: { deriveSession },
+    });
+
+    const attestation = {
+      measurements: {
+        sha256: attestationDigest.toString('base64'),
+      },
+    };
+    const peerPublicKey = Buffer.from('peer-public-key').toString('base64');
+
+    const session = await orchestrator.cryptoProvider.hybridKeyExchange(attestation, peerPublicKey);
+    orchestrator.cryptoProvider.config.attestationDigestB64 = attestation.measurements.sha256;
+    const proofValid = await orchestrator.cryptoProvider.verifyKeyDerivationProof(session);
+
+    expect(deriveSession).toHaveBeenCalledTimes(1);
+    expect(deriveSession.mock.calls[0][0].algorithm).toBe('x25519-mlkem768');
+    expect(session.algorithm).toBe('x25519-mlkem768-audited-fixture');
+    expect(session.sessionKey).toBe(providerSessionKey.toString('base64'));
+    expect(proofValid).toBe(true);
+  });
+
+  test('fails closed when injected hybrid KEX provider returns invalid session key length', async () => {
+    const orchestrator = new Orchestrator({
+      hybridKexProvider: {
+        deriveSession: jest.fn().mockResolvedValue({
+          algorithm: 'x25519-mlkem768-audited-fixture',
+          sessionKey: crypto.randomBytes(16),
+          nonce: crypto.randomBytes(16),
+        }),
+      },
+    });
+
+    const attestation = {
+      measurements: {
+        sha256: crypto.randomBytes(32).toString('base64'),
+      },
+    };
+
+    await expect(
+      orchestrator.cryptoProvider.hybridKeyExchange(
+        attestation,
+        Buffer.from('peer-public-key').toString('base64'),
+      ),
+    ).rejects.toThrow('Hybrid KEX provider must return a 32-byte sessionKey');
+  });
+
   test('rejects revoked attestation certificate fingerprint', async () => {
     const certPath = path.join(__dirname, '../../aggregator/certs/server.crt.pem');
     const certPem = fs.readFileSync(certPath, 'utf8');

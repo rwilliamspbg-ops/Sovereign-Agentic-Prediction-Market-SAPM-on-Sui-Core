@@ -46,7 +46,7 @@ Current implementation status was reconciled against orchestrator code paths in:
 
 | ID | Reconciled Status | Evidence | Remaining Gap |
 | --- | --- | --- | --- |
-| ORCH-001 | Partial | Hybrid KEX derives key material via HKDF and attestation digest in core orchestrator path | Still not full audited runtime x25519-mlkem768 integration |
+| ORCH-001 | Partial | Core orchestrator now supports pluggable hybrid provider seam with strict session material validation and fail-closed behavior | Still not full audited runtime x25519-mlkem768 integration |
 | ORCH-002 | Closed-in-code | Key derivation proof now verified and fails on tampering | Keep deterministic failure-mode tests in CI (already present) |
 | ORCH-003 | Closed-in-code | Peer-key fetch supports signed payload verification and fail-closed behavior | Add integration fixture for live registry endpoint auth semantics |
 | ORCH-004 | Partial | TPM path reads measurement file and hashes evidence; mock fallback controlled by env | Hardware-backed attestation evidence still required for staging closure |
@@ -73,11 +73,11 @@ Wave objective: close the highest risk security and cryptographic gaps before br
 Current regression evidence from orchestrator suite:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 117 tests, 117 passed (2026-06-12)
+- Result: 7 suites, 119 tests, 119 passed (2026-06-12)
 
 | ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
 | --- | --- | --- | --- |
-| ORCH-001 | Partial | security-hardening tamper test validates proof integrity behavior in KEX output | Add deterministic integration test with audited x25519-mlkem768 provider wiring |
+| ORCH-001 | Partial | security-hardening now includes deterministic provider-seam fixture plus fail-closed invalid session-key length test | Integrate audited x25519-mlkem768 provider implementation through configured seam |
 | ORCH-002 | Covered | security-hardening MAC tamper test fails proof verification as expected | Add explicit negative-path test for missing attestation digest |
 | ORCH-003 | Covered | security-hardening signed peer-key accept/reject + timeout + invalid JSON + missing key payload tests | Add integration fixture for live registry endpoint auth semantics |
 | ORCH-004 | Partial | Core code enforces TEE runtime or explicit mock opt-in | Add staging test fixture that validates real TPM/TEE measurement ingestion |
@@ -101,7 +101,25 @@ Added security-hardening regression fixtures in orchestrator tests for:
 Post-update orchestrator test baseline:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 117 tests, 117 passed
+- Result: 7 suites, 119 tests, 119 passed
+
+## 2026-06-12 ORCH-001 Provider-Seam Update
+
+Implemented production-integration seam for ORCH-001 in `agents/orchestrator/core/orchestrator.js`:
+
+- `CryptoProvider` now supports configurable hybrid provider injection (`hybridKexProvider` or `HYBRID_KEX_PROVIDER_PATH`).
+- Provider output is normalized and strictly validated (32-byte session key, non-empty nonce/proof) with fail-closed errors.
+- Existing derivation path remains as deterministic fallback until audited runtime provider integration is complete.
+
+Added deterministic regression tests in `agents/orchestrator/test/security-hardening.test.js`:
+
+- provider fixture is used for deterministic session derivation with proof validation
+- invalid provider session key length fails closed
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 119 tests, 119 passed
 
 ## 2026-06-12 Discovery Key-Confirmation Update (ORCH-009)
 
