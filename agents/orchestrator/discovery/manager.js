@@ -188,11 +188,29 @@ class DiscoveryManager {
       : (process.env.DISCOVERY_USE_GO_HYBRID_PROVIDER || '1') !== '0';
 
     if (useGoHybridProvider) {
-      const providerResult = await goHybridProvider.deriveSession({
-        attestationDigest: Buffer.from(digestB64, 'base64'),
-        peerPublicKey: Buffer.from(peerKey, 'utf8'),
-        algorithm: 'x25519-mlkem768',
-      });
+      let providerResult;
+      try {
+        providerResult = await goHybridProvider.deriveSession({
+          attestationDigest: Buffer.from(digestB64, 'base64'),
+          peerPublicKey: Buffer.from(peerKey, 'utf8'),
+          algorithm: 'x25519-mlkem768',
+        });
+
+        const readiness = goHybridProvider.getProviderReadinessStatus();
+        if (readiness?.ok) {
+          console.log(
+            `[DiscoveryManager] Go provider ready (${readiness.mode}) via ${readiness.command}`,
+          );
+        }
+      } catch (error) {
+        const readiness = goHybridProvider.getProviderReadinessStatus();
+        if (readiness && readiness.ok === false) {
+          console.error(
+            `[DiscoveryManager] Go provider readiness failed at ${readiness.checkedAt}: ${readiness.error}`,
+          );
+        }
+        throw error;
+      }
 
       return {
         algorithm: providerResult.algorithm || 'x25519-mlkem768-go-bridge',

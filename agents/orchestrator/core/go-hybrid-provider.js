@@ -9,6 +9,7 @@ const { execFile } = require('child_process');
 let readinessState = {
   key: '',
   promise: null,
+  status: null,
 };
 
 function execFilePromise(command, args, options = {}) {
@@ -105,10 +106,29 @@ async function ensureProviderReady() {
   readinessState = {
     key,
     promise: runReadinessChecks(invocation)
+      .then((result) => {
+        readinessState.status = {
+          ok: true,
+          checkedAt: new Date().toISOString(),
+          key,
+          ...result,
+        };
+        return result;
+      })
       .catch((error) => {
-        readinessState = { key: '', promise: null };
+        readinessState = {
+          key: '',
+          promise: null,
+          status: {
+            ok: false,
+            checkedAt: new Date().toISOString(),
+            key,
+            error: error.message,
+          },
+        };
         throw new Error(`Hybrid KEX provider readiness check failed: ${error.message}`);
       }),
+    status: readinessState.status,
   };
 
   return readinessState.promise;
@@ -118,12 +138,18 @@ function resetProviderReadinessCache() {
   readinessState = {
     key: '',
     promise: null,
+    status: null,
   };
+}
+
+function getProviderReadinessStatus() {
+  return readinessState.status ? { ...readinessState.status } : null;
 }
 
 module.exports = {
   buildDeriveSessionCommand,
   ensureProviderReady,
+  getProviderReadinessStatus,
   resetProviderReadinessCache,
   async deriveSession({ attestationDigest, peerPublicKey, algorithm }) {
     const peerPublicB64 = Buffer.from(peerPublicKey).toString('base64');

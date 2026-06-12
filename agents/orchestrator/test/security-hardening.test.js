@@ -26,6 +26,14 @@ describe('Orchestrator Security Hardening', () => {
       mode: expect.any(String),
       command: expect.any(String),
     }));
+
+    const status = goHybridProvider.getProviderReadinessStatus();
+    expect(status).toEqual(expect.objectContaining({
+      ok: true,
+      mode: expect.any(String),
+      command: expect.any(String),
+      checkedAt: expect.any(String),
+    }));
   });
 
   test('fails closed with deterministic diagnostics when Go provider readiness check fails', async () => {
@@ -38,6 +46,13 @@ describe('Orchestrator Security Hardening', () => {
         algorithm: 'x25519-mlkem768',
       }),
     ).rejects.toThrow('Hybrid KEX provider readiness check failed');
+
+    const status = goHybridProvider.getProviderReadinessStatus();
+    expect(status).toEqual(expect.objectContaining({
+      ok: false,
+      checkedAt: expect.any(String),
+      error: expect.any(String),
+    }));
   });
 
   test('builds Go hybrid provider command from explicit binary path when configured', () => {

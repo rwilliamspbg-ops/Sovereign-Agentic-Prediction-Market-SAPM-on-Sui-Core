@@ -73,7 +73,7 @@ Wave objective: close the highest risk security and cryptographic gaps before br
 Current regression evidence from orchestrator suite:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 137 tests, 137 passed (2026-06-12)
+- Result: 7 suites, 138 tests, 138 passed (2026-06-12)
 
 | ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
 | --- | --- | --- | --- |
@@ -85,7 +85,7 @@ Current regression evidence from orchestrator suite:
 | ORCH-006 | Covered | security-hardening now covers unreachable endpoint plus explicit 200/404 reachable and 503 unreachable probe semantics | Extend matrix only if probe policy changes |
 | ORCH-007 | Covered | security-hardening now covers below-threshold fail, threshold-met pass, and zero-free-pages fail variants | Extend only if hugepage policy adds more profile dimensions |
 | ORCH-008 | Covered | security-hardening now covers unpinned cpuset detection plus cgroup-v2 effective cpuset accept/reject paths | Extend only if CPU affinity policy adds more cgroup sources |
-| ORCH-009 | Partial | discovery manager now prefers the Go-backed provider path with key confirmation, explicit fallback, and runtime-configurable binary invocation support | Promote provider-backed path from bridge invocation to full production discovery exchange wiring |
+| ORCH-009 | Partial | discovery manager now prefers the Go-backed provider path with key confirmation, explicit fallback, runtime-configurable binary invocation support, and explicit readiness diagnostics | Promote provider-backed path from bridge invocation to full production discovery exchange wiring |
 
 ## 2026-06-12 Regression Expansion Update
 
@@ -294,6 +294,24 @@ Validation evidence:
 
 - Command: npm --prefix agents/orchestrator test
 - Result: 7 suites, 137 tests, 137 passed
+
+## 2026-06-12 Discovery Provider Readiness Telemetry Update
+
+Extended discovery-side provider diagnostics in `agents/orchestrator/discovery/manager.js`:
+
+- discovery now logs explicit provider readiness mode/command when Go provider is ready
+- discovery now logs readiness failure timestamp and reason before session establishment fails closed
+- provider readiness status is now surfaced by `agents/orchestrator/core/go-hybrid-provider.js` for operational diagnostics
+
+Added regression coverage:
+
+- `agents/orchestrator/test/security-hardening.test.js` now validates readiness status snapshots for both pass and fail modes
+- `agents/orchestrator/test/discovery-manager.test.js` now validates fail-closed session behavior when configured provider binary is unavailable
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 138 tests, 138 passed
 
 ## 2026-06-12 ORCH-001 Provider-Seam Update
 

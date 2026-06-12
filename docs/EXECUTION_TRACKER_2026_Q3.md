@@ -185,6 +185,8 @@ WS-3.3 implementation notes:
 - Updated orchestrator regression baseline after Go provider runtime hardening wave: 7 suites, 135 tests, 135 passed.
 - Hardened Go provider readiness checks with invocation-keyed caching and deterministic fail-fast diagnostics.
 - Updated orchestrator regression baseline after Go provider readiness hardening wave: 7 suites, 137 tests, 137 passed.
+- Extended discovery provider readiness telemetry with explicit ready/failure diagnostics and fail-closed coverage.
+- Updated orchestrator regression baseline after discovery readiness telemetry wave: 7 suites, 138 tests, 138 passed.
 
 ### Testing + Readiness
 
@@ -259,3 +261,4 @@ WS-4.1 status notes:
 - 2026-06-12: Added ORCH-009 Go-backed discovery provider coverage and raised orchestrator regression evidence baseline to 134/134 pass.
 - 2026-06-12: Added Go provider runtime hardening and raised orchestrator regression evidence baseline to 135/135 pass.
 - 2026-06-12: Added Go provider readiness hardening and raised orchestrator regression evidence baseline to 137/137 pass.
+- 2026-06-12: Added discovery provider readiness telemetry hardening and raised orchestrator regression evidence baseline to 138/138 pass.

@@ -5,6 +5,12 @@ const path = require('path');
 const { DiscoveryManager } = require('../discovery/manager');
 
 describe('Discovery Manager Session Hardening', () => {
+  const envSnapshot = { ...process.env };
+
+  afterEach(() => {
+    process.env = { ...envSnapshot };
+  });
+
   test('establishSession succeeds through Go-backed provider when key confirmation digest matches peer key', async () => {
     const fixturePath = path.join(__dirname, 'fixtures/hybrid-provider-peer-public.txt');
     const peerPubkey = fs.readFileSync(fixturePath, 'utf8').trim();
@@ -63,6 +69,26 @@ describe('Discovery Manager Session Hardening', () => {
     await expect(manager.establishSession(peer.id, attestationData, peerPubkey))
       .rejects
       .toThrow('Discovery key confirmation failed: peer digest mismatch');
+
+    expect(manager.sessions.has(peer.id)).toBe(false);
+  });
+
+  test('establishSession fails with readiness diagnostics when Go provider binary is unavailable', async () => {
+    process.env.SAPM_HYBRID_KEX_BINARY = '/tmp/not-a-real-provider-binary';
+
+    const manager = new DiscoveryManager({ useGoHybridProvider: true });
+    const peerPubkey = 'peer-public-key-readiness-failure';
+    const attestationData = {
+      measurements: {
+        sha256: Buffer.from('attestation-digest').toString('base64'),
+      },
+    };
+
+    const peer = manager.discoverPeer(peerPubkey, 'https://peer.example');
+
+    await expect(manager.establishSession(peer.id, attestationData, peerPubkey))
+      .rejects
+      .toThrow('Hybrid KEX provider readiness check failed');
 
     expect(manager.sessions.has(peer.id)).toBe(false);
   });
