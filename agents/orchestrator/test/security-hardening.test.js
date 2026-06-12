@@ -172,59 +172,31 @@ describe('Orchestrator Security Hardening', () => {
   });
 
   test('loads staging attestation fixture and preserves audited digest', async () => {
-    const rawMeasurement = 'stage-pcr0-measurement';
-    const digest = crypto.createHash('sha256').update(rawMeasurement).digest('base64');
-    const fixturePath = path.join(__dirname, 'fixtures-attestation-valid.json');
+    const fixturePath = path.join(__dirname, 'fixtures/attestation-staging-valid.json');
+    const fixture = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
 
-    fs.writeFileSync(fixturePath, JSON.stringify({
-      rawMeasurement,
-      capturedAt: '2026-06-12T00:00:00.000Z',
-      platform: 'staging-tpm-node-a',
-      measurements: {
-        sha256: digest,
-        teeRuntime: 'tpm2',
-      },
-    }, null, 2));
+    const orchestrator = new Orchestrator({
+      teeRuntime: 'tpm2',
+      attestationFixturePath: fixturePath,
+    });
 
-    try {
-      const orchestrator = new Orchestrator({
-        teeRuntime: 'tpm2',
-        attestationFixturePath: fixturePath,
-      });
-
-      const attestation = await orchestrator.attestationClient.readTPM();
-      expect(attestation.measurements.sha256).toBe(digest);
-      expect(attestation.measurements.source).toBe(fixturePath);
-      expect(attestation.evidence.mode).toBe('staging-fixture');
-      expect(attestation.evidence.platform).toBe('staging-tpm-node-a');
-    } finally {
-      fs.unlinkSync(fixturePath);
-    }
+    const attestation = await orchestrator.attestationClient.readTPM();
+    expect(attestation.measurements.sha256).toBe(fixture.measurements.sha256);
+    expect(attestation.measurements.source).toBe(fixturePath);
+    expect(attestation.evidence.mode).toBe('staging-fixture');
+    expect(attestation.evidence.platform).toBe('staging-tpm-node-a');
   });
 
   test('fails closed when staging attestation fixture digest does not match raw measurement', async () => {
-    const fixturePath = path.join(__dirname, 'fixtures-attestation-invalid.json');
+    const fixturePath = path.join(__dirname, 'fixtures/attestation-staging-invalid.json');
+    const orchestrator = new Orchestrator({
+      teeRuntime: 'tpm2',
+      attestationFixturePath: fixturePath,
+    });
 
-    fs.writeFileSync(fixturePath, JSON.stringify({
-      rawMeasurement: 'stage-pcr0-measurement',
-      measurements: {
-        sha256: Buffer.from('wrong-digest').toString('base64'),
-        teeRuntime: 'tpm2',
-      },
-    }, null, 2));
-
-    try {
-      const orchestrator = new Orchestrator({
-        teeRuntime: 'tpm2',
-        attestationFixturePath: fixturePath,
-      });
-
-      await expect(orchestrator.attestationClient.readTPM())
-        .rejects
-        .toThrow(`Attestation fixture digest mismatch at ${fixturePath}`);
-    } finally {
-      fs.unlinkSync(fixturePath);
-    }
+    await expect(orchestrator.attestationClient.readTPM())
+      .rejects
+      .toThrow(`Attestation fixture digest mismatch at ${fixturePath}`);
   });
 
   test('fails peer key retrieval on endpoint timeout', async () => {

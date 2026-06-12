@@ -1,0 +1,9 @@
+{
+  "rawMeasurement": "stage-pcr0-measurement",
+  "capturedAt": "2026-06-12T00:00:00.000Z",
+  "platform": "staging-tpm-node-a",
+  "measurements": {
+    "sha256": "nsDlefbAtS0uvlroyLrKGGCaohn31niGRODYrSIsnJs=",
+    "teeRuntime": "tpm2"
+  }
+}

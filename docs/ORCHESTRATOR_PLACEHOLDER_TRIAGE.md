@@ -115,6 +115,7 @@ Added regression coverage in `agents/orchestrator/test/security-hardening.test.j
 
 - valid staging fixture ingestion preserves audited digest and evidence metadata
 - invalid fixture digest fails closed
+- committed reusable staging fixture samples now live under `agents/orchestrator/test/fixtures/`
 
 Validation evidence:
 

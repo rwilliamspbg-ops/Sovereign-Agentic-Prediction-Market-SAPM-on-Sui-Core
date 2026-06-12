@@ -160,6 +160,7 @@ WS-3.3 implementation notes:
 - Implemented ORCH-004 staging attestation fixture ingestion with digest validation and fail-closed mismatch handling.
 - Added security-hardening tests for valid staging fixture ingestion and invalid digest rejection.
 - Updated orchestrator regression baseline after ORCH-004 staging fixture wave: 7 suites, 121 tests, 121 passed.
+- Replaced ad hoc ORCH-004 temp-file fixtures with committed reusable staging attestation samples under `agents/orchestrator/test/fixtures/`.
 
 ### Testing + Readiness
 
@@ -221,3 +222,4 @@ WS-4.1 status notes:
 - 2026-06-12: Added ORCH-009 discovery key-confirmation hardening and raised orchestrator regression evidence baseline to 117/117 pass.
 - 2026-06-12: Added ORCH-001 hybrid-provider integration seam and raised orchestrator regression evidence baseline to 119/119 pass.
 - 2026-06-12: Added ORCH-004 staging attestation fixture validation and raised orchestrator regression evidence baseline to 121/121 pass.
+- 2026-06-12: Added committed ORCH-004 staging attestation fixture samples and removed temporary runtime fixture creation from tests.
