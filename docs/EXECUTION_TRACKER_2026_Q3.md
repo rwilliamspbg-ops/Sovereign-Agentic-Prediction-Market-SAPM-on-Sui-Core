@@ -149,6 +149,8 @@ WS-3.3 implementation notes:
 
 - Added regression test mapping table tying each ORCH ID to current test evidence and missing tests.
 - Captured orchestrator regression baseline: `npm --prefix agents/orchestrator test` => 6 suites, 109 tests, 109 passed.
+- Expanded security-hardening regression fixtures for peer-key endpoint resilience and resource guard checks.
+- Updated orchestrator regression baseline after expansion: 6 suites, 115 tests, 115 passed.
 
 ### Testing + Readiness
 
@@ -200,3 +202,4 @@ WS-4.1 status notes:
 - 2026-06-12: Completed WS-3.1 by reconciling ORCH placeholder ledger with current orchestrator/discovery code paths.
 - 2026-06-12: Completed WS-3.2 by defining first placeholder-closure wave with priority, owner, and date.
 - 2026-06-12: Completed WS-3.3 by mapping ORCH items to regression coverage and recording current orchestrator test baseline (109/109 pass).
+- 2026-06-12: Added WS-3 regression expansion fixtures and updated orchestrator test evidence baseline to 115/115 pass.
