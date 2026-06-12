@@ -177,6 +177,10 @@ jobs:
 
   critical-path-summary:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ vars.FLAKE_GATING != 'true' }}
+    env:
+      FLAKE_RATE_MAX: ${{ vars.FLAKE_RATE_MAX || '0.0500' }}
+      FLAKE_PROBE_RUNS: ${{ vars.FLAKE_PROBE_RUNS || '3' }}
     needs:
       - release-check
       - frontend-prod-gate
@@ -198,12 +202,36 @@ jobs:
         run: |
           chmod +x scripts/compute_test_flake_rate.sh
           scripts/compute_test_flake_rate.sh
+      - name: Enforce flake-rate threshold
+        run: |
+          if [[ ! -f artifacts/ci-logs/flake-rate.json ]]; then
+            echo "Missing flake-rate report at artifacts/ci-logs/flake-rate.json"
+            exit 1
+          fi
+
+          ACTUAL=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.flakeRate));")
+          MAX_ALLOWED="${FLAKE_RATE_MAX}"
+
+          if ! node -e "const actual=Number(process.argv[1]);const max=Number(process.argv[2]); if (!Number.isFinite(actual) || !Number.isFinite(max)) { process.exit(2); } process.exit(actual <= max ? 0 : 1);" "$ACTUAL" "$MAX_ALLOWED"; then
+            STATUS=$?
+            if [[ "$STATUS" -eq 2 ]]; then
+              echo "Invalid flake threshold values: actual=${ACTUAL}, max=${MAX_ALLOWED}"
+              exit 1
+            fi
+
+            echo "Flake threshold exceeded: actual=${ACTUAL} max=${MAX_ALLOWED}"
+            exit 1
+          fi
+
+          echo "Flake threshold check passed: actual=${ACTUAL} max=${MAX_ALLOWED}"
       - name: Generate critical-path status summary
         run: |
           mkdir -p artifacts/ci-logs
           FLAKE_RATE="n/a"
           FLAKE_RUNS="n/a"
           FLAKE_FAILURES="n/a"
+          FLAKE_THRESHOLD="${FLAKE_RATE_MAX}"
+          FLAKE_GATING_MODE="${{ vars.FLAKE_GATING == 'true' && 'enforced' || 'warn-only' }}"
           if [[ -f artifacts/ci-logs/flake-rate.json ]]; then
             FLAKE_RATE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.flakeRate));")
             FLAKE_RUNS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.probeRuns));")
@@ -238,10 +266,14 @@ jobs:
 
           | Metric | Value |
           | --- | --- |
+          | Flake gating mode | __FLAKE_GATING_MODE__ |
+          | Max allowed flake rate | __FLAKE_THRESHOLD__ |
           | Orchestrator probe runs | __FLAKE_RUNS__ |
           | Orchestrator probe failures | __FLAKE_FAILURES__ |
           | Orchestrator flake rate | __FLAKE_RATE__ |
           EOF
+          sed -i "s/__FLAKE_GATING_MODE__/${FLAKE_GATING_MODE}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__FLAKE_THRESHOLD__/${FLAKE_THRESHOLD}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__FLAKE_RATE__/${FLAKE_RATE}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__FLAKE_RUNS__/${FLAKE_RUNS}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__FLAKE_FAILURES__/${FLAKE_FAILURES}/g" artifacts/ci-logs/critical-path-summary.md
