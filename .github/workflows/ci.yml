@@ -14,6 +14,32 @@ permissions:
   contents: read
 
 jobs:
+  governance-policy:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ vars.GOVERNANCE_POLICY_GATING != 'true' }}
+    env:
+      GOVERNANCE_POLICY_GATING: ${{ vars.GOVERNANCE_POLICY_GATING || 'false' }}
+      GOVERNANCE_BRANCH: ${{ vars.GOVERNANCE_BRANCH || 'main' }}
+      MIN_REQUIRED_STATUS_CHECKS: ${{ vars.MIN_REQUIRED_STATUS_CHECKS || '3' }}
+      REQUIRED_STATUS_CHECKS: ${{ vars.REQUIRED_STATUS_CHECKS || 'release-check,frontend-prod-gate,orchestrator-tests,resilience-tests' }}
+      GOVERNANCE_POLICY_REPORT_PATH: artifacts/ci-logs/governance-policy-check.json
+    steps:
+      - uses: actions/checkout@v4
+      - name: Evaluate GitHub governance policy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p artifacts/ci-logs
+          GOVERNANCE_POLICY_GATING_MODE="${{ vars.GOVERNANCE_POLICY_GATING == 'true' && 'enforced' || 'warn-only' }}" \
+            node scripts/check_github_governance_policy.js
+      - name: Upload governance policy artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-policy-check
+          path: artifacts/ci-logs/governance-policy-check.json
+          if-no-files-found: warn
+
   secrets-scan:
     runs-on: ubuntu-latest
     steps:
@@ -259,6 +285,7 @@ jobs:
       LIFECYCLE_MIN_RETRY_BACKOFF_MS: ${{ vars.LIFECYCLE_MIN_RETRY_BACKOFF_MS || '0' }}
       LIFECYCLE_MAX_RETRY_BACKOFF_MS: ${{ vars.LIFECYCLE_MAX_RETRY_BACKOFF_MS || '1000' }}
     needs:
+      - governance-policy
       - release-check
       - frontend-prod-gate
       - unit-tests
@@ -331,6 +358,11 @@ jobs:
           LOAD_SUCCESS_RATE="n/a"
           LOAD_RPS="n/a"
           LOAD_P99="n/a"
+          GOV_POLICY_MODE="${{ vars.GOVERNANCE_POLICY_GATING == 'true' && 'enforced' || 'warn-only' }}"
+          GOV_POLICY_PASS="n/a"
+          GOV_BRANCH_PROTECTED="n/a"
+          GOV_SIGNED_COMMITS="n/a"
+          GOV_REQUIRED_CHECKS="n/a"
           SOAK_PASSED="n/a"
           SOAK_ITERATIONS="n/a"
           SOAK_SUCCESS_RATE="n/a"
@@ -368,6 +400,13 @@ jobs:
             RESILIENCE_POLICY_MODE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-policy-check.json','utf8'));process.stdout.write(String(j.mode));")
             RESILIENCE_POLICY_PASS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-policy-check.json','utf8'));process.stdout.write(String(j.passed));")
           fi
+          if [[ -f artifacts/ci-logs/governance-policy-check.json ]]; then
+            GOV_POLICY_MODE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/governance-policy-check.json','utf8'));process.stdout.write(String(j.mode));")
+            GOV_POLICY_PASS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/governance-policy-check.json','utf8'));process.stdout.write(String(j.passed));")
+            GOV_BRANCH_PROTECTED=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/governance-policy-check.json','utf8'));const c=j.checks.find(x=>x.name==='branchProtectionEnabled');process.stdout.write(String(c?c.actual:'n/a'));")
+            GOV_SIGNED_COMMITS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/governance-policy-check.json','utf8'));const c=j.checks.find(x=>x.name==='signedCommitsRequired');process.stdout.write(String(c?c.actual:'n/a'));")
+            GOV_REQUIRED_CHECKS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/governance-policy-check.json','utf8'));process.stdout.write(String((j.observedChecks||[]).length));")
+          fi
           if [[ -f artifacts/ci-logs/orchestrator-lifecycle-summary.json ]]; then
             LIFECYCLE_PREFLIGHT=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.healthPreflightGate));")
             LIFECYCLE_RESTART_ENFORCED=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.restartBudgetEnforced));")
@@ -394,6 +433,7 @@ jobs:
           | unit-tests | ${{ needs.unit-tests.result }} |
           | orchestrator-tests | ${{ needs.orchestrator-tests.result }} |
           | resilience-tests | ${{ needs.resilience-tests.result }} |
+          | governance-policy | ${{ needs.governance-policy.result }} |
 
           ## Critical-Path Mapping
 
@@ -404,6 +444,16 @@ jobs:
           | Trade execution resilience | resilience-tests | ${{ needs.resilience-tests.result }} |
           | Settlement and post-trade integrity | release-check + unit-tests | ${{ needs.release-check.result }} / ${{ needs.unit-tests.result }} |
           | Failure recovery and rollback readiness | release-check + resilience-tests | ${{ needs.release-check.result }} / ${{ needs.resilience-tests.result }} |
+
+          ## Governance Policy Gate
+
+          | Metric | Value |
+          | --- | --- |
+          | Governance policy gating mode | __GOV_POLICY_MODE__ |
+          | Governance policy checks passed | __GOV_POLICY_PASS__ |
+          | Branch protection enabled | __GOV_BRANCH_PROTECTED__ |
+          | Signed commits required | __GOV_SIGNED_COMMITS__ |
+          | Required status checks count | __GOV_REQUIRED_CHECKS__ |
 
           ## Flake-Rate Probe
 
@@ -467,6 +517,11 @@ jobs:
           sed -i "s/__LOAD_SUCCESS_RATE__/${LOAD_SUCCESS_RATE}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__LOAD_RPS__/${LOAD_RPS}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__LOAD_P99__/${LOAD_P99}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__GOV_POLICY_MODE__/${GOV_POLICY_MODE}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__GOV_POLICY_PASS__/${GOV_POLICY_PASS}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__GOV_BRANCH_PROTECTED__/${GOV_BRANCH_PROTECTED}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__GOV_SIGNED_COMMITS__/${GOV_SIGNED_COMMITS}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__GOV_REQUIRED_CHECKS__/${GOV_REQUIRED_CHECKS}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__SOAK_PASSED__/${SOAK_PASSED}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__SOAK_ITERATIONS__/${SOAK_ITERATIONS}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__SOAK_SUCCESS_RATE__/${SOAK_SUCCESS_RATE}/g" artifacts/ci-logs/critical-path-summary.md
