@@ -73,11 +73,11 @@ Wave objective: close the highest risk security and cryptographic gaps before br
 Current regression evidence from orchestrator suite:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 135 tests, 135 passed (2026-06-12)
+- Result: 7 suites, 137 tests, 137 passed (2026-06-12)
 
 | ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
 | --- | --- | --- | --- |
-| ORCH-001 | Partial | security-hardening now includes deterministic seam coverage, a real Go-backed provider bridge, and explicit binary-path runtime configuration support | Promote bridge from `go run` default to production binary lifecycle/telemetry |
+| ORCH-001 | Partial | security-hardening now includes deterministic seam coverage, a real Go-backed provider bridge, explicit binary-path runtime configuration support, and provider readiness fail-fast diagnostics | Promote bridge from `go run` default to production binary lifecycle/telemetry |
 | ORCH-002 | Covered | security-hardening now covers MAC tamper and missing-attestation-digest fail-closed verification paths | Keep CI baseline current as proof verification logic evolves |
 | ORCH-003 | Covered | security-hardening now includes signed peer-key accept/reject paths plus a live local HTTP registry-style endpoint verification test | Add broader registry auth fixture parity if production payload schema expands |
 | ORCH-004 | Partial | security-hardening now covers validated staging attestation fixture ingestion and digest-mismatch fail-closed behavior | Capture hardware-backed staging evidence artifact and verify real TPM/TEE measurement ingestion |
@@ -276,6 +276,24 @@ Validation evidence:
 
 - Command: npm --prefix agents/orchestrator test
 - Result: 7 suites, 135 tests, 135 passed
+
+## 2026-06-12 Go Provider Readiness Hardening Update
+
+Hardened provider readiness behavior in `agents/orchestrator/core/go-hybrid-provider.js`:
+
+- added cached provider readiness checks keyed by invocation shape
+- added fail-fast readiness probes for both `go run` and explicit binary execution modes
+- added deterministic error wrapping for operator-facing diagnostics when provider readiness fails
+
+Added regression coverage in `agents/orchestrator/test/security-hardening.test.js`:
+
+- readiness cache behavior is validated for repeated readiness calls
+- invalid provider binary path fails closed with deterministic readiness diagnostics
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 137 tests, 137 passed
 
 ## 2026-06-12 ORCH-001 Provider-Seam Update
 

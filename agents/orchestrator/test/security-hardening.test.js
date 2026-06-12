@@ -12,6 +12,32 @@ describe('Orchestrator Security Hardening', () => {
 
   afterEach(() => {
     process.env = { ...envSnapshot };
+    goHybridProvider.resetProviderReadinessCache();
+  });
+
+  test('performs Go provider readiness check once per invocation shape', async () => {
+    const [first, second] = await Promise.all([
+      goHybridProvider.ensureProviderReady(),
+      goHybridProvider.ensureProviderReady(),
+    ]);
+
+    expect(second).toEqual(first);
+    expect(first).toEqual(expect.objectContaining({
+      mode: expect.any(String),
+      command: expect.any(String),
+    }));
+  });
+
+  test('fails closed with deterministic diagnostics when Go provider readiness check fails', async () => {
+    process.env.SAPM_HYBRID_KEX_BINARY = '/tmp/not-a-real-provider-binary';
+
+    await expect(
+      goHybridProvider.deriveSession({
+        attestationDigest: crypto.randomBytes(32),
+        peerPublicKey: Buffer.from('peer-public-key-readiness-fail', 'utf8'),
+        algorithm: 'x25519-mlkem768',
+      }),
+    ).rejects.toThrow('Hybrid KEX provider readiness check failed');
   });
 
   test('builds Go hybrid provider command from explicit binary path when configured', () => {
