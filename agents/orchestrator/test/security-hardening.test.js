@@ -190,6 +190,28 @@ describe('Orchestrator Security Hardening', () => {
     expect(proofValid).toBe(true);
   });
 
+  test('uses Go-backed hybrid provider bridge through ORCH-001 seam', async () => {
+    const fixturePath = path.join(__dirname, 'fixtures/hybrid-provider-peer-public.txt');
+    const peerPublicKey = fs.readFileSync(fixturePath, 'utf8').trim();
+    const attestationDigest = crypto.randomBytes(32).toString('base64');
+
+    const orchestrator = new Orchestrator({
+      hybridKexProvider: require('../core/go-hybrid-provider'),
+    });
+
+    const session = await orchestrator.cryptoProvider.hybridKeyExchange(
+      { measurements: { sha256: attestationDigest } },
+      peerPublicKey,
+    );
+
+    orchestrator.cryptoProvider.config.attestationDigestB64 = attestationDigest;
+
+    expect(session.algorithm).toBe('x25519-mlkem768-go-bridge');
+    expect(typeof session.peerKeyDigest).toBe('string');
+    expect(session.peerKeyDigest.length).toBeGreaterThan(0);
+    await expect(orchestrator.cryptoProvider.verifyKeyDerivationProof(session)).resolves.toBe(true);
+  });
+
   test('fails closed when injected hybrid KEX provider returns invalid session key length', async () => {
     const orchestrator = new Orchestrator({
       hybridKexProvider: {

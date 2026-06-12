@@ -73,11 +73,11 @@ Wave objective: close the highest risk security and cryptographic gaps before br
 Current regression evidence from orchestrator suite:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 132 tests, 132 passed (2026-06-12)
+- Result: 7 suites, 133 tests, 133 passed (2026-06-12)
 
 | ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
 | --- | --- | --- | --- |
-| ORCH-001 | Partial | security-hardening now includes deterministic provider-seam fixture plus fail-closed invalid session-key length test | Integrate audited x25519-mlkem768 provider implementation through configured seam |
+| ORCH-001 | Partial | security-hardening now includes deterministic seam coverage plus a real Go-backed x25519-mlkem768 provider bridge test through the configured seam | Extend provider bridge from test-backed integration to production runtime wiring |
 | ORCH-002 | Covered | security-hardening now covers MAC tamper and missing-attestation-digest fail-closed verification paths | Keep CI baseline current as proof verification logic evolves |
 | ORCH-003 | Covered | security-hardening now includes signed peer-key accept/reject paths plus a live local HTTP registry-style endpoint verification test | Add broader registry auth fixture parity if production payload schema expands |
 | ORCH-004 | Partial | security-hardening now covers validated staging attestation fixture ingestion and digest-mismatch fail-closed behavior | Capture hardware-backed staging evidence artifact and verify real TPM/TEE measurement ingestion |
@@ -222,6 +222,24 @@ Validation evidence:
 
 - Command: npm --prefix agents/orchestrator test
 - Result: 7 suites, 132 tests, 132 passed
+
+## 2026-06-12 ORCH-001 Go-Backed Provider Bridge Update
+
+Implemented the first real provider-backed ORCH-001 integration step:
+
+- extended `cmd/kexcli/main.go` with provider-oriented `export-public` and `derive-session` modes
+- added `agents/orchestrator/core/go-hybrid-provider.js` to invoke the Go bridge through the existing provider seam
+- added committed peer public fixture at `agents/orchestrator/test/fixtures/hybrid-provider-peer-public.txt`
+
+Added regression coverage in `agents/orchestrator/test/security-hardening.test.js`:
+
+- orchestrator now validates a Go-backed x25519-mlkem768 provider path through `CryptoProvider.hybridKeyExchange`
+- proof verification succeeds with provider-derived session material
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 133 tests, 133 passed
 
 ## 2026-06-12 ORCH-001 Provider-Seam Update
 
