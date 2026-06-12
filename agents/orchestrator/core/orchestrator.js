@@ -197,6 +197,13 @@ class CryptoProvider {
     const attestationDigest = Buffer.from(attestationData.measurements.sha256, 'base64');
 
     if (this.hybridProvider) {
+      if (typeof this.hybridProvider.healthCheckProviderLifecycle === 'function') {
+        const health = await this.hybridProvider.healthCheckProviderLifecycle();
+        if (!health?.ok) {
+          throw new Error(`Hybrid KEX provider lifecycle health check failed: ${health?.error || 'unknown health check failure'}`);
+        }
+      }
+
       const providerResult = await this.hybridProvider.deriveSession({
         attestationDigest,
         peerPublicKey,

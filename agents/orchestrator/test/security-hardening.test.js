@@ -228,6 +228,37 @@ echo '{"algorithm":"x25519-mlkem768-go-bridge","sessionKey":"AAAAAAAAAAAAAAAAAAA
     ]);
   });
 
+  test('fails closed when orchestrator hybrid provider lifecycle health preflight is degraded', async () => {
+    const deriveSession = jest.fn();
+    const healthCheckProviderLifecycle = jest.fn().mockResolvedValue({
+      ok: false,
+      error: 'forced-orchestrator-provider-unhealthy',
+    });
+
+    const orchestrator = new Orchestrator({
+      hybridKexProvider: {
+        deriveSession,
+        healthCheckProviderLifecycle,
+      },
+    });
+
+    const attestation = {
+      measurements: {
+        sha256: crypto.randomBytes(32).toString('base64'),
+      },
+    };
+
+    await expect(
+      orchestrator.cryptoProvider.hybridKeyExchange(
+        attestation,
+        Buffer.from('peer-public-key').toString('base64'),
+      ),
+    ).rejects.toThrow('Hybrid KEX provider lifecycle health check failed: forced-orchestrator-provider-unhealthy');
+
+    expect(healthCheckProviderLifecycle).toHaveBeenCalled();
+    expect(deriveSession).not.toHaveBeenCalled();
+  });
+
   test('rejects invalid peer key signature when signed mode is enabled', async () => {
     const { publicKey } = crypto.generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
     const orchestrator = new Orchestrator({

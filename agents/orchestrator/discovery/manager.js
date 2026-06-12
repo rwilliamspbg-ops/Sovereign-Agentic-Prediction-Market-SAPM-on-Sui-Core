@@ -190,6 +190,13 @@ class DiscoveryManager {
     if (useGoHybridProvider) {
       let providerResult;
       try {
+        if (typeof goHybridProvider.healthCheckProviderLifecycle === 'function') {
+          const health = await goHybridProvider.healthCheckProviderLifecycle();
+          if (!health?.ok) {
+            throw new Error(`Discovery provider lifecycle health check failed: ${health?.error || 'unknown health check failure'}`);
+          }
+        }
+
         providerResult = await goHybridProvider.deriveSession({
           attestationDigest: Buffer.from(digestB64, 'base64'),
           peerPublicKey: Buffer.from(peerKey, 'utf8'),

@@ -193,6 +193,8 @@ WS-3.3 implementation notes:
 - Updated orchestrator regression baseline after provider recovery policy wave: 7 suites, 141 tests, 141 passed.
 - Added explicit provider lifecycle controller APIs with restart-budget enforcement and lifecycle health telemetry.
 - Updated orchestrator regression baseline after provider lifecycle-controller wave: 7 suites, 143 tests, 143 passed.
+- Added lifecycle health preflight fail-closed gates in discovery/orchestrator provider call paths.
+- Updated orchestrator regression baseline after lifecycle preflight gating wave: 7 suites, 145 tests, 145 passed.
 
 ### Testing + Readiness
 
@@ -271,3 +273,4 @@ WS-4.1 status notes:
 - 2026-06-12: Added provider runtime classification hardening and raised orchestrator regression evidence baseline to 139/139 pass.
 - 2026-06-12: Added provider recovery policy hardening and raised orchestrator regression evidence baseline to 141/141 pass.
 - 2026-06-12: Added provider lifecycle-controller hardening and raised orchestrator regression evidence baseline to 143/143 pass.
+- 2026-06-12: Added lifecycle preflight gating hardening and raised orchestrator regression evidence baseline to 145/145 pass.

@@ -73,11 +73,11 @@ Wave objective: close the highest risk security and cryptographic gaps before br
 Current regression evidence from orchestrator suite:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 143 tests, 143 passed (2026-06-12)
+- Result: 7 suites, 145 tests, 145 passed (2026-06-12)
 
 | ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
 | --- | --- | --- | --- |
-| ORCH-001 | Partial | security-hardening now includes deterministic seam coverage, a real Go-backed provider bridge, explicit binary-path runtime configuration support, provider readiness fail-fast diagnostics, derive-session failure classification telemetry, bounded retry/recovery policy, and lifecycle-controller APIs with restart-budget enforcement | Promote bridge from `go run` default to production binary lifecycle/telemetry |
+| ORCH-001 | Partial | security-hardening now includes deterministic seam coverage, a real Go-backed provider bridge, explicit binary-path runtime configuration support, provider readiness fail-fast diagnostics, derive-session failure classification telemetry, bounded retry/recovery policy, lifecycle-controller APIs with restart-budget enforcement, and lifecycle health preflight gates in orchestrator session establishment | Promote bridge from `go run` default to production binary lifecycle/telemetry |
 | ORCH-002 | Covered | security-hardening now covers MAC tamper and missing-attestation-digest fail-closed verification paths | Keep CI baseline current as proof verification logic evolves |
 | ORCH-003 | Covered | security-hardening now includes signed peer-key accept/reject paths plus a live local HTTP registry-style endpoint verification test | Add broader registry auth fixture parity if production payload schema expands |
 | ORCH-004 | Partial | security-hardening now covers validated staging attestation fixture ingestion and digest-mismatch fail-closed behavior | Capture hardware-backed staging evidence artifact and verify real TPM/TEE measurement ingestion |
@@ -85,7 +85,7 @@ Current regression evidence from orchestrator suite:
 | ORCH-006 | Covered | security-hardening now covers unreachable endpoint plus explicit 200/404 reachable and 503 unreachable probe semantics | Extend matrix only if probe policy changes |
 | ORCH-007 | Covered | security-hardening now covers below-threshold fail, threshold-met pass, and zero-free-pages fail variants | Extend only if hugepage policy adds more profile dimensions |
 | ORCH-008 | Covered | security-hardening now covers unpinned cpuset detection plus cgroup-v2 effective cpuset accept/reject paths | Extend only if CPU affinity policy adds more cgroup sources |
-| ORCH-009 | Partial | discovery manager now prefers the Go-backed provider path with key confirmation, explicit fallback, runtime-configurable binary invocation support, readiness diagnostics, runtime error-category telemetry, recovery-aware provider runtime signals, and lifecycle-aware health state exposure | Promote provider-backed path from bridge invocation to full production discovery exchange wiring |
+| ORCH-009 | Partial | discovery manager now prefers the Go-backed provider path with key confirmation, explicit fallback, runtime-configurable binary invocation support, readiness diagnostics, runtime error-category telemetry, recovery-aware provider runtime signals, lifecycle-aware health state exposure, and fail-closed lifecycle preflight gating | Promote provider-backed path from bridge invocation to full production discovery exchange wiring |
 
 ## 2026-06-12 Regression Expansion Update
 
@@ -371,6 +371,23 @@ Validation evidence:
 
 - Command: npm --prefix agents/orchestrator test
 - Result: 7 suites, 143 tests, 143 passed
+
+## 2026-06-12 Lifecycle Preflight Gating Update
+
+Extended lifecycle preflight enforcement in provider call sites:
+
+- `agents/orchestrator/discovery/manager.js` now runs provider lifecycle health check before derive-session and fails closed if unhealthy
+- `agents/orchestrator/core/orchestrator.js` now runs hybrid provider lifecycle health preflight before invoking provider derive-session
+
+Added regression coverage:
+
+- `agents/orchestrator/test/discovery-manager.test.js` now validates fail-closed behavior when discovery lifecycle preflight health is degraded
+- `agents/orchestrator/test/security-hardening.test.js` now validates fail-closed behavior when orchestrator provider lifecycle preflight is degraded
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 145 tests, 145 passed
 
 ## 2026-06-12 ORCH-001 Provider-Seam Update
 
