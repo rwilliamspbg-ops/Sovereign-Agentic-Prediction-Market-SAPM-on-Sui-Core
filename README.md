@@ -72,13 +72,18 @@ Why Sui? Object-centric model, Programmable Transaction Blocks (PTBs), native De
 ##Integrated Ecosystem
 ---
 <div align="center">
-  <a href="https://deepsurge.ai" target="_blank"><img src="docs/assets/deepsurge-logo.svg" alt="DeepSurge" height="80" /></a>
-     
-  <a href="https://sui.io" target="_blank"><img src="frontend/public/sui-logo.svg" alt="Sui" height="80" /></a>
-     
-  <a href="https://docs.sui.io/onchain-finance/deepbookv3/deepbook" target="_blank"><img src="frontend/public/deepbook-logo.svg" alt="DeepBook" height="80" /></a>
-     
-  <a href="https://docs.wal.app" target="_blank"><img src="frontend/public/walrus-logo.svg" alt="Walrus" height="80" /></a>
+  <a href="https://deepsurge.ai" target="_blank">
+    <img src="docs/assets/deepsurge-logo.svg" alt="DeepSurge" style="height: 60px; margin: 0 15px; vertical-align: middle;" />
+  </a>
+  <a href="https://sui.io" target="_blank">
+    <img src="frontend/public/sui-logo.svg" alt="Sui" style="height: 60px; margin: 0 15px; vertical-align: middle;" />
+  </a>
+  <a href="https://docs.sui.io/onchain-finance/deepbookv3/deepbook" target="_blank">
+    <img src="frontend/public/deepbook-logo.svg" alt="DeepBook" style="height: 60px; margin: 0 15px; vertical-align: middle;" />
+  </a>
+  <a href="https://docs.wal.app" target="_blank">
+    <img src="frontend/public/walrus-logo.svg" alt="Walrus" style="height: 60px; margin: 0 15px; vertical-align: middle;" />
+  </a>
 </div>
 
 Sui Overflow 2026 Target Tracks: Agentic Web (Core), DeFi & Payments (Core), DeepBook, Walrus.
