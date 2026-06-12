@@ -197,16 +197,18 @@ class DiscoveryManager {
         });
 
         const readiness = goHybridProvider.getProviderReadinessStatus();
+        const runtimeState = goHybridProvider.getProviderRuntimeState();
         if (readiness?.ok) {
           console.log(
-            `[DiscoveryManager] Go provider ready (${readiness.mode}) via ${readiness.command}`,
+            `[DiscoveryManager] Go provider ready (${readiness.mode}) via ${readiness.command}; runtime mode=${runtimeState.executionMode}, deriveCalls=${runtimeState.deriveCalls}`,
           );
         }
       } catch (error) {
         const readiness = goHybridProvider.getProviderReadinessStatus();
+        const runtimeState = goHybridProvider.getProviderRuntimeState();
         if (readiness && readiness.ok === false) {
           console.error(
-            `[DiscoveryManager] Go provider readiness failed at ${readiness.checkedAt}: ${readiness.error}`,
+            `[DiscoveryManager] Go provider readiness failed at ${readiness.checkedAt}: ${readiness.error}; lastErrorCategory=${runtimeState.lastErrorCategory || 'unknown'}`,
           );
         }
         throw error;

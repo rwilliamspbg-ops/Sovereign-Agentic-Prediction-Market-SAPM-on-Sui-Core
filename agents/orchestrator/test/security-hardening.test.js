@@ -45,7 +45,7 @@ describe('Orchestrator Security Hardening', () => {
         peerPublicKey: Buffer.from('peer-public-key-readiness-fail', 'utf8'),
         algorithm: 'x25519-mlkem768',
       }),
-    ).rejects.toThrow('Hybrid KEX provider readiness check failed');
+    ).rejects.toThrow('Hybrid KEX provider derive-session failed [readiness_failed]');
 
     const status = goHybridProvider.getProviderReadinessStatus();
     expect(status).toEqual(expect.objectContaining({
@@ -53,6 +53,34 @@ describe('Orchestrator Security Hardening', () => {
       checkedAt: expect.any(String),
       error: expect.any(String),
     }));
+
+    const runtimeState = goHybridProvider.getProviderRuntimeState();
+    expect(runtimeState).toEqual(expect.objectContaining({
+      deriveCalls: 1,
+      lastErrorCategory: 'readiness_failed',
+      lastDurationMs: expect.any(Number),
+    }));
+  });
+
+  test('classifies invalid provider payload as invalid_payload with runtime telemetry', async () => {
+    const scriptPath = path.join('/tmp', `sapm-invalid-provider-${Date.now()}.sh`);
+    fs.writeFileSync(scriptPath, '#!/usr/bin/env bash\necho "{}"\n', { mode: 0o755 });
+    process.env.SAPM_HYBRID_KEX_BINARY = scriptPath;
+
+    try {
+      await expect(
+        goHybridProvider.deriveSession({
+          attestationDigest: crypto.randomBytes(32),
+          peerPublicKey: Buffer.from('peer-public-key-invalid-payload', 'utf8'),
+          algorithm: 'x25519-mlkem768',
+        }),
+      ).rejects.toThrow('Hybrid KEX provider derive-session failed [invalid_payload]');
+
+      const runtimeState = goHybridProvider.getProviderRuntimeState();
+      expect(runtimeState.lastErrorCategory).toBe('invalid_payload');
+    } finally {
+      fs.rmSync(scriptPath, { force: true });
+    }
   });
 
   test('builds Go hybrid provider command from explicit binary path when configured', () => {

@@ -3,12 +3,14 @@
 const fs = require('fs');
 const path = require('path');
 const { DiscoveryManager } = require('../discovery/manager');
+const goHybridProvider = require('../core/go-hybrid-provider');
 
 describe('Discovery Manager Session Hardening', () => {
   const envSnapshot = { ...process.env };
 
   afterEach(() => {
     process.env = { ...envSnapshot };
+    goHybridProvider.resetProviderReadinessCache();
   });
 
   test('establishSession succeeds through Go-backed provider when key confirmation digest matches peer key', async () => {
@@ -88,8 +90,11 @@ describe('Discovery Manager Session Hardening', () => {
 
     await expect(manager.establishSession(peer.id, attestationData, peerPubkey))
       .rejects
-      .toThrow('Hybrid KEX provider readiness check failed');
+      .toThrow('Hybrid KEX provider derive-session failed [readiness_failed]');
 
     expect(manager.sessions.has(peer.id)).toBe(false);
+
+    const runtimeState = goHybridProvider.getProviderRuntimeState();
+    expect(runtimeState.lastErrorCategory).toBe('readiness_failed');
   });
 });
