@@ -127,15 +127,7 @@ Fail-proof demo checks:
 4. After any `.env.local` change, restart the frontend server.
 
 ---
-Verified Deployment (Sui Testnet)Package ID: 0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188Use these values in frontend/.env.local:
 
-```
-env
-
-NEXT_PUBLIC_SUI_PACKAGE_ID=0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188
-NEXT_PUBLIC_SUI_NETWORK=testnet
-# NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS=... (optional)
-```
 Full transaction history and artifacts available in docs/artifacts/.
 
 [![Video: Click thumbnail to play](https://img.youtube.com/vi/CEEmdBJklB0/hqdefault.jpg)](https://www.youtube.com/watch?v=CEEmdBJklB0)
