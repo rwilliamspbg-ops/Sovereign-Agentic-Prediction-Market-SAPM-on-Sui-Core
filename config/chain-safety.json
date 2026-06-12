@@ -40,5 +40,12 @@
     "required": true,
     "dryRunBeforeSubmit": true,
     "description": "All transactions must pass dryRun preflight before mainnet submission"
+  },
+  "replayProtection": {
+    "enforced": true,
+    "mechanism": "Sui PTB object version locking — each transaction references specific object versions. Replaying a captured tx will fail with ObjectVersionUnavailableForConsumption once the object version advances.",
+    "agentGuard": "Agent state machine tracks last-submitted digest per market/round and rejects duplicate submissions for the same round ID.",
+    "nonceValidation": "Chain enforces sequence via object versioning; agent additionally validates round-scoped idempotency before PTB construction.",
+    "description": "Replay protection is enforced at both chain (object version lock) and agent (round-scoped idempotency guard) layers"
   }
 }

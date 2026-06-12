@@ -19,11 +19,11 @@ Tracking fields:
 
 ## 2. Architecture And Threat Model
 
-- [ ] Current architecture diagram reviewed and approved.
-- [ ] Threat model completed for agent runtime, wallet management, and on-chain execution.
-- [ ] Trust boundaries explicitly documented (agent node, RPC, faucet, signing service).
-- [ ] Abuse cases documented (model poisoning, sybil coordination, key theft, replay attempts).
-- [ ] Controls mapped to each identified critical threat.
+- [x] Current architecture diagram reviewed and approved.
+- [x] Threat model completed for agent runtime, wallet management, and on-chain execution.
+- [x] Trust boundaries explicitly documented (agent node, RPC, faucet, signing service).
+- [x] Abuse cases documented (model poisoning, sybil coordination, key theft, replay attempts).
+- [x] Controls mapped to each identified critical threat.
 
 ## 3. Identity, Keys, And Secrets
 
@@ -38,19 +38,19 @@ Tracking fields:
 
 - [x] Explicit network allowlist configured (devnet/testnet/mainnet separation).
 - [x] Gas budget, slippage, and risk limits enforced in transaction pipeline.
-- [ ] Transaction simulation/preflight checks required before execution.
-- [ ] Replay protection and nonce/state validation implemented.
+- [x] Transaction simulation/preflight checks required before execution.
+- [x] Replay protection and nonce/state validation implemented.
 - [x] Failed transaction retry policy bounded and idempotent.
-- [ ] On-chain object ownership and capability checks covered by tests.
+- [x] On-chain object ownership and capability checks covered by tests.
 
 ## 5. Agent Runtime And Model Safety
 
-- [ ] Deterministic build and runtime dependencies pinned.
-- [ ] Input validation and schema checks enforced at boundaries.
+- [x] Deterministic build and runtime dependencies pinned.
+- [x] Input validation and schema checks enforced at boundaries.
 - [ ] Sandboxing/resource limits applied to model and agent processes.
 - [ ] Byzantine-tolerance assumptions validated under adversarial tests.
 - [ ] Reputation/slashing logic tested for false positives and evasion paths.
-- [ ] Fallback strategy defined when model confidence is low or conflicting.
+- [x] Fallback strategy defined when model confidence is low or conflicting.
 
 ## 6. Infrastructure, Reliability, And SLOs
 
