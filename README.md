@@ -56,32 +56,31 @@ graph TB
 ```
 ---
 
-## SAPM is a sovereign, high-performance prediction market aggregator built natively on Sui. By combining low-latency agentic orchestration, mathematical formal verification, and Byzantine fault tolerance, SAPM delivers a resilient, quantum-resistant infrastructure tailored for decentralized AI agents and predictive routing.
+##What is SAPM?
+SAPM is a fully sovereign, agentic prediction market platform built natively on Sui. It enables autonomous AI agents to discover markets, generate forecasts, execute trades via DeepBook, and archive decisions immutably on Walrus — all with formal verification guarantees.Key CapabilitiesAutonomous Agent Stack — Trader, Aggregator (Multi-Krum), and Orchestrator agents with on-chain reputation and slashing
+DeepBook Integration — Limit orders, cancel/replace, open order tracking, and balance preflights
+Walrus Archival — Every market snapshot and trade decision published as verifiable blobs with SHA-256 manifests
+Lean 4 Formal Verification — BFT safety/liveness, Multi-Krum correctness, hybrid PQC proofs, and oracle invariants
+Judge Mode — One-click on-chain verification and trade execution for any market object ID
 
+Why Sui? Object-centric model, Programmable Transaction Blocks (PTBs), native DeepBook + Walrus integration, and shared objects for global registry visibility.
 
 <!-- markdownlint-disable MD060 -->
 
 
-## Integrated Ecosystem
+##Integrated Ecosystem<div align="center">
+  <a href="https://deepsurge.ai" target="_blank"><img src="docs/assets/deepsurge-logo.svg" alt="DeepSurge" height="52" /></a>
+     
+  <a href="https://sui.io" target="_blank"><img src="frontend/public/sui-logo.svg" alt="Sui" height="52" /></a>
+     
+  <a href="https://docs.sui.io/onchain-finance/deepbookv3/deepbook" target="_blank"><img src="frontend/public/deepbook-logo.svg" alt="DeepBook" height="52" /></a>
+     
+  <a href="https://docs.wal.app" target="_blank"><img src="frontend/public/walrus-logo.svg" alt="Walrus" height="52" /></a>
+</div>
 
-<a href="https://deepsurge.ai" target="_blank" rel="noopener noreferrer">
-  <img src="docs/assets/deepsurge-logo.svg" alt="DeepSurge" height="48" />
-</a>
-&nbsp;&nbsp;
-<a href="https://sui.io" target="_blank" rel="noopener noreferrer">
-  <img src="frontend/public/sui-logo.svg" alt="Sui" height="48" />
-</a>
-&nbsp;&nbsp;
-<a href="https://docs.sui.io/onchain-finance/deepbookv3/deepbook" target="_blank" rel="noopener noreferrer">
-  <img src="frontend/public/deepbook-logo.svg" alt="DeepBook" height="48" />
-</a>
-&nbsp;&nbsp;
-<a href="https://docs.wal.app" target="_blank" rel="noopener noreferrer">
-  <img src="frontend/public/walrus-logo.svg" alt="Walrus" height="48" />
-</a>
+Sui Overflow 2026 Target Tracks: Agentic Web (Core), DeFi & Payments (Core), DeepBook, Walrus.
 
 
-Sui Overflow 2026 Target Tracks: Agentic Web (Core), DeFi & Payments (Core), DeepBook, and Walrus.
 
 
 ## Problem
