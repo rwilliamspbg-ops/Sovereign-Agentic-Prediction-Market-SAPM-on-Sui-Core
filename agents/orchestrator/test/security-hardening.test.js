@@ -256,6 +256,34 @@ describe('Orchestrator Security Hardening', () => {
       .toThrow('Attestation root certificate is not trusted');
   });
 
+  test('accepts valid multi-certificate chain when trusted root matches terminal certificate in chain', async () => {
+    const chainPath = path.join(__dirname, 'fixtures/attestation-chain-valid.pem');
+    const chainPem = fs.readFileSync(chainPath, 'utf8');
+    const certs = chainPem.match(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g);
+    const rootCert = new crypto.X509Certificate(certs[certs.length - 1]);
+
+    const orchestrator = new Orchestrator({
+      attestationTrustedRoots: rootCert.fingerprint256,
+    });
+
+    await expect(orchestrator.attestationClient.verifyCertChain(chainPem))
+      .resolves
+      .toBe(true);
+  });
+
+  test('rejects valid multi-certificate chain when configured trusted root does not match chain root', async () => {
+    const chainPath = path.join(__dirname, 'fixtures/attestation-chain-valid.pem');
+    const chainPem = fs.readFileSync(chainPath, 'utf8');
+
+    const orchestrator = new Orchestrator({
+      attestationTrustedRoots: 'AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99',
+    });
+
+    await expect(orchestrator.attestationClient.verifyCertChain(chainPem))
+      .rejects
+      .toThrow('Attestation root certificate is not trusted');
+  });
+
   test('loads staging attestation fixture and preserves audited digest', async () => {
     const fixturePath = path.join(__dirname, 'fixtures/attestation-staging-valid.json');
     const fixture = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));

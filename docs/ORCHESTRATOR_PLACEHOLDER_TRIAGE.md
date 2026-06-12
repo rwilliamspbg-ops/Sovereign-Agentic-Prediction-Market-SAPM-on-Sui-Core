@@ -73,7 +73,7 @@ Wave objective: close the highest risk security and cryptographic gaps before br
 Current regression evidence from orchestrator suite:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 130 tests, 130 passed (2026-06-12)
+- Result: 7 suites, 132 tests, 132 passed (2026-06-12)
 
 | ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
 | --- | --- | --- | --- |
@@ -81,7 +81,7 @@ Current regression evidence from orchestrator suite:
 | ORCH-002 | Covered | security-hardening now covers MAC tamper and missing-attestation-digest fail-closed verification paths | Keep CI baseline current as proof verification logic evolves |
 | ORCH-003 | Covered | security-hardening now includes signed peer-key accept/reject paths plus a live local HTTP registry-style endpoint verification test | Add broader registry auth fixture parity if production payload schema expands |
 | ORCH-004 | Partial | security-hardening now covers validated staging attestation fixture ingestion and digest-mismatch fail-closed behavior | Capture hardware-backed staging evidence artifact and verify real TPM/TEE measurement ingestion |
-| ORCH-005 | Covered | security-hardening covers revoked fingerprint rejection plus trusted-root accept/reject policy enforcement | Add full chain-to-root multi-cert test vector fixture in CI |
+| ORCH-005 | Covered | security-hardening now covers revoked fingerprint rejection, trusted-root policy enforcement, and true multi-certificate chain-root validation | Extend only if production chain shape introduces intermediates beyond current fixture |
 | ORCH-006 | Covered | security-hardening now covers unreachable endpoint plus explicit 200/404 reachable and 503 unreachable probe semantics | Extend matrix only if probe policy changes |
 | ORCH-007 | Covered | security-hardening now covers below-threshold fail, threshold-met pass, and zero-free-pages fail variants | Extend only if hugepage policy adds more profile dimensions |
 | ORCH-008 | Covered | security-hardening now covers unpinned cpuset detection plus cgroup-v2 effective cpuset accept/reject paths | Extend only if CPU affinity policy adds more cgroup sources |
@@ -209,6 +209,19 @@ Validation evidence:
 
 - Command: npm --prefix agents/orchestrator test
 - Result: 7 suites, 130 tests, 130 passed
+
+## 2026-06-12 ORCH-005 Multi-Certificate Chain Update
+
+Added true multi-certificate ORCH-005 regression coverage with committed chain fixture material:
+
+- generated root CA and leaf certificate chain combined into `agents/orchestrator/test/fixtures/attestation-chain-valid.pem`
+- trusted-root acceptance now validates the terminal root certificate in a real leaf+root chain
+- non-matching trusted root still fails closed for the same chain
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 132 tests, 132 passed
 
 ## 2026-06-12 ORCH-001 Provider-Seam Update
 
