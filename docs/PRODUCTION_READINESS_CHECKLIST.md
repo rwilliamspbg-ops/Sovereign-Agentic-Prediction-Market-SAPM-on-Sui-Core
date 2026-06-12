@@ -2,6 +2,12 @@
 
 Use this checklist as a release gate before any production deployment.
 
+Tracking fields:
+
+- Owner:
+- Due date (YYYY-MM-DD):
+- Evidence link:
+
 ## 1. Governance And Release Control
 
 - [ ] Code owners defined for all critical paths (`agents`, `docker`, `scripts`, infrastructure).
@@ -113,3 +119,22 @@ Use this checklist as a release gate before any production deployment.
 - Operations approver:
 - Product approver:
 - Final decision: [ ] Go  [ ] No-Go
+
+## Accountability Tracker
+
+Use this section to assign ownership and due dates for each checklist domain.
+
+| Domain | Owner | Due Date | Status | Evidence |
+| --- | --- | --- | --- | --- |
+| 1. Governance And Release Control | Platform PMO | 2026-07-05 | In Progress | docs/PRODUCTION_STATUS.md |
+| 2. Architecture And Threat Model | Security Architecture | 2026-07-12 | In Progress | docs/THREAT_MODEL.md |
+| 3. Identity, Keys, And Secrets | Security Engineering | 2026-07-19 | Not Started | docs/SECURITY_AUDIT_REPORT.md |
+| 4. Chain And Transaction Safety | Protocol Engineering | 2026-07-26 | In Progress | docs/OPERATIONS_RUNBOOK.md |
+| 5. Agent Runtime And Model Safety | Orchestrator Team | 2026-08-02 | In Progress | docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md |
+| 6. Infrastructure, Reliability, And SLOs | SRE | 2026-08-09 | In Progress | scripts/release_check.sh |
+| 7. Observability And Operations | SRE + Ops | 2026-08-16 | In Progress | docs/OPERATIONS_RUNBOOK.md |
+| 8. Security Assurance | Security Engineering | 2026-08-23 | In Progress | docs/SECURITY_AUDIT_REPORT.md |
+| 9. Compliance And Data Handling | Compliance + Legal Ops | 2026-08-30 | Not Started | docs/INCIDENT_RESPONSE_PLAYBOOK.md |
+| 10. Verification And Testing | QA + SRE | 2026-09-06 | In Progress | docs/PRODUCTION_STATUS.md |
+| 11. Launch Readiness Review | Engineering Leadership | 2026-09-13 | Not Started | docs/PRODUCTION_READINESS_CHECKLIST.md |
+| 12. Post-Launch Controls | Ops Leadership | 2026-09-20 | Not Started | docs/OPERATIONS_RUNBOOK.md |

@@ -1,0 +1,171 @@
+# SAPM Execution Tracker (Q3 2026)
+
+Last updated: 2026-06-12 (post frontend-prod-gate baseline capture)  
+Branch: feat/plan-execution-tracker-2026-06-12
+
+## Purpose
+
+Track execution of the remediation plan across:
+
+- Frontend stylesheet containment and performance hygiene
+- Rust datapath AF_XDP completion and truth-in-benchmarking
+- Agent autonomy and orchestrator placeholder closure
+- Test coverage expansion on critical paths
+- Mainnet hardening and launch-governance closure
+
+This tracker is operational and owner-oriented. It complements:
+
+- `docs/PRODUCTION_STATUS.md`
+- `docs/PRODUCTION_READINESS_CHECKLIST.md`
+- `docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md`
+- `docs/PERFORMANCE_BENCHMARKS.md`
+
+## Workstream Status (RAG)
+
+| ID | Workstream | Owner | Status | Target Window | Current Focus |
+| --- | --- | --- | --- | --- | --- |
+| WS-1 | Frontend stylesheet containment | Frontend Platform | Green | 2026-06-12 to 2026-06-26 | Baseline + containment complete; monitor budgets and regressions |
+| WS-2 | AF_XDP datapath implementation | Datapath Team | Amber | 2026-06-15 to 2026-07-31 | Implement first production AF_XDP path with fallback |
+| WS-3 | Agent autonomy hardening | Orchestrator Team | Amber | 2026-06-15 to 2026-08-05 | Close security-sensitive placeholder paths |
+| WS-4 | Critical-path testing expansion | QA + SRE | Amber | 2026-06-12 to 2026-07-25 | Build and enforce critical-path matrix in CI |
+| WS-5 | Mainnet readiness and launch governance | Ops + Security | Red | 2026-07-01 to 2026-09-01 | Burn down checklist and audit gating |
+
+## Execution Milestones
+
+### M1 (Weeks 1-2): Baseline + Containment
+
+- [x] Record frontend stylesheet baseline (style sources, injected groups, page-level impact).
+- [x] Create route-scoped approach for Copilot UI styles.
+- [x] Add KPI baselines for CSS payload, style-tag count, and render timing.
+- [x] Publish initial RAG update in this tracker.
+
+Exit criteria:
+
+- Baseline data captured and linked.
+- Scoped implementation path approved by frontend owners.
+
+### M2 (Weeks 3-6): Implementation + Evidence
+
+- [ ] Implement AF_XDP milestone path with runtime fallback.
+- [ ] Execute placeholder closures per ORCH IDs with linked tests.
+- [ ] Expand integration and E2E tests for market/trader critical flows.
+- [ ] Update benchmark documentation with measured, non-theoretical results.
+
+Exit criteria:
+
+- First AF_XDP implementation merged behind guardrails.
+- Security-sensitive placeholders closed or risk-accepted with owner sign-off.
+
+### M3 (Weeks 7-12): Hardening + Launch Gate
+
+- [x] Complete readiness checklist owner assignment and due dates.
+- [ ] Close or explicitly accept audit findings with documented rationale.
+- [ ] Run release dress rehearsal with rollback drill evidence.
+- [ ] Produce Go/No-Go package for launch governance review.
+
+Exit criteria:
+
+- Production readiness checklist is actionable and mostly complete.
+- Launch gate package is reviewable and evidence-backed.
+
+## KPI Dashboard
+
+Track weekly and update in-place.
+
+| KPI | Baseline | Current | Target | Notes |
+| --- | --- | --- | --- | --- |
+| Frontend global style injections on markets route | Copilot global stylesheet was always-on pre-containment | Copilot stylesheet is now conditional on panel-open | Decrease week-over-week | Source moved from global import to scoped link in layout |
+| Frontend CSS payload (markets route) | CSS files=2, total=44,730 bytes, largest=25,157 bytes | CSS files=2, total=44,730 bytes, largest=25,157 bytes | <= baseline - 20% | Baseline captured from `npm run check:frontend:prod` + CSS budget script |
+| Datapath p95 latency | Socket-path benchmarks per `docs/PERFORMANCE_BENCHMARKS.md` | TBD | Defined per environment | Distinguish socket path vs AF_XDP path |
+| Datapath throughput | Theoretical AF_XDP figures documented; measured socket path only | TBD | Measured, not projected | Include hardware profile |
+| Open orchestrator placeholder items (critical) | TBD | TBD | 0 critical open | Link ORCH IDs |
+| Critical-path automated test pass rate | release-check test gate currently green | release-check test gate currently green | >= 99% | Add flake-rate metric in WS-4.1/WS-4.2 |
+| Readiness checklist completion | 1.52% (1/66 checked) | 1.52% (1/66 checked) | >= 90% before Go/No-Go | Baseline computed from checklist markdown state |
+
+## Immediate Tasks (Execution Queue)
+
+### Frontend Style Hygiene
+
+- [x] WS-1.1: Enumerate all global CSS imports in `frontend/src/app/layout.tsx` and classify by source.
+- [x] WS-1.2: Propose route-level style scoping for Copilot UI surfaces.
+- [x] WS-1.3: Add CI budget check for CSS and style-tag count.
+
+WS-1.1 baseline notes:
+
+- Global imports observed in `frontend/src/app/layout.tsx`: `@copilotkit/react-ui/styles.css` and local `./globals.css`.
+- Copilot UI styling is currently global and likely contributes utility-class stylesheet groups in rendered output.
+- Markets UI uses local design classes defined in `frontend/src/app/globals.css` (e.g., `liquid-*`), so scoping third-party styles is low-risk if limited to Copilot surfaces.
+
+WS-1.2 implementation notes:
+
+- Removed global `@copilotkit/react-ui/styles.css` import from `frontend/src/app/layout.tsx`.
+- Added conditional stylesheet link (`/copilotkit-scoped.css`) loaded only when Copilot panel is open.
+- Copilot CSS asset copied to `frontend/public/copilotkit-scoped.css` from package dist output for stable runtime loading.
+
+WS-1.3 implementation notes:
+
+- Added `scripts/check_frontend_css_budget.sh` to enforce CSS file count/size budgets on built frontend assets.
+- Wired CSS budget check into `scripts/frontend_production_gate.sh` so CI and release checks fail on budget regressions.
+
+### Datapath + Benchmark Integrity
+
+- [x] WS-2.1: Document current socket-path benchmark command matrix.
+- [ ] WS-2.2: Create AF_XDP implementation design note with feature flag strategy.
+- [ ] WS-2.3: Add benchmark reporting template with commit SHA and environment metadata.
+
+WS-2.1 implementation notes:
+
+- Added socket-path benchmark command matrix to `docs/PERFORMANCE_BENCHMARKS.md`.
+- Mapped each command to primary metrics, output artifacts, and owner.
+- Added explicit policy that AF_XDP theoretical values must not be presented as current measurements.
+
+### Orchestrator + Autonomy
+
+- [ ] WS-3.1: Reconcile ORCH placeholder table with current code state.
+- [ ] WS-3.2: Mark critical security-sensitive items for first closure wave.
+- [ ] WS-3.3: Ensure each closure has linked regression tests.
+
+### Testing + Readiness
+
+- [x] WS-4.1: Define critical-path test matrix (market create/trade/settle/dispute + failure recovery).
+- [ ] WS-4.2: Wire matrix status into CI output summary.
+- [x] WS-5.1: Add owner/due-date columns to `docs/PRODUCTION_READINESS_CHECKLIST.md` process.
+
+WS-4.1 critical-path test matrix:
+
+| Flow | Scope | Primary Checks | Current Automation | Evidence Source | Owner |
+| --- | --- | --- | --- | --- | --- |
+| Market data ingestion and display | Frontend + API | `/api/markets` response health, fallback behavior, route render success | Partial | `npm run check:frontend:prod`, `/api/markets` route build output | Frontend Platform |
+| Trader decision pipeline | Agent runtime | Forecast-to-trade path correctness, risk checks, decision logging | Strong | `npm run test:all` (trader + aggregator + orchestrator suites) | Trader Team |
+| Trade execution resilience | Runtime + infra | Load behavior, error rates, bounded failure handling | In Progress | `npm run test:load`, `npm run test:chaos` | QA + SRE |
+| Settlement and post-trade integrity | Data + logging | Audit trail persistence and canonical schema consistency | In Progress | `npm run check:schemas`, logger tests | Data + Compliance |
+| Failure recovery and rollback readiness | Ops + release | Release gate pass/fail, rollback drill readiness indicators | In Progress | `npm run release:check`, readiness checklist | Platform PMO + Ops |
+
+WS-4.1 status notes:
+
+- Critical path domains are now explicitly defined with owner and evidence source.
+- WS-4.2 remains open to wire this matrix into CI summary reporting artifacts.
+
+## Risk Register (Active)
+
+| Risk ID | Description | Severity | Mitigation | Owner | Status |
+| --- | --- | --- | --- | --- | --- |
+| R-001 | Global style bleed from framework/library CSS impacts markets route consistency | Medium | Route-scoped style loading + regression snapshots | Frontend Platform | Open |
+| R-002 | AF_XDP claims diverge from measured implementation status | High | Enforce evidence-linked benchmark reporting | Datapath Team | Open |
+| R-003 | Security-sensitive placeholder logic remains in orchestration path | High | ORCH critical closure wave + tests + sign-off | Orchestrator Team | Open |
+| R-004 | Incomplete critical-path coverage allows regressions into release | High | Coverage floors + deterministic E2E scenarios | QA + SRE | Open |
+| R-005 | Mainnet checklist closure lags launch narrative | High | Weekly governance review and explicit Go/No-Go gate | Ops + Security | Open |
+
+## Change Log
+
+- 2026-06-12: Tracker created on `feat/plan-execution-tracker-2026-06-12`.
+- 2026-06-12: Completed WS-1.1 baseline style-source inventory; identified global Copilot UI stylesheet as primary external style injector.
+- 2026-06-12: Completed WS-1.2 by removing global Copilot style injection and using conditional scoped stylesheet loading.
+- 2026-06-12: Completed WS-1.3 by adding frontend CSS budget gate script and integrating it into frontend production gate.
+- 2026-06-12: Completed WS-5.1 by adding accountability tracker (owner/due-date/status/evidence) to production readiness checklist.
+- 2026-06-12: Captured frontend production baseline from gate run: build success, CSS budget PASS, CSS files=2, total CSS bytes=44,730, largest CSS=25,157 bytes.
+- 2026-06-12: Completed M1 KPI baseline and initial RAG publication updates.
+- 2026-06-12: Verified frontend production gate PASS with Next.js build success and CSS budget PASS in terminal execution output.
+- 2026-06-12: Completed M3 readiness ownership setup by assigning domain owners and due dates in production readiness accountability tracker.
+- 2026-06-12: Completed WS-2.1 by adding socket-path benchmark command matrix and measurement policy to performance benchmarks documentation.
+- 2026-06-12: Completed WS-4.1 by defining critical-path test matrix with owners, current automation state, and evidence sources.

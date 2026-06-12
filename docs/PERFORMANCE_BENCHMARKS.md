@@ -36,6 +36,25 @@ Do not cite these figures as current SAPM benchmarks.
 
 ## How to Run Current Benchmarks
 
+### Socket-Path Benchmark Command Matrix (WS-2.1)
+
+Use this matrix as the canonical command set for current (non-AF_XDP) measurements.
+
+| Area | Command | Primary Metrics | Output Artifact | Owner |
+|---|---|---|---|---|
+| Frontend production gate | `npm run check:frontend:prod` | Build success/failure, generated route footprint, CSS budget (files/bytes/largest) | `artifacts/ci-logs/frontend-prod-gate.log` (CI) | Frontend Platform |
+| Frontend bundle analysis | `npm --prefix frontend run analyze` | Bundle composition and size deltas | Next analyze output (local) | Frontend Platform |
+| Trader load behavior | `npm run test:load` | Latency distribution under load, error rate, throughput trend | `artifacts/ci-logs/load-tests.log`, `artifacts/ci-logs/load-report.json` (CI) | QA + SRE |
+| Aggregator benchmark | `npm run bench:aggregator` | Aggregation latency and throughput profile | Console benchmark output | Datapath Team |
+| Chaos resilience baseline | `npm run test:chaos` | Failure handling behavior, degradation characteristics | `artifacts/ci-logs/chaos-tests.log`, `artifacts/ci-logs/chaos-report.json` (CI) | QA + SRE |
+| Release gate baseline | `npm run release:check` | End-to-end readiness gate pass/fail | `artifacts/ci-logs/release-check.log` (CI) | Platform PMO |
+
+Benchmark policy:
+
+- Use this command matrix for all socket-path baseline captures until AF_XDP path is implemented.
+- Include commit SHA, environment, and command used in every benchmark report.
+- Do not present AF_XDP theoretical values as current measured performance.
+
 ### Frontend bundle analysis
 
 ```bash

@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { getWallets } from '@wallet-standard/app';
 import { SUI_MAINNET_CHAIN, SUI_TESTNET_CHAIN } from '@mysten/wallet-standard';
 import { CopilotKit } from '@copilotkit/react-core';
-import '@copilotkit/react-ui/styles.css';
 import "./globals.css";
 import { CommandPalette } from '@/components/ui/CommandPalette';
 import { CopilotOpsPanel } from '@/components/a2ui/CopilotOpsPanel';
@@ -546,6 +545,11 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        {showCopilotPanel && (
+          <link rel="stylesheet" href="/copilotkit-scoped.css" />
+        )}
+      </head>
       <body style={{ margin: 0, padding: 0, backgroundColor: '#0f172a', fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
         <CopilotKit runtimeUrl="/api/copilotkit" agent="default">
         {/* Main Application Content */}
