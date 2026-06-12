@@ -404,6 +404,22 @@ Validation evidence:
 - Command: node --test scripts/summarize_orchestrator_lifecycle.test.js
 - Result: 1 test, 1 passed
 
+## 2026-06-12 Lifecycle Policy CI Gate Update
+
+Expanded WS-4 lifecycle evidence from reporting-only to policy-checked controls:
+
+- added `scripts/check_orchestrator_lifecycle_policy.js` to validate lifecycle control summary values against configurable thresholds
+- wired policy check into `.github/workflows/ci.yml` with `LIFECYCLE_POLICY_GATING` warn-only/enforced mode
+- published `artifacts/ci-logs/orchestrator-lifecycle-policy-check.json` as a dedicated artifact
+- surfaced lifecycle policy mode/pass outcome in `critical-path-summary.md`
+
+Validation evidence:
+
+- Command: node --test scripts/summarize_orchestrator_lifecycle.test.js scripts/check_orchestrator_lifecycle_policy.test.js
+- Result: 3 tests, 3 passed
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 145 tests, 145 passed
+
 ## 2026-06-12 ORCH-001 Provider-Seam Update
 
 Implemented production-integration seam for ORCH-001 in `agents/orchestrator/core/orchestrator.js`:

@@ -197,6 +197,8 @@ WS-3.3 implementation notes:
 - Updated orchestrator regression baseline after lifecycle preflight gating wave: 7 suites, 145 tests, 145 passed.
 - Added orchestrator lifecycle-control summary synthesis in CI critical-path reporting and artifact uploads.
 - Added deterministic unit coverage for lifecycle summary script generation (`node --test scripts/summarize_orchestrator_lifecycle.test.js`).
+- Added lifecycle policy threshold checks (warn-only/enforced) for provider lifecycle controls in CI critical-path reporting.
+- Added deterministic unit coverage for lifecycle policy checker (`node --test scripts/check_orchestrator_lifecycle_policy.test.js`).
 
 ### Testing + Readiness
 
@@ -277,3 +279,4 @@ WS-4.1 status notes:
 - 2026-06-12: Added provider lifecycle-controller hardening and raised orchestrator regression evidence baseline to 143/143 pass.
 - 2026-06-12: Added lifecycle preflight gating hardening and raised orchestrator regression evidence baseline to 145/145 pass.
 - 2026-06-12: Added WS-4 lifecycle-control summary artifact wiring to CI critical-path outputs and validated script generation coverage.
+- 2026-06-12: Added WS-4 lifecycle policy threshold gating and policy-check artifact publication for critical-path evidence.

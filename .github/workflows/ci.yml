@@ -185,6 +185,15 @@ jobs:
       SAPM_HYBRID_KEX_RESTART_BUDGET_WINDOW_MS: ${{ vars.SAPM_HYBRID_KEX_RESTART_BUDGET_WINDOW_MS || '60000' }}
       SAPM_HYBRID_KEX_MAX_RETRIES: ${{ vars.SAPM_HYBRID_KEX_MAX_RETRIES || '1' }}
       SAPM_HYBRID_KEX_RETRY_BACKOFF_MS: ${{ vars.SAPM_HYBRID_KEX_RETRY_BACKOFF_MS || '50' }}
+      LIFECYCLE_POLICY_GATING: ${{ vars.LIFECYCLE_POLICY_GATING || 'false' }}
+      LIFECYCLE_MIN_RESTART_BUDGET_MAX: ${{ vars.LIFECYCLE_MIN_RESTART_BUDGET_MAX || '1' }}
+      LIFECYCLE_MAX_RESTART_BUDGET_MAX: ${{ vars.LIFECYCLE_MAX_RESTART_BUDGET_MAX || '10' }}
+      LIFECYCLE_MIN_RESTART_WINDOW_MS: ${{ vars.LIFECYCLE_MIN_RESTART_WINDOW_MS || '1000' }}
+      LIFECYCLE_MAX_RESTART_WINDOW_MS: ${{ vars.LIFECYCLE_MAX_RESTART_WINDOW_MS || '300000' }}
+      LIFECYCLE_MIN_RETRIES: ${{ vars.LIFECYCLE_MIN_RETRIES || '0' }}
+      LIFECYCLE_MAX_RETRIES: ${{ vars.LIFECYCLE_MAX_RETRIES || '5' }}
+      LIFECYCLE_MIN_RETRY_BACKOFF_MS: ${{ vars.LIFECYCLE_MIN_RETRY_BACKOFF_MS || '0' }}
+      LIFECYCLE_MAX_RETRY_BACKOFF_MS: ${{ vars.LIFECYCLE_MAX_RETRY_BACKOFF_MS || '1000' }}
     needs:
       - release-check
       - frontend-prod-gate
@@ -215,6 +224,13 @@ jobs:
           mkdir -p artifacts/ci-logs
           FLAKE_GATING_MODE="${{ vars.FLAKE_GATING == 'true' && 'enforced' || 'warn-only' }}" \
             node scripts/summarize_orchestrator_lifecycle.js
+      - name: Evaluate lifecycle policy thresholds
+        run: |
+          mkdir -p artifacts/ci-logs
+          EXPECTED_LIFECYCLE_PREFLIGHT_GATE="enabled" \
+          EXPECTED_LIFECYCLE_RESTART_ENFORCED="true" \
+          LIFECYCLE_POLICY_GATING_MODE="${{ vars.LIFECYCLE_POLICY_GATING == 'true' && 'enforced' || 'warn-only' }}" \
+            node scripts/check_orchestrator_lifecycle_policy.js
       - name: Enforce flake-rate threshold
         run: |
           if [[ ! -f artifacts/ci-logs/flake-rate.json ]]; then
@@ -257,6 +273,8 @@ jobs:
           LIFECYCLE_RESTART_WINDOW_MS="n/a"
           LIFECYCLE_MAX_RETRIES="n/a"
           LIFECYCLE_RETRY_BACKOFF_MS="n/a"
+          LIFECYCLE_POLICY_MODE="${{ vars.LIFECYCLE_POLICY_GATING == 'true' && 'enforced' || 'warn-only' }}"
+          LIFECYCLE_POLICY_PASS="n/a"
           if [[ -f artifacts/ci-logs/flake-rate.json ]]; then
             FLAKE_RATE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.flakeRate));")
             FLAKE_RUNS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.probeRuns));")
@@ -277,6 +295,10 @@ jobs:
             LIFECYCLE_RESTART_WINDOW_MS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.restartBudgetWindowMs));")
             LIFECYCLE_MAX_RETRIES=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.maxRetries));")
             LIFECYCLE_RETRY_BACKOFF_MS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.retryBackoffMs));")
+          fi
+          if [[ -f artifacts/ci-logs/orchestrator-lifecycle-policy-check.json ]]; then
+            LIFECYCLE_POLICY_MODE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-policy-check.json','utf8'));process.stdout.write(String(j.mode));")
+            LIFECYCLE_POLICY_PASS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-policy-check.json','utf8'));process.stdout.write(String(j.passed));")
           fi
           cat > artifacts/ci-logs/critical-path-summary.md <<'EOF'
           # Critical-Path Matrix Status
@@ -334,6 +356,13 @@ jobs:
           | Restart budget window (ms) | __LIFECYCLE_RESTART_WINDOW_MS__ |
           | Max retries | __LIFECYCLE_MAX_RETRIES__ |
           | Retry backoff (ms) | __LIFECYCLE_RETRY_BACKOFF_MS__ |
+
+          ## Provider Lifecycle Policy Gate
+
+          | Metric | Value |
+          | --- | --- |
+          | Lifecycle policy gating mode | __LIFECYCLE_POLICY_MODE__ |
+          | Lifecycle policy checks passed | __LIFECYCLE_POLICY_PASS__ |
           EOF
           sed -i "s/__FLAKE_GATING_MODE__/${FLAKE_GATING_MODE}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__FLAKE_THRESHOLD__/${FLAKE_THRESHOLD}/g" artifacts/ci-logs/critical-path-summary.md
@@ -352,6 +381,8 @@ jobs:
           sed -i "s/__LIFECYCLE_RESTART_WINDOW_MS__/${LIFECYCLE_RESTART_WINDOW_MS}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__LIFECYCLE_MAX_RETRIES__/${LIFECYCLE_MAX_RETRIES}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__LIFECYCLE_RETRY_BACKOFF_MS__/${LIFECYCLE_RETRY_BACKOFF_MS}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__LIFECYCLE_POLICY_MODE__/${LIFECYCLE_POLICY_MODE}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__LIFECYCLE_POLICY_PASS__/${LIFECYCLE_POLICY_PASS}/g" artifacts/ci-logs/critical-path-summary.md
       - name: Upload critical-path summary
         if: always()
         uses: actions/upload-artifact@v4
@@ -381,4 +412,11 @@ jobs:
         with:
           name: orchestrator-lifecycle-summary
           path: artifacts/ci-logs/orchestrator-lifecycle-summary.json
+          if-no-files-found: warn
+      - name: Upload orchestrator lifecycle policy-check artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orchestrator-lifecycle-policy-check
+          path: artifacts/ci-logs/orchestrator-lifecycle-policy-check.json
           if-no-files-found: warn
