@@ -5,6 +5,7 @@
  */
 
 const crypto = require('crypto');
+const goHybridProvider = require('../core/go-hybrid-provider');
 
 class DiscoveryManager {
   constructor(config) {
@@ -180,6 +181,26 @@ class DiscoveryManager {
     const peerKey = typeof peerPubkey === 'string' ? peerPubkey.trim() : '';
     if (!peerKey) {
       throw new Error('Peer public key is required for discovery key exchange');
+    }
+
+    const useGoHybridProvider = this.config.useGoHybridProvider !== undefined
+      ? this.config.useGoHybridProvider
+      : (process.env.DISCOVERY_USE_GO_HYBRID_PROVIDER || '1') !== '0';
+
+    if (useGoHybridProvider) {
+      const providerResult = await goHybridProvider.deriveSession({
+        attestationDigest: Buffer.from(digestB64, 'base64'),
+        peerPublicKey: Buffer.from(peerKey, 'utf8'),
+        algorithm: 'x25519-mlkem768',
+      });
+
+      return {
+        algorithm: providerResult.algorithm || 'x25519-mlkem768-go-bridge',
+        key: providerResult.sessionKey,
+        nonce: providerResult.nonce,
+        peerDigest: providerResult.peerKeyDigest,
+        establishedAt: new Date().toISOString(),
+      };
     }
 
     const nonce = crypto.randomBytes(32);

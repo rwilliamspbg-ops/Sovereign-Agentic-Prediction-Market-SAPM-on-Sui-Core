@@ -179,6 +179,8 @@ WS-3.3 implementation notes:
 - Updated orchestrator regression baseline after ORCH-005 multi-cert wave: 7 suites, 132 tests, 132 passed.
 - Added ORCH-001 Go-backed provider bridge integration through the existing seam and a committed peer-public fixture.
 - Updated orchestrator regression baseline after ORCH-001 provider-bridge wave: 7 suites, 133 tests, 133 passed.
+- Implemented ORCH-009 provider-backed discovery exchange with explicit fallback control and retained key-confirmation enforcement.
+- Updated orchestrator regression baseline after ORCH-009 provider-backed discovery wave: 7 suites, 134 tests, 134 passed.
 
 ### Testing + Readiness
 
@@ -250,3 +252,4 @@ WS-4.1 status notes:
 - 2026-06-12: Added ORCH-008 cgroup-v2 CPU pinning coverage and raised orchestrator regression evidence baseline to 130/130 pass.
 - 2026-06-12: Added ORCH-005 multi-certificate chain regression coverage and raised orchestrator regression evidence baseline to 132/132 pass.
 - 2026-06-12: Added ORCH-001 Go-backed provider bridge coverage and raised orchestrator regression evidence baseline to 133/133 pass.
+- 2026-06-12: Added ORCH-009 Go-backed discovery provider coverage and raised orchestrator regression evidence baseline to 134/134 pass.

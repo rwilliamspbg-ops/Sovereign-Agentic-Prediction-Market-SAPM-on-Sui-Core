@@ -73,7 +73,7 @@ Wave objective: close the highest risk security and cryptographic gaps before br
 Current regression evidence from orchestrator suite:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 133 tests, 133 passed (2026-06-12)
+- Result: 7 suites, 134 tests, 134 passed (2026-06-12)
 
 | ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
 | --- | --- | --- | --- |
@@ -85,7 +85,7 @@ Current regression evidence from orchestrator suite:
 | ORCH-006 | Covered | security-hardening now covers unreachable endpoint plus explicit 200/404 reachable and 503 unreachable probe semantics | Extend matrix only if probe policy changes |
 | ORCH-007 | Covered | security-hardening now covers below-threshold fail, threshold-met pass, and zero-free-pages fail variants | Extend only if hugepage policy adds more profile dimensions |
 | ORCH-008 | Covered | security-hardening now covers unpinned cpuset detection plus cgroup-v2 effective cpuset accept/reject paths | Extend only if CPU affinity policy adds more cgroup sources |
-| ORCH-009 | Partial | discovery-manager tests now cover successful key confirmation and digest-mismatch fail-closed behavior | Integrate audited hybrid provider path and key confirmation handshake beyond placeholder-design derivation |
+| ORCH-009 | Partial | discovery manager now prefers the Go-backed provider path with key confirmation, while tests cover provider-backed success, explicit fallback, and digest-mismatch fail-closed behavior | Promote provider-backed path from test/runtime bridge to full production discovery exchange wiring |
 
 ## 2026-06-12 Regression Expansion Update
 
@@ -240,6 +240,25 @@ Validation evidence:
 
 - Command: npm --prefix agents/orchestrator test
 - Result: 7 suites, 133 tests, 133 passed
+
+## 2026-06-12 ORCH-009 Go-Backed Discovery Update
+
+Implemented the first real provider-backed ORCH-009 discovery exchange step:
+
+- `agents/orchestrator/discovery/manager.js` now prefers the Go-backed hybrid provider path for discovery KEX
+- explicit config/env control preserves fallback derivation behavior when required
+- existing key confirmation guard remains in place on top of provider output
+
+Added regression coverage in `agents/orchestrator/test/discovery-manager.test.js`:
+
+- provider-backed discovery session establishment succeeds with matching digest
+- fallback derivation path still succeeds when Go provider is disabled
+- digest mismatch continues to fail closed
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 134 tests, 134 passed
 
 ## 2026-06-12 ORCH-001 Provider-Seam Update
 
