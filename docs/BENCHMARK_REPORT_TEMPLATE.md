@@ -42,14 +42,14 @@ Reference command policy in `docs/PERFORMANCE_BENCHMARKS.md`.
 
 ## 5. Results Summary
 
-| Metric | Value | Unit | Notes |
-| --- | --- | --- | --- |
-| Throughput |  |  |  |
-| Latency p50 |  |  |  |
-| Latency p95 |  |  |  |
-| Latency p99 |  |  |  |
-| Error rate |  |  |  |
-| CPU utilization |  |  |  |
+| Metric          | Value | Unit | Notes |
+| --------------- | ----- | ---- | ----- |
+| Throughput      |       |      |       |
+| Latency p50     |       |      |       |
+| Latency p95     |       |      |       |
+| Latency p99     |       |      |       |
+| Error rate      |       |      |       |
+| CPU utilization |       |      |       |
 
 ## 6. Artifact Links
 

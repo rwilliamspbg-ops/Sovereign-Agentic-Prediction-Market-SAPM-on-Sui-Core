@@ -42,13 +42,13 @@ Primary interface selection:
 - Gate AF_XDP initialization behind explicit env flag.
 - Add startup capability probe (kernel support, privileges, iface presence).
 
-2. Phase B: Staging canary
+1. Phase B: Staging canary
 
 - Enable AF_XDP only in staging profile.
 - Compare AF_XDP vs socket metrics under identical load profiles.
 - Auto-fallback on health check degradation.
 
-3. Phase C: Controlled production introduction
+1. Phase C: Controlled production introduction
 
 - Enable for a narrow traffic slice or dedicated instance pool.
 - Require predefined SLO pass criteria before expansion.
