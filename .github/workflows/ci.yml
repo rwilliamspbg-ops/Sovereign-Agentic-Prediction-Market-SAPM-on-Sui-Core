@@ -202,6 +202,10 @@ jobs:
         run: |
           chmod +x scripts/compute_test_flake_rate.sh
           scripts/compute_test_flake_rate.sh
+      - name: Synthesize resilience summary
+        run: |
+          mkdir -p artifacts/ci-logs
+          node scripts/summarize_resilience_reports.js
       - name: Enforce flake-rate threshold
         run: |
           if [[ ! -f artifacts/ci-logs/flake-rate.json ]]; then
@@ -232,10 +236,24 @@ jobs:
           FLAKE_FAILURES="n/a"
           FLAKE_THRESHOLD="${FLAKE_RATE_MAX}"
           FLAKE_GATING_MODE="${{ vars.FLAKE_GATING == 'true' && 'enforced' || 'warn-only' }}"
+          CHAOS_PASSED="n/a"
+          CHAOS_SCENARIOS="n/a"
+          CHAOS_FAILED="n/a"
+          LOAD_SUCCESS_RATE="n/a"
+          LOAD_RPS="n/a"
+          LOAD_P99="n/a"
           if [[ -f artifacts/ci-logs/flake-rate.json ]]; then
             FLAKE_RATE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.flakeRate));")
             FLAKE_RUNS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.probeRuns));")
             FLAKE_FAILURES=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.failures));")
+          fi
+          if [[ -f artifacts/ci-logs/resilience-summary.json ]]; then
+            CHAOS_PASSED=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.chaos.passed));")
+            CHAOS_SCENARIOS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.chaos.totalScenarios));")
+            CHAOS_FAILED=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(j.chaos.failedScenarios.length ? j.chaos.failedScenarios.join('; ') : 'none');")
+            LOAD_SUCCESS_RATE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.load.successRate));")
+            LOAD_RPS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.load.rps));")
+            LOAD_P99=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.load.p99LatencyMs));")
           fi
           cat > artifacts/ci-logs/critical-path-summary.md <<'EOF'
           # Critical-Path Matrix Status
@@ -271,12 +289,29 @@ jobs:
           | Orchestrator probe runs | __FLAKE_RUNS__ |
           | Orchestrator probe failures | __FLAKE_FAILURES__ |
           | Orchestrator flake rate | __FLAKE_RATE__ |
+
+          ## Resilience Metrics
+
+          | Metric | Value |
+          | --- | --- |
+          | Chaos scenarios passed | __CHAOS_PASSED__ |
+          | Chaos scenario count | __CHAOS_SCENARIOS__ |
+          | Chaos failed scenarios | __CHAOS_FAILED__ |
+          | Load success rate (%) | __LOAD_SUCCESS_RATE__ |
+          | Load throughput (req/s) | __LOAD_RPS__ |
+          | Load p99 latency (ms) | __LOAD_P99__ |
           EOF
           sed -i "s/__FLAKE_GATING_MODE__/${FLAKE_GATING_MODE}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__FLAKE_THRESHOLD__/${FLAKE_THRESHOLD}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__FLAKE_RATE__/${FLAKE_RATE}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__FLAKE_RUNS__/${FLAKE_RUNS}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__FLAKE_FAILURES__/${FLAKE_FAILURES}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__CHAOS_PASSED__/${CHAOS_PASSED}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__CHAOS_SCENARIOS__/${CHAOS_SCENARIOS}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__CHAOS_FAILED__/${CHAOS_FAILED}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__LOAD_SUCCESS_RATE__/${LOAD_SUCCESS_RATE}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__LOAD_RPS__/${LOAD_RPS}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__LOAD_P99__/${LOAD_P99}/g" artifacts/ci-logs/critical-path-summary.md
       - name: Upload critical-path summary
         if: always()
         uses: actions/upload-artifact@v4
@@ -292,4 +327,11 @@ jobs:
           path: |
             artifacts/ci-logs/flake-probe.log
             artifacts/ci-logs/flake-rate.json
+          if-no-files-found: warn
+      - name: Upload resilience summary artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resilience-summary
+          path: artifacts/ci-logs/resilience-summary.json
           if-no-files-found: warn

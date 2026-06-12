@@ -180,6 +180,7 @@ WS-4.1 status notes:
 - WS-4.2 is complete via CI `critical-path-summary` job in `.github/workflows/ci.yml` that publishes a `critical-path-summary` artifact.
 - Added orchestrator flake-rate probe wiring (`scripts/compute_test_flake_rate.sh`) and embedded flake metrics in the CI critical-path summary artifact.
 - Added configurable flake gating in CI (`FLAKE_GATING`, `FLAKE_RATE_MAX`, `FLAKE_PROBE_RUNS`) with warn-only vs enforced behavior.
+- Added resilience metric synthesis (`scripts/summarize_resilience_reports.js`) so the critical-path summary artifact includes chaos pass/fail and load throughput/latency evidence.
 
 ## Risk Register (Active)
 
@@ -209,6 +210,7 @@ WS-4.1 status notes:
 - 2026-06-12: Completed WS-4.2 by adding CI critical-path-summary job and published summary artifact wiring.
 - 2026-06-12: Added WS-4 flake-rate automation by wiring orchestrator rerun probe metrics into critical-path summary + artifact uploads.
 - 2026-06-12: Added WS-4 flake-rate threshold gating with configurable enforcement mode and max-rate policy in CI.
+- 2026-06-12: Expanded WS-4 critical-path summary artifact with parsed chaos/load resilience metrics and uploaded resilience-summary artifact.
 - 2026-06-12: Completed WS-3.1 by reconciling ORCH placeholder ledger with current orchestrator/discovery code paths.
 - 2026-06-12: Completed WS-3.2 by defining first placeholder-closure wave with priority, owner, and date.
 - 2026-06-12: Completed WS-3.3 by mapping ORCH items to regression coverage and recording current orchestrator test baseline (109/109 pass).
