@@ -58,7 +58,8 @@ graph TB
 
 ##What is SAPM?
 ---
-SAPM is a fully sovereign, agentic prediction market platform built natively on Sui. It enables autonomous AI agents to discover markets, generate forecasts, execute trades via DeepBook, and archive decisions immutably on Walrus — all with formal verification guarantees.Key CapabilitiesAutonomous Agent Stack — Trader, Aggregator (Multi-Krum), and Orchestrator agents with on-chain reputation and slashing
+SAPM is a fully sovereign, agentic prediction market platform built natively on Sui. It enables autonomous AI agents to discover markets, generate forecasts, execute trades via DeepBook, and archive decisions immutably on Walrus — all with formal verification guarantees.Key Capabilities
+Autonomous Agent Stack — Trader, Aggregator (Multi-Krum), and Orchestrator agents with on-chain reputation and slashing
 DeepBook Integration — Limit orders, cancel/replace, open order tracking, and balance preflights
 Walrus Archival — Every market snapshot and trade decision published as verifiable blobs with SHA-256 manifests
 Lean 4 Formal Verification — BFT safety/liveness, Multi-Krum correctness, hybrid PQC proofs, and oracle invariants
@@ -87,29 +88,36 @@ Why Sui? Object-centric model, Programmable Transaction Blocks (PTBs), native De
 </div>
 ---
 
-##Sui Overflow 2026 Target Tracks: Agentic Web (Core), DeFi & Payments (Core), DeepBook, Walrus.
+Sui Overflow 2026 Target Tracks: Agentic Web (Core), DeFi & Payments (Core), DeepBook, Walrus.
 ---
-##Live Demo — 
----
-Judge ModeFastest way to test: Connect a Sui wallet → Paste a PredictionMarket object ID → Run Judge Mode.It performs:Wallet connection & validation
-On-chain market loading
-Micro trade execution via DeepBook
-Snapshot publication to Walrus
-Verification of returned blob
+## Live Demo — Judge Mode
 
-Quick Start for Demobash
+> **The fastest path to verification:** open the app, connect a Sui wallet, paste a market object ID, and click **Run Judge Mode**. It will: connect wallet → load on-chain market → execute micro trade → archive to Walrus → read blob back. Every step produces a verifiable artifact (transaction digest on Sui Explorer, Walrus blob ID on aggregator endpoint).
 
-```
+> **Fail-proof usage:** use only valid `PredictionMarket` object IDs in `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS`, or leave it unset to allow Judge Mode to auto-create a market.
+
+```bash
 ./scripts/ci_frontend_validation.sh
 cd frontend
 npm ci
 cp ../.env.example .env.local
+# set NEXT_PUBLIC_SUI_PACKAGE_ID and NEXT_PUBLIC_SUI_NETWORK
+# set NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS only to PredictionMarket object IDs
+# or leave NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS unset for Judge auto-create
 npm run dev
 ```
 
-Open http://localhost:3000 → Connect wallet → Run Judge Mode.Tip: Leave NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS unset to let Judge Mode auto-create test markets.
+Then open `http://localhost:3000`, connect wallet, run Judge Mode, and archive snapshot.
+
+Fail-proof demo checks:
+
+1. If Judge Mode fails preflight, reconnect wallet and verify network alignment.
+2. If on-chain market loading fails, unset `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` and retry Judge Mode.
+3. If archive fails, run Judge Mode once more so `sapm.judgeMode.lastResult` is refreshed.
+4. After any `.env.local` change, restart the frontend server.
+
 ---
-##Verified Deployment (Sui Testnet)Package ID: 0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188Use these values in frontend/.env.local:
+Verified Deployment (Sui Testnet)Package ID: 0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188Use these values in frontend/.env.local:
 ---
 ```
 env
