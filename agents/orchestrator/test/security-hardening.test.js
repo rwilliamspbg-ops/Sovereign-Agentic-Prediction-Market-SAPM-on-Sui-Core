@@ -63,6 +63,45 @@ describe('Orchestrator Security Hardening', () => {
       .toBe(payload.publicKey);
   });
 
+  test('accepts valid signed peer key from live local registry-style endpoint', async () => {
+    const keyPair = crypto.generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
+    const payload = {
+      publicKey: Buffer.from('peer-public-key-live-endpoint').toString('base64'),
+      algorithm: 'x25519',
+      keyId: 'peer-key-live-1',
+    };
+
+    const signer = crypto.createSign('sha256');
+    signer.update(JSON.stringify(payload));
+    signer.end();
+    const signature = signer.sign(keyPair.privateKey).toString('base64');
+
+    const server = http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ...payload, signature }));
+    });
+
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const address = server.address();
+    const peerKeyUrl = `http://127.0.0.1:${address.port}/peer-key`;
+
+    try {
+      const orchestrator = new Orchestrator({
+        peerKeyUrl,
+        requireSignedPeerKey: true,
+        registryVerificationKey: keyPair.publicKey.export({ type: 'spki', format: 'pem' }).toString(),
+      });
+
+      await expect(orchestrator.cryptoProvider.fetchPeerPublicKey())
+        .resolves
+        .toBe(payload.publicKey);
+    } finally {
+      await new Promise((resolve, reject) => {
+        server.close((err) => (err ? reject(err) : resolve()));
+      });
+    }
+  });
+
   test('fails key derivation proof verification when MAC is tampered', async () => {
     const orchestrator = new Orchestrator();
     const attestation = {

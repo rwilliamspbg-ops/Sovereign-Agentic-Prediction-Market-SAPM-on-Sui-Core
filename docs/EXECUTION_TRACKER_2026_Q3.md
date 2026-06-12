@@ -167,6 +167,8 @@ WS-3.3 implementation notes:
 - Added operator-facing fixture contract documentation in `agents/orchestrator/test/fixtures/README.md` for staged attestation and trusted-root rehearsal.
 - Added ORCH-002 negative-path regression coverage for missing attestation digest during proof verification.
 - Updated orchestrator regression baseline after ORCH-002 coverage wave: 7 suites, 124 tests, 124 passed.
+- Added ORCH-003 live local registry-style endpoint coverage for signed peer-key fetch and verification.
+- Updated orchestrator regression baseline after ORCH-003 coverage wave: 7 suites, 125 tests, 125 passed.
 
 ### Testing + Readiness
 
@@ -232,3 +234,4 @@ WS-4.1 status notes:
 - 2026-06-12: Added ORCH-005 trusted-root attestation policy enforcement and raised orchestrator regression evidence baseline to 123/123 pass.
 - 2026-06-12: Added orchestrator fixture README documenting staged attestation JSON contract and trusted-root rehearsal inputs.
 - 2026-06-12: Added ORCH-002 missing-attestation-digest regression coverage and raised orchestrator regression evidence baseline to 124/124 pass.
+- 2026-06-12: Added ORCH-003 live registry-style endpoint regression coverage and raised orchestrator regression evidence baseline to 125/125 pass.
