@@ -107,6 +107,10 @@ jobs:
         run: npm --prefix agents/orchestrator ci --no-audit --no-fund
       - name: Run orchestrator test suite
         run: npm --prefix agents/orchestrator test
+      - name: Enforce orchestrator test coverage floor
+        run: |
+          chmod +x scripts/check_test_coverage_floor.sh
+          COVERAGE_MIN_TESTS=${{ vars.ORCH_COVERAGE_MIN_TESTS || '145' }} scripts/check_test_coverage_floor.sh
       - name: Run orchestrator hardening checks
         run: bash scripts/orchestrator_hardening_check.sh
 

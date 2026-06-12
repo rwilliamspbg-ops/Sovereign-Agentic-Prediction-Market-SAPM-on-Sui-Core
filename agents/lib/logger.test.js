@@ -69,4 +69,73 @@ describe('agents/lib/logger', () => {
     assert.ok(lines[0].includes('[PrettyComp]'), 'should include component');
     assert.ok(lines[0].includes('pretty message'), 'should include message');
   });
+
+  it('emits correlationId in JSON output when set via withContext', () => {
+    delete require.cache[require.resolve('./logger')];
+    process.env.LOG_LEVEL = 'info';
+    delete process.env.LOG_PRETTY;
+
+    const lines = [];
+    const orig = process.stdout.write.bind(process.stdout);
+    process.stdout.write = (s) => { lines.push(s); return true; };
+
+    const { create } = require('./logger');
+    const log = create('TraceComp').withContext({ correlationId: 'test-cid-001' });
+    log.info('traced event', { op: 'trade' });
+
+    process.stdout.write = orig;
+    assert.ok(lines.length > 0, 'should emit a line');
+    const parsed = JSON.parse(lines[0]);
+    assert.equal(parsed.correlationId, 'test-cid-001');
+    assert.equal(parsed.component, 'TraceComp');
+    assert.equal(parsed.message, 'traced event');
+  });
+
+  it('withContext does not bleed correlationId to sibling loggers', () => {
+    delete require.cache[require.resolve('./logger')];
+    process.env.LOG_LEVEL = 'info';
+    delete process.env.LOG_PRETTY;
+
+    const lines = [];
+    const orig = process.stdout.write.bind(process.stdout);
+    process.stdout.write = (s) => { lines.push(s); return true; };
+
+    const { create } = require('./logger');
+    const base = create('BaseComp');
+    const withCid = base.withContext({ correlationId: 'isolated-cid' });
+    base.info('base log');
+    withCid.info('scoped log');
+
+    process.stdout.write = orig;
+    assert.equal(lines.length, 2);
+    const baseParsed = JSON.parse(lines[0]);
+    const scopedParsed = JSON.parse(lines[1]);
+    assert.equal(baseParsed.correlationId, undefined, 'base should not have correlationId');
+    assert.equal(scopedParsed.correlationId, 'isolated-cid');
+  });
+
+  it('generateCorrelationId returns a UUID-shaped string', () => {
+    delete require.cache[require.resolve('./logger')];
+    const { generateCorrelationId } = require('./logger');
+    const id = generateCorrelationId();
+    assert.match(id, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+  });
+
+  it('emits correlationId in pretty output via withContext', () => {
+    delete require.cache[require.resolve('./logger')];
+    process.env.LOG_LEVEL = 'info';
+    process.env.LOG_PRETTY = '1';
+
+    const lines = [];
+    const orig = process.stdout.write.bind(process.stdout);
+    process.stdout.write = (s) => { lines.push(s); return true; };
+
+    const { create } = require('./logger');
+    const log = create('PrettyTrace').withContext({ correlationId: 'pretty-cid' });
+    log.info('traced pretty message');
+
+    process.stdout.write = orig;
+    assert.ok(lines[0].includes('[cid:pretty-cid]'), 'pretty output should include cid label');
+    assert.ok(lines[0].includes('traced pretty message'));
+  });
 });

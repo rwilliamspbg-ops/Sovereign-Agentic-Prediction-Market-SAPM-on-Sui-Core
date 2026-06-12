@@ -54,8 +54,8 @@ Tracking fields:
 
 ## 6. Infrastructure, Reliability, And SLOs
 
-- [ ] Availability SLOs defined for RPC, agent loop, and transaction execution.
-- [ ] Error budget policy documented.
+- [x] Availability SLOs defined for RPC, agent loop, and transaction execution.
+- [x] Error budget policy documented.
 - [ ] Horizontal scaling and capacity plan validated with load tests.
 - [ ] Backup and restore tested for stateful components.
 - [ ] Disaster recovery tested with target RTO and RPO.
@@ -63,11 +63,11 @@ Tracking fields:
 
 ## 7. Observability And Operations
 
-- [ ] Structured logging with correlation IDs enabled.
+- [x] Structured logging with correlation IDs enabled.
 - [ ] Metrics published for forecast latency, tx success rate, and RPC error rates.
 - [ ] Alert thresholds and paging rules tuned and tested.
 - [ ] Dashboards available for operators and incident response.
-- [ ] Runbooks available for common failure modes.
+- [x] Runbooks available for common failure modes.
 - [ ] Post-incident review template and process in place.
 
 ## 8. Security Assurance
@@ -89,7 +89,7 @@ Tracking fields:
 
 ## 10. Verification And Testing
 
-- [ ] Unit, integration, and end-to-end coverage thresholds met.
+- [x] Unit, integration, and end-to-end coverage thresholds met.
 - [ ] Chaos/fault-injection tests passed for network and dependency failures.
 - [ ] Soak tests passed at expected production load profile.
 - [ ] Canary deployment plan tested.
