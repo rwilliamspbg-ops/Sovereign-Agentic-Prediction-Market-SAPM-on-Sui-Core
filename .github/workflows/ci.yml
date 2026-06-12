@@ -186,9 +186,29 @@ jobs:
     if: always()
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: agents/orchestrator/package-lock.json
+      - name: Install orchestrator dependencies
+        run: npm --prefix agents/orchestrator ci --no-audit --no-fund
+      - name: Compute orchestrator flake-rate probe
+        run: |
+          chmod +x scripts/compute_test_flake_rate.sh
+          scripts/compute_test_flake_rate.sh
       - name: Generate critical-path status summary
         run: |
           mkdir -p artifacts/ci-logs
+          FLAKE_RATE="n/a"
+          FLAKE_RUNS="n/a"
+          FLAKE_FAILURES="n/a"
+          if [[ -f artifacts/ci-logs/flake-rate.json ]]; then
+            FLAKE_RATE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.flakeRate));")
+            FLAKE_RUNS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.probeRuns));")
+            FLAKE_FAILURES=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.failures));")
+          fi
           cat > artifacts/ci-logs/critical-path-summary.md <<'EOF'
           # Critical-Path Matrix Status
 
@@ -213,11 +233,31 @@ jobs:
           | Trade execution resilience | resilience-tests | ${{ needs.resilience-tests.result }} |
           | Settlement and post-trade integrity | release-check + unit-tests | ${{ needs.release-check.result }} / ${{ needs.unit-tests.result }} |
           | Failure recovery and rollback readiness | release-check + resilience-tests | ${{ needs.release-check.result }} / ${{ needs.resilience-tests.result }} |
+
+          ## Flake-Rate Probe
+
+          | Metric | Value |
+          | --- | --- |
+          | Orchestrator probe runs | __FLAKE_RUNS__ |
+          | Orchestrator probe failures | __FLAKE_FAILURES__ |
+          | Orchestrator flake rate | __FLAKE_RATE__ |
           EOF
+          sed -i "s/__FLAKE_RATE__/${FLAKE_RATE}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__FLAKE_RUNS__/${FLAKE_RUNS}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__FLAKE_FAILURES__/${FLAKE_FAILURES}/g" artifacts/ci-logs/critical-path-summary.md
       - name: Upload critical-path summary
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: critical-path-summary
           path: artifacts/ci-logs/critical-path-summary.md
+          if-no-files-found: warn
+      - name: Upload flake-rate probe artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flake-rate-probe
+          path: |
+            artifacts/ci-logs/flake-probe.log
+            artifacts/ci-logs/flake-rate.json
           if-no-files-found: warn
