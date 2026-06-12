@@ -53,6 +53,12 @@ class DiscoveryManager {
     try {
       // Perform hybrid key exchange (x25519-mlkem768)
       const sessionKeys = await this._performHybridKeyExchange(attestationData, peerPubkey);
+
+      // Key confirmation guard: ensure returned peer digest matches negotiated peer key material.
+      const expectedPeerDigest = crypto.createHash('sha256').update(String(peerPubkey || '').trim()).digest('hex');
+      if (sessionKeys?.peerDigest !== expectedPeerDigest) {
+        throw new Error('Discovery key confirmation failed: peer digest mismatch');
+      }
       
       session.keyMaterial = sessionKeys;
       session.status = 'encrypted';

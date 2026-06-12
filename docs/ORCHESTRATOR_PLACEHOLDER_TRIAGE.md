@@ -54,7 +54,7 @@ Current implementation status was reconciled against orchestrator code paths in:
 | ORCH-006 | Closed-in-code | Reachability check performs active HTTP/S probe with timeout handling | Add multi-endpoint degraded-network matrix scenarios |
 | ORCH-007 | Closed-in-code | Hugepage check reads procfs and enforces minimum availability threshold | Add production profile threshold variants |
 | ORCH-008 | Closed-in-code | CPU pinning check validates cpuset against online CPU list | Add cgroup-v2 specific regression fixture |
-| ORCH-009 | Partial | Discovery KEX path derives session material from attestation digest and peer digest | Replace placeholder-design derivation with audited x25519-mlkem768 path |
+| ORCH-009 | Partial | Discovery KEX path now includes peer-digest key confirmation and fail-closed mismatch handling | Replace placeholder-design derivation with audited x25519-mlkem768 path |
 
 ## First Closure Wave (WS-3.2)
 
@@ -73,7 +73,7 @@ Wave objective: close the highest risk security and cryptographic gaps before br
 Current regression evidence from orchestrator suite:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 6 suites, 115 tests, 115 passed (2026-06-12)
+- Result: 7 suites, 117 tests, 117 passed (2026-06-12)
 
 | ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
 | --- | --- | --- | --- |
@@ -85,7 +85,7 @@ Current regression evidence from orchestrator suite:
 | ORCH-006 | Covered | security-hardening reachability negative-path fixture validates false on unreachable endpoint | Add unit tests for explicit status-code matrix |
 | ORCH-007 | Covered | security-hardening procfs fixture validates hugepage threshold fail path | Add production profile threshold variants |
 | ORCH-008 | Covered | security-hardening cpuset fixture validates unpinned detection path | Add cgroup-v2 specific regression fixture |
-| ORCH-009 | Partial | Discovery manager hybrid KEX derives context-bound session material | Add discovery integration test with audited hybrid provider and key confirmation |
+| ORCH-009 | Partial | discovery-manager tests now cover successful key confirmation and digest-mismatch fail-closed behavior | Integrate audited hybrid provider path and key confirmation handshake beyond placeholder-design derivation |
 
 ## 2026-06-12 Regression Expansion Update
 
@@ -101,4 +101,21 @@ Added security-hardening regression fixtures in orchestrator tests for:
 Post-update orchestrator test baseline:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 6 suites, 115 tests, 115 passed
+- Result: 7 suites, 117 tests, 117 passed
+
+## 2026-06-12 Discovery Key-Confirmation Update (ORCH-009)
+
+Implemented discovery session key-confirmation guard in `agents/orchestrator/discovery/manager.js`:
+
+- Session establishment now validates derived `peerDigest` against expected peer-key digest.
+- Mismatch fails closed and tears down negotiating session.
+
+Added dedicated discovery-manager regression tests:
+
+- successful session establishment with matching digest
+- fail-closed session establishment when digest mismatches
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 117 tests, 117 passed
