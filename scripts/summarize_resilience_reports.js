@@ -3,6 +3,7 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 
 function readJsonIfExists(filePath) {
   if (!filePath || !fs.existsSync(filePath)) {
@@ -22,10 +23,12 @@ function formatNumber(value, digits = 2) {
 function main() {
   const chaosPath = process.env.CHAOS_REPORT_PATH || 'artifacts/ci-logs/chaos-report.json';
   const loadPath = process.env.LOAD_REPORT_PATH || 'artifacts/ci-logs/load-report.json';
+  const soakPath = process.env.SOAK_REPORT_PATH || 'artifacts/ci-logs/soak-report.json';
   const outputPath = process.env.RESILIENCE_SUMMARY_PATH || 'artifacts/ci-logs/resilience-summary.json';
 
   const chaos = readJsonIfExists(chaosPath);
   const load = readJsonIfExists(loadPath);
+  const soak = readJsonIfExists(soakPath);
 
   const summary = {
     generatedAt: new Date().toISOString(),
@@ -65,8 +68,28 @@ function main() {
           p99LatencyMs: 'n/a',
           failedRequests: null,
         },
+    soak: soak
+      ? {
+          reportPresent: true,
+          passed: Boolean(soak.passed),
+          iterations: soak.iterations ?? null,
+          failedIterations: Array.isArray(soak.failedIterations) ? soak.failedIterations : [],
+          avgSuccessRate: formatNumber(soak.avgSuccessRate, 2),
+          avgRps: formatNumber(soak.avgRps, 2),
+          worstP99LatencyMs: formatNumber(soak.worstP99Latency, 2),
+        }
+      : {
+          reportPresent: false,
+          passed: null,
+          iterations: null,
+          failedIterations: [],
+          avgSuccessRate: 'n/a',
+          avgRps: 'n/a',
+          worstP99LatencyMs: 'n/a',
+        },
   };
 
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, `${JSON.stringify(summary, null, 2)}\n`, 'utf8');
   console.log(JSON.stringify(summary, null, 2));
 }

@@ -176,8 +176,22 @@ jobs:
     env:
       REQUESTS: '120'
       CONCURRENCY: '12'
+      SOAK_ITERATIONS: ${{ vars.SOAK_ITERATIONS || '5' }}
+      SOAK_REQUESTS: ${{ vars.SOAK_REQUESTS || '100' }}
+      SOAK_CONCURRENCY: ${{ vars.SOAK_CONCURRENCY || '10' }}
       CHAOS_REPORT_PATH: artifacts/ci-logs/chaos-report.json
       LOAD_REPORT_PATH: artifacts/ci-logs/load-report.json
+      SOAK_REPORT_PATH: artifacts/ci-logs/soak-report.json
+      RESILIENCE_POLICY_GATING: ${{ vars.RESILIENCE_POLICY_GATING || 'false' }}
+      MIN_CHAOS_SCENARIO_COUNT: ${{ vars.MIN_CHAOS_SCENARIO_COUNT || '3' }}
+      MIN_LOAD_SUCCESS_RATE: ${{ vars.MIN_LOAD_SUCCESS_RATE || '95' }}
+      MAX_LOAD_P99_LATENCY_MS: ${{ vars.MAX_LOAD_P99_LATENCY_MS || '1000' }}
+      MIN_LOAD_REQUESTS: ${{ vars.MIN_LOAD_REQUESTS || '100' }}
+      MIN_LOAD_RPS: ${{ vars.MIN_LOAD_RPS || '50' }}
+      MIN_SOAK_ITERATIONS: ${{ vars.MIN_SOAK_ITERATIONS || '3' }}
+      MIN_SOAK_SUCCESS_RATE: ${{ vars.MIN_SOAK_SUCCESS_RATE || '95' }}
+      MAX_SOAK_P99_LATENCY_MS: ${{ vars.MAX_SOAK_P99_LATENCY_MS || '1000' }}
+      MIN_SOAK_RPS: ${{ vars.MIN_SOAK_RPS || '50' }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js
@@ -195,6 +209,19 @@ jobs:
         run: |
           mkdir -p artifacts/ci-logs
           npm run test:load 2>&1 | tee artifacts/ci-logs/load-tests.log
+      - name: Run soak benchmark
+        run: |
+          mkdir -p artifacts/ci-logs
+          node scripts/soak_test_trading.js 2>&1 | tee artifacts/ci-logs/soak-tests.log
+      - name: Synthesize resilience summary
+        run: |
+          mkdir -p artifacts/ci-logs
+          node scripts/summarize_resilience_reports.js
+      - name: Evaluate resilience policy thresholds
+        run: |
+          mkdir -p artifacts/ci-logs
+          RESILIENCE_POLICY_GATING_MODE="${{ vars.RESILIENCE_POLICY_GATING == 'true' && 'enforced' || 'warn-only' }}" \
+            node scripts/check_resilience_policy.js
       - name: Upload resilience logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -205,6 +232,10 @@ jobs:
             artifacts/ci-logs/load-tests.log
             artifacts/ci-logs/chaos-report.json
             artifacts/ci-logs/load-report.json
+            artifacts/ci-logs/soak-tests.log
+            artifacts/ci-logs/soak-report.json
+            artifacts/ci-logs/resilience-summary.json
+            artifacts/ci-logs/resilience-policy-check.json
           if-no-files-found: warn
 
   critical-path-summary:
@@ -217,6 +248,7 @@ jobs:
       SAPM_HYBRID_KEX_RESTART_BUDGET_WINDOW_MS: ${{ vars.SAPM_HYBRID_KEX_RESTART_BUDGET_WINDOW_MS || '60000' }}
       SAPM_HYBRID_KEX_MAX_RETRIES: ${{ vars.SAPM_HYBRID_KEX_MAX_RETRIES || '1' }}
       SAPM_HYBRID_KEX_RETRY_BACKOFF_MS: ${{ vars.SAPM_HYBRID_KEX_RETRY_BACKOFF_MS || '50' }}
+      RESILIENCE_POLICY_GATING: ${{ vars.RESILIENCE_POLICY_GATING || 'false' }}
       LIFECYCLE_POLICY_GATING: ${{ vars.LIFECYCLE_POLICY_GATING || 'false' }}
       LIFECYCLE_MIN_RESTART_BUDGET_MAX: ${{ vars.LIFECYCLE_MIN_RESTART_BUDGET_MAX || '1' }}
       LIFECYCLE_MAX_RESTART_BUDGET_MAX: ${{ vars.LIFECYCLE_MAX_RESTART_BUDGET_MAX || '10' }}
@@ -299,12 +331,19 @@ jobs:
           LOAD_SUCCESS_RATE="n/a"
           LOAD_RPS="n/a"
           LOAD_P99="n/a"
+          SOAK_PASSED="n/a"
+          SOAK_ITERATIONS="n/a"
+          SOAK_SUCCESS_RATE="n/a"
+          SOAK_RPS="n/a"
+          SOAK_WORST_P99="n/a"
           LIFECYCLE_PREFLIGHT="n/a"
           LIFECYCLE_RESTART_ENFORCED="n/a"
           LIFECYCLE_RESTART_BUDGET_MAX="n/a"
           LIFECYCLE_RESTART_WINDOW_MS="n/a"
           LIFECYCLE_MAX_RETRIES="n/a"
           LIFECYCLE_RETRY_BACKOFF_MS="n/a"
+          RESILIENCE_POLICY_MODE="${{ vars.RESILIENCE_POLICY_GATING == 'true' && 'enforced' || 'warn-only' }}"
+          RESILIENCE_POLICY_PASS="n/a"
           LIFECYCLE_POLICY_MODE="${{ vars.LIFECYCLE_POLICY_GATING == 'true' && 'enforced' || 'warn-only' }}"
           LIFECYCLE_POLICY_PASS="n/a"
           if [[ -f artifacts/ci-logs/flake-rate.json ]]; then
@@ -319,6 +358,15 @@ jobs:
             LOAD_SUCCESS_RATE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.load.successRate));")
             LOAD_RPS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.load.rps));")
             LOAD_P99=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.load.p99LatencyMs));")
+            SOAK_PASSED=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.soak.passed));")
+            SOAK_ITERATIONS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.soak.iterations));")
+            SOAK_SUCCESS_RATE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.soak.avgSuccessRate));")
+            SOAK_RPS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.soak.avgRps));")
+            SOAK_WORST_P99=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.soak.worstP99LatencyMs));")
+          fi
+          if [[ -f artifacts/ci-logs/resilience-policy-check.json ]]; then
+            RESILIENCE_POLICY_MODE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-policy-check.json','utf8'));process.stdout.write(String(j.mode));")
+            RESILIENCE_POLICY_PASS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-policy-check.json','utf8'));process.stdout.write(String(j.passed));")
           fi
           if [[ -f artifacts/ci-logs/orchestrator-lifecycle-summary.json ]]; then
             LIFECYCLE_PREFLIGHT=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.healthPreflightGate));")
@@ -377,6 +425,18 @@ jobs:
           | Load success rate (%) | __LOAD_SUCCESS_RATE__ |
           | Load throughput (req/s) | __LOAD_RPS__ |
           | Load p99 latency (ms) | __LOAD_P99__ |
+          | Soak passed | __SOAK_PASSED__ |
+          | Soak iterations | __SOAK_ITERATIONS__ |
+          | Soak success rate (%) | __SOAK_SUCCESS_RATE__ |
+          | Soak throughput (req/s) | __SOAK_RPS__ |
+          | Soak worst p99 latency (ms) | __SOAK_WORST_P99__ |
+
+          ## Resilience Policy Gate
+
+          | Metric | Value |
+          | --- | --- |
+          | Resilience policy gating mode | __RESILIENCE_POLICY_MODE__ |
+          | Resilience policy checks passed | __RESILIENCE_POLICY_PASS__ |
 
           ## Provider Lifecycle Controls
 
@@ -407,6 +467,13 @@ jobs:
           sed -i "s/__LOAD_SUCCESS_RATE__/${LOAD_SUCCESS_RATE}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__LOAD_RPS__/${LOAD_RPS}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__LOAD_P99__/${LOAD_P99}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__SOAK_PASSED__/${SOAK_PASSED}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__SOAK_ITERATIONS__/${SOAK_ITERATIONS}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__SOAK_SUCCESS_RATE__/${SOAK_SUCCESS_RATE}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__SOAK_RPS__/${SOAK_RPS}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__SOAK_WORST_P99__/${SOAK_WORST_P99}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__RESILIENCE_POLICY_MODE__/${RESILIENCE_POLICY_MODE}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__RESILIENCE_POLICY_PASS__/${RESILIENCE_POLICY_PASS}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__LIFECYCLE_PREFLIGHT__/${LIFECYCLE_PREFLIGHT}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__LIFECYCLE_RESTART_ENFORCED__/${LIFECYCLE_RESTART_ENFORCED}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__LIFECYCLE_RESTART_BUDGET_MAX__/${LIFECYCLE_RESTART_BUDGET_MAX}/g" artifacts/ci-logs/critical-path-summary.md

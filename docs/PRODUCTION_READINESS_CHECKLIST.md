@@ -90,8 +90,8 @@ Tracking fields:
 ## 10. Verification And Testing
 
 - [x] Unit, integration, and end-to-end coverage thresholds met.
-- [ ] Chaos/fault-injection tests passed for network and dependency failures.
-- [ ] Soak tests passed at expected production load profile.
+- [x] Chaos/fault-injection tests passed for network and dependency failures.
+- [x] Soak tests passed at expected production load profile.
 - [x] Canary deployment plan tested.
 - [x] Rollback drill executed in staging with acceptable recovery time.
 
