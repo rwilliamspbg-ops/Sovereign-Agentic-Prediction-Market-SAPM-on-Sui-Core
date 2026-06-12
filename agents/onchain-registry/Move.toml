@@ -5,10 +5,13 @@ authors = ["Sovereign Mohawk Proto LLC"]
 edition = "2024"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet" }
 
 [addresses]
 sapm_registry = "0x0"
 
 [environments]
+mainnet = { rpc = "https://fullnode.mainnet.sui.io:443" }
 testnet = { rpc = "https://fullnode.testnet.sui.io:443" }
+devnet = { rpc = "https://fullnode.devnet.sui.io:443" }
+localnet = { rpc = "http://127.0.0.1:9000" }

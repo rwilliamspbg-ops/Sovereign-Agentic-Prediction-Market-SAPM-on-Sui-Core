@@ -17,7 +17,8 @@ const router = express.Router();
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 
-const SUI_RPC_URL   = process.env.SUI_RPC     || getFullnodeUrl('testnet');
+const SUI_NETWORK   = process.env.SUI_NETWORK || 'testnet';
+const SUI_RPC_URL   = process.env.SUI_RPC || getFullnodeUrl(SUI_NETWORK);
 const PACKAGE_ID    = process.env.REGISTRY_PACKAGE_ID ||
   '0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188';
 

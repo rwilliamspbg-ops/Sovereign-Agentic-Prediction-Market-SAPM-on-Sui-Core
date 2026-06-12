@@ -25,6 +25,19 @@
 
 const { ForecastToTradeAdapter } = require('./forecast_to_trade');
 
+/**
+ * Get default RPC endpoint based on network
+ */
+function getDefaultRpc(network = 'testnet') {
+  const rpcMap = {
+    mainnet: 'https://fullnode.mainnet.sui.io:443',
+    testnet: 'https://fullnode.testnet.sui.io:443',
+    devnet: 'https://fullnode.devnet.sui.io:443',
+    localnet: 'http://127.0.0.1:9000'
+  };
+  return rpcMap[network] || rpcMap.testnet;
+}
+
 // Example forecast metadata structure (from aggregator)
 const exampleForecast = {
   confidence: 78.5,
@@ -42,8 +55,9 @@ async function main() {
   
   // Parse command line arguments
   const dryRun = args.includes('--dry-run') || process.env.DRY_RUN === 'true';
+  const network = process.env.SUI_NETWORK || 'testnet';
   const rpcEndpoint = args.find(a => a.startsWith('--rpc='))?.split('=')[1] || 
-                     process.env.SUI_RPC || 'https://fullnode.testnet.sui.io:443';
+                     process.env.SUI_RPC || getDefaultRpc(network);
   const packageId = args.find(a => a.startsWith('--package-id='))?.split('=')[1] ||
                     process.env.REGISTRY_PACKAGE_ID || '0xplaceholder_package_id';
   const marketObjectId = args.find(a => a.startsWith('--market-object-id='))?.split('=')[1] ||

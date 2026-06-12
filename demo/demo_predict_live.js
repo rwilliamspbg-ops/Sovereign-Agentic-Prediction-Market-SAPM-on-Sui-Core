@@ -21,12 +21,13 @@
  */
 'use strict';
 
-const DEEPBOOK_PREDICT_SERVER = 'https://predict-server.testnet.mystenlabs.com';
-const DEEPBOOK_PREDICT_OBJECT_ID = '0xc8736204d12f0a7277c86388a68bf8a194b0a14c5538ad13f22cbd8e2a38028a';
-const DEEPBOOK_PREDICT_PACKAGE  = '0xf5ea2b3749c65d6e56507cc35388719aadb28f9cab873696a2f8687f5c785138';
-const WALRUS_AGGREGATOR_URL     = 'https://aggregator.walrus-testnet.walrus.space';
-const SAPM_PACKAGE_ID           = '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
-const SUISCAN_BASE              = 'https://suiscan.xyz/testnet';
+const DEEPBOOK_PREDICT_SERVER = process.env.DEEPBOOK_PREDICT_SERVER || 'https://predict-server.testnet.mystenlabs.com';
+const DEEPBOOK_PREDICT_OBJECT_ID = process.env.DEEPBOOK_PREDICT_OBJECT_ID || '0xc8736204d12f0a7277c86388a68bf8a194b0a14c5538ad13f22cbd8e2a38028a';
+const DEEPBOOK_PREDICT_PACKAGE  = process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID || '0xf5ea2b3749c65d6e56507cc35388719aadb28f9cab873696a2f8687f5c785138';
+const WALRUS_AGGREGATOR_URL     = process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL || 'https://aggregator.walrus-testnet.walrus.space';
+const SAPM_PACKAGE_ID           = process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
+const SUI_NETWORK               = process.env.SUI_NETWORK || 'testnet';
+const SUISCAN_BASE              = SUI_NETWORK === 'mainnet' ? 'https://suiscan.xyz' : 'https://suiscan.xyz/testnet';
 
 const log = (msg, data) => {
   const entry = { ts: new Date().toISOString(), msg };
