@@ -17,22 +17,50 @@ function execFilePromise(command, args, options = {}) {
   });
 }
 
+function resolveProviderInvocation() {
+  const repoRoot = path.resolve(__dirname, '../../..');
+  const configuredBinary = (process.env.SAPM_HYBRID_KEX_BINARY || '').trim();
+
+  if (configuredBinary) {
+    return {
+      command: configuredBinary,
+      argsPrefix: [],
+      cwd: repoRoot,
+    };
+  }
+
+  return {
+    command: 'go',
+    argsPrefix: ['run', './cmd/kexcli'],
+    cwd: repoRoot,
+  };
+}
+
+function buildDeriveSessionCommand(peerPublicB64, attestationDigestB64) {
+  const invocation = resolveProviderInvocation();
+  return {
+    command: invocation.command,
+    args: [
+      ...invocation.argsPrefix,
+      '-mode', 'derive-session',
+      '-peer-public-b64', peerPublicB64,
+      '-attestation-digest-b64', attestationDigestB64,
+    ],
+    cwd: invocation.cwd,
+  };
+}
+
 module.exports = {
+  buildDeriveSessionCommand,
   async deriveSession({ attestationDigest, peerPublicKey, algorithm }) {
-    const repoRoot = path.resolve(__dirname, '../../..');
     const peerPublicB64 = Buffer.from(peerPublicKey).toString('base64');
     const attestationDigestB64 = Buffer.from(attestationDigest).toString('base64');
+    const invocation = buildDeriveSessionCommand(peerPublicB64, attestationDigestB64);
 
     const stdout = await execFilePromise(
-      'go',
-      [
-        'run',
-        './cmd/kexcli',
-        '-mode', 'derive-session',
-        '-peer-public-b64', peerPublicB64,
-        '-attestation-digest-b64', attestationDigestB64,
-      ],
-      { cwd: repoRoot, maxBuffer: 1024 * 1024 },
+      invocation.command,
+      invocation.args,
+      { cwd: invocation.cwd, maxBuffer: 1024 * 1024 },
     );
 
     const result = JSON.parse(stdout.trim());

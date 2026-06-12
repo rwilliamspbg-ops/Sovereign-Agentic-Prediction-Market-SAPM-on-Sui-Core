@@ -181,6 +181,8 @@ WS-3.3 implementation notes:
 - Updated orchestrator regression baseline after ORCH-001 provider-bridge wave: 7 suites, 133 tests, 133 passed.
 - Implemented ORCH-009 provider-backed discovery exchange with explicit fallback control and retained key-confirmation enforcement.
 - Updated orchestrator regression baseline after ORCH-009 provider-backed discovery wave: 7 suites, 134 tests, 134 passed.
+- Hardened the Go provider runtime path with explicit binary override support and command-shape regression coverage.
+- Updated orchestrator regression baseline after Go provider runtime hardening wave: 7 suites, 135 tests, 135 passed.
 
 ### Testing + Readiness
 
@@ -253,3 +255,4 @@ WS-4.1 status notes:
 - 2026-06-12: Added ORCH-005 multi-certificate chain regression coverage and raised orchestrator regression evidence baseline to 132/132 pass.
 - 2026-06-12: Added ORCH-001 Go-backed provider bridge coverage and raised orchestrator regression evidence baseline to 133/133 pass.
 - 2026-06-12: Added ORCH-009 Go-backed discovery provider coverage and raised orchestrator regression evidence baseline to 134/134 pass.
+- 2026-06-12: Added Go provider runtime hardening and raised orchestrator regression evidence baseline to 135/135 pass.

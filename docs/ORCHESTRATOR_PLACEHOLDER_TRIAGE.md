@@ -73,11 +73,11 @@ Wave objective: close the highest risk security and cryptographic gaps before br
 Current regression evidence from orchestrator suite:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 134 tests, 134 passed (2026-06-12)
+- Result: 7 suites, 135 tests, 135 passed (2026-06-12)
 
 | ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
 | --- | --- | --- | --- |
-| ORCH-001 | Partial | security-hardening now includes deterministic seam coverage plus a real Go-backed x25519-mlkem768 provider bridge test through the configured seam | Extend provider bridge from test-backed integration to production runtime wiring |
+| ORCH-001 | Partial | security-hardening now includes deterministic seam coverage, a real Go-backed provider bridge, and explicit binary-path runtime configuration support | Promote bridge from `go run` default to production binary lifecycle/telemetry |
 | ORCH-002 | Covered | security-hardening now covers MAC tamper and missing-attestation-digest fail-closed verification paths | Keep CI baseline current as proof verification logic evolves |
 | ORCH-003 | Covered | security-hardening now includes signed peer-key accept/reject paths plus a live local HTTP registry-style endpoint verification test | Add broader registry auth fixture parity if production payload schema expands |
 | ORCH-004 | Partial | security-hardening now covers validated staging attestation fixture ingestion and digest-mismatch fail-closed behavior | Capture hardware-backed staging evidence artifact and verify real TPM/TEE measurement ingestion |
@@ -85,7 +85,7 @@ Current regression evidence from orchestrator suite:
 | ORCH-006 | Covered | security-hardening now covers unreachable endpoint plus explicit 200/404 reachable and 503 unreachable probe semantics | Extend matrix only if probe policy changes |
 | ORCH-007 | Covered | security-hardening now covers below-threshold fail, threshold-met pass, and zero-free-pages fail variants | Extend only if hugepage policy adds more profile dimensions |
 | ORCH-008 | Covered | security-hardening now covers unpinned cpuset detection plus cgroup-v2 effective cpuset accept/reject paths | Extend only if CPU affinity policy adds more cgroup sources |
-| ORCH-009 | Partial | discovery manager now prefers the Go-backed provider path with key confirmation, while tests cover provider-backed success, explicit fallback, and digest-mismatch fail-closed behavior | Promote provider-backed path from test/runtime bridge to full production discovery exchange wiring |
+| ORCH-009 | Partial | discovery manager now prefers the Go-backed provider path with key confirmation, explicit fallback, and runtime-configurable binary invocation support | Promote provider-backed path from bridge invocation to full production discovery exchange wiring |
 
 ## 2026-06-12 Regression Expansion Update
 
@@ -259,6 +259,23 @@ Validation evidence:
 
 - Command: npm --prefix agents/orchestrator test
 - Result: 7 suites, 134 tests, 134 passed
+
+## 2026-06-12 Go Provider Runtime Hardening Update
+
+Hardened the Go provider bridge runtime path in `agents/orchestrator/core/go-hybrid-provider.js`:
+
+- added explicit `SAPM_HYBRID_KEX_BINARY` override support for production binary wiring
+- exposed deterministic command construction for regression validation
+- preserved `go run ./cmd/kexcli` as the default development path
+
+Added regression coverage in `agents/orchestrator/test/security-hardening.test.js`:
+
+- explicit binary override produces the expected provider command invocation shape
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 135 tests, 135 passed
 
 ## 2026-06-12 ORCH-001 Provider-Seam Update
 

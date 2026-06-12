@@ -5,12 +5,26 @@ const fs = require('fs');
 const crypto = require('crypto');
 const http = require('http');
 const { Orchestrator } = require('../core/orchestrator');
+const goHybridProvider = require('../core/go-hybrid-provider');
 
 describe('Orchestrator Security Hardening', () => {
   const envSnapshot = { ...process.env };
 
   afterEach(() => {
     process.env = { ...envSnapshot };
+  });
+
+  test('builds Go hybrid provider command from explicit binary path when configured', () => {
+    process.env.SAPM_HYBRID_KEX_BINARY = '/tmp/sapm-kex-provider';
+
+    const invocation = goHybridProvider.buildDeriveSessionCommand('peer-b64', 'digest-b64');
+
+    expect(invocation.command).toBe('/tmp/sapm-kex-provider');
+    expect(invocation.args).toEqual([
+      '-mode', 'derive-session',
+      '-peer-public-b64', 'peer-b64',
+      '-attestation-digest-b64', 'digest-b64',
+    ]);
   });
 
   test('rejects invalid peer key signature when signed mode is enabled', async () => {
