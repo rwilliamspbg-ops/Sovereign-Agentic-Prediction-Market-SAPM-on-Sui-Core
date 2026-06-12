@@ -83,6 +83,88 @@ describe('Orchestrator Security Hardening', () => {
     }
   });
 
+  test('recovers with bounded retry when provider fails once then succeeds', async () => {
+    const scriptPath = path.join('/tmp', `sapm-retry-provider-${Date.now()}.sh`);
+    const statePath = path.join('/tmp', `sapm-retry-provider-state-${Date.now()}.txt`);
+    fs.writeFileSync(
+      scriptPath,
+      `#!/usr/bin/env bash
+STATE_FILE="${statePath}"
+COUNT=0
+if [ -f "$STATE_FILE" ]; then
+  COUNT=$(cat "$STATE_FILE")
+fi
+COUNT=$((COUNT+1))
+echo "$COUNT" > "$STATE_FILE"
+if [ "$COUNT" -eq 1 ]; then
+  echo "transient failure" >&2
+  exit 1
+fi
+echo '{"algorithm":"x25519-mlkem768-go-bridge","sessionKey":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=","nonce":"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=","peerKeyDigest":"retry-peer-digest"}'
+`,
+      { mode: 0o755 },
+    );
+
+    process.env.SAPM_HYBRID_KEX_BINARY = scriptPath;
+    process.env.SAPM_HYBRID_KEX_MAX_RETRIES = '1';
+    process.env.SAPM_HYBRID_KEX_RETRY_BACKOFF_MS = '0';
+
+    try {
+      const result = await goHybridProvider.deriveSession({
+        attestationDigest: crypto.randomBytes(32),
+        peerPublicKey: Buffer.from('peer-public-key-retry-success', 'utf8'),
+        algorithm: 'x25519-mlkem768',
+      });
+
+      expect(result.algorithm).toBe('x25519-mlkem768-go-bridge');
+      const runtimeState = goHybridProvider.getProviderRuntimeState();
+      expect(runtimeState).toEqual(expect.objectContaining({
+        deriveCalls: 1,
+        deriveAttempts: 2,
+        recoveryAttempts: 1,
+        lastErrorCategory: null,
+        lastRecoveryAction: 'retry_succeeded_after_1',
+      }));
+    } finally {
+      fs.rmSync(scriptPath, { force: true });
+      fs.rmSync(statePath, { force: true });
+    }
+  });
+
+  test('fails after bounded retries are exhausted', async () => {
+    const scriptPath = path.join('/tmp', `sapm-retry-fail-provider-${Date.now()}.sh`);
+    fs.writeFileSync(
+      scriptPath,
+      '#!/usr/bin/env bash\necho "still failing" >&2\nexit 1\n',
+      { mode: 0o755 },
+    );
+
+    process.env.SAPM_HYBRID_KEX_BINARY = scriptPath;
+    process.env.SAPM_HYBRID_KEX_MAX_RETRIES = '2';
+    process.env.SAPM_HYBRID_KEX_RETRY_BACKOFF_MS = '0';
+
+    try {
+      await expect(
+        goHybridProvider.deriveSession({
+          attestationDigest: crypto.randomBytes(32),
+          peerPublicKey: Buffer.from('peer-public-key-retry-fail', 'utf8'),
+          algorithm: 'x25519-mlkem768',
+        }),
+      ).rejects.toThrow('Hybrid KEX provider derive-session failed [execution_failed]');
+
+      const runtimeState = goHybridProvider.getProviderRuntimeState();
+      expect(runtimeState).toEqual(expect.objectContaining({
+        deriveCalls: 1,
+        deriveAttempts: 3,
+        recoveryAttempts: 2,
+        lastErrorCategory: 'execution_failed',
+        lastRecoveryAction: 'retry_2_after_execution_failed',
+      }));
+    } finally {
+      fs.rmSync(scriptPath, { force: true });
+    }
+  });
+
   test('builds Go hybrid provider command from explicit binary path when configured', () => {
     process.env.SAPM_HYBRID_KEX_BINARY = '/tmp/sapm-kex-provider';
 
