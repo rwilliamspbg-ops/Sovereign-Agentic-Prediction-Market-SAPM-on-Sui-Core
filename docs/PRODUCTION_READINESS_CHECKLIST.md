@@ -10,12 +10,12 @@ Tracking fields:
 
 ## 1. Governance And Release Control
 
-- [ ] Code owners defined for all critical paths (`agents`, `docker`, `scripts`, infrastructure).
+- [x] Code owners defined for all critical paths (`agents`, `docker`, `scripts`, infrastructure).
 - [ ] Branch protection enabled for default branch.
 - [ ] Required status checks enforced (tests, lint, security scans).
 - [ ] Signed commits and release tags required for release branches.
-- [ ] Incident commander and escalation matrix documented.
-- [ ] Rollback authority and rollback SLA documented.
+- [x] Incident commander and escalation matrix documented.
+- [x] Rollback authority and rollback SLA documented.
 
 ## 2. Architecture And Threat Model
 
@@ -27,20 +27,20 @@ Tracking fields:
 
 ## 3. Identity, Keys, And Secrets
 
-- [ ] No private keys or secrets in repository or images.
+- [x] No private keys or secrets in repository or images.
 - [ ] Key generation and storage policy approved (HSM/KMS or equivalent).
 - [ ] Key rotation procedures tested.
-- [ ] Signing permissions scoped to least privilege.
+- [x] Signing permissions scoped to least privilege.
 - [ ] Secret distribution and revocation process validated.
 - [ ] Break-glass credentials audited and stored securely.
 
 ## 4. Chain And Transaction Safety
 
-- [ ] Explicit network allowlist configured (devnet/testnet/mainnet separation).
-- [ ] Gas budget, slippage, and risk limits enforced in transaction pipeline.
+- [x] Explicit network allowlist configured (devnet/testnet/mainnet separation).
+- [x] Gas budget, slippage, and risk limits enforced in transaction pipeline.
 - [ ] Transaction simulation/preflight checks required before execution.
 - [ ] Replay protection and nonce/state validation implemented.
-- [ ] Failed transaction retry policy bounded and idempotent.
+- [x] Failed transaction retry policy bounded and idempotent.
 - [ ] On-chain object ownership and capability checks covered by tests.
 
 ## 5. Agent Runtime And Model Safety
@@ -72,7 +72,7 @@ Tracking fields:
 
 ## 8. Security Assurance
 
-- [ ] SAST, dependency, and container scanning active in CI.
+- [x] SAST, dependency, and container scanning active in CI.
 - [ ] Critical/high vulnerabilities blocked at merge.
 - [ ] Container images run as non-root where possible.
 - [ ] Network segmentation and egress controls verified.

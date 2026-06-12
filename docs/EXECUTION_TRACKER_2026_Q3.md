@@ -80,7 +80,7 @@ Track weekly and update in-place.
 | Datapath throughput | Theoretical AF_XDP figures documented; measured socket path only | TBD | Measured, not projected | Include hardware profile |
 | Open orchestrator placeholder items (critical) | TBD | TBD | 0 critical open | Link ORCH IDs |
 | Critical-path automated test pass rate | release-check test gate currently green | release-check test gate currently green | >= 99% | Add flake-rate metric in WS-4.1/WS-4.2 |
-| Readiness checklist completion | 1.52% (1/66 checked) | 1.52% (1/66 checked) | >= 90% before Go/No-Go | Baseline computed from checklist markdown state |
+| Readiness checklist completion | 1.52% (1/66 checked) | 15.15% (10/66 checked) | >= 90% before Go/No-Go | Incremented by WS-5 governance/security evidence wave |
 
 ## Immediate Tasks (Execution Queue)
 
@@ -279,4 +279,4 @@ WS-4.1 status notes:
 - 2026-06-12: Added provider lifecycle-controller hardening and raised orchestrator regression evidence baseline to 143/143 pass.
 - 2026-06-12: Added lifecycle preflight gating hardening and raised orchestrator regression evidence baseline to 145/145 pass.
 - 2026-06-12: Added WS-4 lifecycle-control summary artifact wiring to CI critical-path outputs and validated script generation coverage.
-- 2026-06-12: Added WS-4 lifecycle policy threshold gating and policy-check artifact publication for critical-path evidence.
+- 2026-06-12: Added WS-4 lifecycle policy threshold gating and policy-check artifact publication for critical-path evidence.- 2026-06-12: Executed WS-5 governance/security evidence wave: CODEOWNERS expanded, secrets scan + npm audit CI gates added, incident commander + rollback SLA documented, network allowlist + chain safety configs created, 9 new checklist items marked done (10/66 = 15.15%).

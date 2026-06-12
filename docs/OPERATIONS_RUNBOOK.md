@@ -102,7 +102,69 @@ docker system prune -af --volumes
 
 - Rebuild only required services.
 
-## 8. Production Transition Notes
+## 8. Rollback Procedure
+
+### Rollback Authority
+
+Rollback decisions are made by the Incident Commander as defined in `docs/INCIDENT_RESPONSE_PLAYBOOK.md`.
+The Incident Commander may authorize rollback unilaterally for SEV-1 within 5 minutes of impact confirmation.
+
+### Rollback SLA
+
+| Severity | Decision Window | Target Rollback Completion |
+| --- | --- | --- |
+| SEV-1 | 5 minutes | 30 minutes from impact |
+| SEV-2 | 15 minutes | 2 hours from impact |
+| SEV-3 | 1 hour | Next business day |
+
+### Rollback Steps (Kubernetes / Production Deployment)
+
+1. Confirm current deployment state:
+
+```bash
+kubectl -n sapm get deployments
+kubectl -n sapm rollout history deployment/sapm-aggregator
+```
+
+2. Roll back to the previous stable revision:
+
+```bash
+kubectl -n sapm rollout undo deployment/sapm-aggregator
+kubectl -n sapm rollout status deployment/sapm-aggregator
+```
+
+3. Confirm services are healthy after rollback:
+
+```bash
+kubectl -n sapm get pods
+curl -sf http://<service-endpoint>/health
+```
+
+4. Notify incident channel that rollback is complete and begin post-incident review.
+
+### Rollback Steps (Docker Compose / Local Stack)
+
+1. Stop current containers:
+
+```bash
+docker compose -f docker/docker-compose.yml down
+```
+
+2. Check out the last known-good commit tag:
+
+```bash
+git checkout <last-good-tag>
+```
+
+3. Rebuild and restart:
+
+```bash
+docker compose -f docker/docker-compose.yml up -d --build
+```
+
+4. Validate per section 3-5 of this runbook.
+
+## 9. Production Transition Notes
 
 Before production:
 - Replace ephemeral key strategy with managed key custody.

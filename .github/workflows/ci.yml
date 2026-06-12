@@ -14,6 +14,34 @@ permissions:
   contents: read
 
 jobs:
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for private keys and secrets
+        run: |
+          chmod +x scripts/scan_secrets.sh
+          scripts/scan_secrets.sh .
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ vars.DEPENDENCY_AUDIT_GATING != 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install root dependencies
+        run: npm ci --no-fund
+      - name: Audit root dependencies (critical/high)
+        run: npm audit --audit-level=high --no-fund
+      - name: Audit orchestrator dependencies
+        run: npm --prefix agents/orchestrator audit --audit-level=high --no-fund
+      - name: Audit frontend dependencies
+        run: npm --prefix frontend audit --audit-level=high --no-fund
+
   release-check:
     runs-on: ubuntu-latest
     env:

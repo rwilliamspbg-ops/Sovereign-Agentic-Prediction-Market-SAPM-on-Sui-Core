@@ -1,5 +1,28 @@
 # SAPM Incident Response Playbook
 
+## Incident Commander And Escalation Matrix
+
+| Role | Primary | Escalation Path | Contact |
+| --- | --- | --- | --- |
+| Incident Commander | Platform PMO | → Engineering Leadership → Product Leadership | pagerduty/sapm-oncall |
+| Engineering Lead | Orchestrator Team Lead | → Platform Engineering Manager | pagerduty/sapm-oncall |
+| Security Lead | Security Engineering Lead | → CISO | security@sovereign-mohawk-ops |
+| Communications Lead | Product Leadership | → Legal if required | internal slack #sapm-incidents |
+| Operations Lead | SRE On-Call | → SRE Manager | pagerduty/sapm-sre |
+
+The incident commander has final authority to declare incidents, escalate severity, execute rollbacks, and authorize emergency hotfixes.
+
+## Rollback Authority And SLA
+
+| Severity | Rollback Decision Authority | Maximum Decision Time | Target RTO |
+| --- | --- | --- | --- |
+| SEV-1 | Incident Commander (unilateral) | 5 minutes | 30 minutes |
+| SEV-2 | Incident Commander + Engineering Lead | 15 minutes | 2 hours |
+| SEV-3 | Engineering Lead | 1 hour | Next business day |
+
+Rollback procedure is documented in `docs/OPERATIONS_RUNBOOK.md` under "Rollback Procedure".
+Rollback authority may not be overridden without explicit approval from Engineering Leadership.
+
 ## Severity Levels
 
 - SEV-1: Active exploit, wallet risk, chain state corruption, or broad outage.

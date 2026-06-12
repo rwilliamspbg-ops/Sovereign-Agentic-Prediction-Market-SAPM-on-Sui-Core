@@ -11,9 +11,19 @@ agents/aggregator/  @sovereign-mohawk-ops/fl-team
 agents/trader/      @sovereign-mohawk-ops/trading-team
 agents/onchain-registry/ @sovereign-mohawk-ops/blockchain-engineers
 
+# Scripts and automation
+scripts/            @sovereign-mohawk-ops/platform-engineers
+Makefile            @sovereign-mohawk-ops/platform-engineers
+
+# Risk management
+risk-management/    @sovereign-mohawk-ops/trading-team
+
+# Deployment manifests
+production-deployment-manifests/ @sovereign-mohawk-ops/devops
+k8s/                @sovereign-mohawk-ops/platform-engineers
+
 # Docker and deployment
 docker/             @sovereign-mohawk-ops/devops
-k8s/                @sovereign-mohawk-ops/platform-engineers
 
 # Documentation
 docs/               @sovereign-mohawk-ops/documentation
