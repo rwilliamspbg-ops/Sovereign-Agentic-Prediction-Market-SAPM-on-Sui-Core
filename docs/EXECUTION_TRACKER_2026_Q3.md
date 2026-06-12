@@ -169,6 +169,8 @@ WS-3.3 implementation notes:
 - Updated orchestrator regression baseline after ORCH-002 coverage wave: 7 suites, 124 tests, 124 passed.
 - Added ORCH-003 live local registry-style endpoint coverage for signed peer-key fetch and verification.
 - Updated orchestrator regression baseline after ORCH-003 coverage wave: 7 suites, 125 tests, 125 passed.
+- Added ORCH-006 explicit reachability status-code matrix coverage for 200/404/503 probe semantics.
+- Updated orchestrator regression baseline after ORCH-006 coverage wave: 7 suites, 126 tests, 126 passed.
 
 ### Testing + Readiness
 
@@ -235,3 +237,4 @@ WS-4.1 status notes:
 - 2026-06-12: Added orchestrator fixture README documenting staged attestation JSON contract and trusted-root rehearsal inputs.
 - 2026-06-12: Added ORCH-002 missing-attestation-digest regression coverage and raised orchestrator regression evidence baseline to 124/124 pass.
 - 2026-06-12: Added ORCH-003 live registry-style endpoint regression coverage and raised orchestrator regression evidence baseline to 125/125 pass.
+- 2026-06-12: Added ORCH-006 reachability status-code matrix regression coverage and raised orchestrator regression evidence baseline to 126/126 pass.

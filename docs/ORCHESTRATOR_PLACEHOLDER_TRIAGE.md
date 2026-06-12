@@ -73,7 +73,7 @@ Wave objective: close the highest risk security and cryptographic gaps before br
 Current regression evidence from orchestrator suite:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 125 tests, 125 passed (2026-06-12)
+- Result: 7 suites, 126 tests, 126 passed (2026-06-12)
 
 | ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
 | --- | --- | --- | --- |
@@ -82,7 +82,7 @@ Current regression evidence from orchestrator suite:
 | ORCH-003 | Covered | security-hardening now includes signed peer-key accept/reject paths plus a live local HTTP registry-style endpoint verification test | Add broader registry auth fixture parity if production payload schema expands |
 | ORCH-004 | Partial | security-hardening now covers validated staging attestation fixture ingestion and digest-mismatch fail-closed behavior | Capture hardware-backed staging evidence artifact and verify real TPM/TEE measurement ingestion |
 | ORCH-005 | Covered | security-hardening covers revoked fingerprint rejection plus trusted-root accept/reject policy enforcement | Add full chain-to-root multi-cert test vector fixture in CI |
-| ORCH-006 | Covered | security-hardening reachability negative-path fixture validates false on unreachable endpoint | Add unit tests for explicit status-code matrix |
+| ORCH-006 | Covered | security-hardening now covers unreachable endpoint plus explicit 200/404 reachable and 503 unreachable probe semantics | Extend matrix only if probe policy changes |
 | ORCH-007 | Covered | security-hardening procfs fixture validates hugepage threshold fail path | Add production profile threshold variants |
 | ORCH-008 | Covered | security-hardening cpuset fixture validates unpinned detection path | Add cgroup-v2 specific regression fixture |
 | ORCH-009 | Partial | discovery-manager tests now cover successful key confirmation and digest-mismatch fail-closed behavior | Integrate audited hybrid provider path and key confirmation handshake beyond placeholder-design derivation |
@@ -165,6 +165,19 @@ Validation evidence:
 
 - Command: npm --prefix agents/orchestrator test
 - Result: 7 suites, 125 tests, 125 passed
+
+## 2026-06-12 ORCH-006 Reachability Matrix Update
+
+Added explicit ORCH-006 status-code matrix coverage in `agents/orchestrator/test/security-hardening.test.js`:
+
+- HTTP 200 is treated as reachable
+- HTTP 404 is treated as reachable
+- HTTP 503 is treated as unreachable
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 126 tests, 126 passed
 
 ## 2026-06-12 ORCH-001 Provider-Seam Update
 

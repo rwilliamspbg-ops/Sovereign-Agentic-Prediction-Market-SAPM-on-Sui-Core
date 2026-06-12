@@ -345,6 +345,39 @@ describe('Orchestrator Security Hardening', () => {
     expect(reachable).toBe(false);
   });
 
+  test('treats HTTP 200 and 404 as reachable but 503 as unreachable', async () => {
+    const orchestrator = new Orchestrator({ connectivityTimeoutMs: 1000 });
+
+    const server = http.createServer((req, res) => {
+      if (req.url === '/ok') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+        return;
+      }
+      if (req.url === '/missing') {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false }));
+        return;
+      }
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false }));
+    });
+
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const address = server.address();
+    const baseUrl = `http://127.0.0.1:${address.port}`;
+
+    try {
+      await expect(orchestrator.networkHandler.isReachable(`${baseUrl}/ok`)).resolves.toBe(true);
+      await expect(orchestrator.networkHandler.isReachable(`${baseUrl}/missing`)).resolves.toBe(true);
+      await expect(orchestrator.networkHandler.isReachable(`${baseUrl}/degraded`)).resolves.toBe(false);
+    } finally {
+      await new Promise((resolve, reject) => {
+        server.close((err) => (err ? reject(err) : resolve()));
+      });
+    }
+  });
+
   test('returns false when hugepages are below configured threshold', () => {
     const orchestrator = new Orchestrator({ minHugepages: 8 });
     const spy = jest.spyOn(fs, 'readFileSync').mockReturnValue(
