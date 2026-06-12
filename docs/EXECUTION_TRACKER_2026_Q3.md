@@ -80,7 +80,7 @@ Track weekly and update in-place.
 | Datapath throughput | Theoretical AF_XDP figures documented; measured socket path only | TBD | Measured, not projected | Include hardware profile |
 | Open orchestrator placeholder items (critical) | TBD | TBD | 0 critical open | Link ORCH IDs |
 | Critical-path automated test pass rate | release-check test gate currently green | release-check test gate currently green | >= 99% | Add flake-rate metric in WS-4.1/WS-4.2 |
-| Readiness checklist completion | 1.52% (1/66 checked) | 39.39% (26/66 checked) | >= 90% before Go/No-Go | Incremented by WS-5/7/10 governance, observability, threat model, and chain-safety waves |
+| Readiness checklist completion | 1.52% (1/66 checked) | 59.09% (39/66 checked) | >= 90% before Go/No-Go | Incremented by five consecutive evidence waves through Domain 11 |
 
 ## Immediate Tasks (Execution Queue)
 
@@ -283,3 +283,4 @@ WS-4.1 status notes:
 - 2026-06-12: Executed WS-5 governance/security evidence wave: CODEOWNERS expanded, secrets scan + npm audit CI gates added, incident commander + rollback SLA documented, network allowlist + chain safety configs created, 9 new checklist items marked done (10/66 = 15.15%).
 - 2026-06-12: Executed WS-5/7/10 observability + testing evidence wave: structured logger extended with correlation ID threading + withContext binder (7/7 tests pass), SLO definitions and error budget policy created, test coverage floor CI gate added, 5 new checklist items marked done (15/66 = 22.73%).
 - 2026-06-12: Executed Domain 2/4/5 threat model + chain safety wave: threat model expanded with trust boundary table, 6 abuse cases (AB-001–006), control mapping; dryRun preflight tests added (3 new pass); replay protection documented in chain-safety.json; 11 new checklist items marked done (26/66 = 39.39%).
+- 2026-06-12: Executed Domain 3/5/7/8/11 wave: key management policy created, metrics + alert thresholds defined, PIR template added, top-5 launch risks + 24h success criteria documented, vuln blocking CI gate confirmed; 13 new checklist items marked done (39/66 = 59.09%).

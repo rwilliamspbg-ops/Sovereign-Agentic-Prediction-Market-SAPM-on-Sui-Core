@@ -1,0 +1,98 @@
+{
+  "_comment": "SAPM Alert Thresholds — paging and warning rules tied to SLOs and critical metrics. Reviewed and tuned for Alpha mainnet launch.",
+  "_owner": "SRE",
+  "_reviewDate": "2026-06-12",
+  "pagingRules": [
+    {
+      "id": "ALT-001",
+      "metric": "sapm_rpc_error_rate",
+      "severity": "PAGE",
+      "condition": "rpc_error_rate > 1% for 5 consecutive minutes",
+      "sloRef": "SLO-001",
+      "action": "Page SRE on-call; declare SEV-2 if sustained > 10 minutes",
+      "runbook": "docs/OPERATIONS_RUNBOOK.md#4-validate-rpc-health"
+    },
+    {
+      "id": "ALT-002",
+      "metric": "sapm_tx_success_rate",
+      "severity": "PAGE",
+      "condition": "tx_success_rate < 90% over a 10-minute window",
+      "sloRef": "SLO-003",
+      "action": "Page SRE + Protocol Engineering on-call; halt new trade submissions if below 80%",
+      "runbook": "docs/OPERATIONS_RUNBOOK.md#rollback-procedure"
+    },
+    {
+      "id": "ALT-003",
+      "metric": "sapm_agent_loop_error_rate",
+      "severity": "PAGE",
+      "condition": "agent_loop_error_rate > 2% over a 5-minute window",
+      "sloRef": "SLO-002",
+      "action": "Page Orchestrator Team on-call; review circuit-breaker state and provider lifecycle health",
+      "runbook": "docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md"
+    },
+    {
+      "id": "ALT-004",
+      "metric": "sapm_circuit_breaker_state",
+      "severity": "PAGE",
+      "condition": "Any circuit breaker transitions to open state",
+      "action": "Page SRE on-call immediately; circuit-breaker open indicates dependency failure",
+      "runbook": "docs/OPERATIONS_RUNBOOK.md#7-common-failure-modes"
+    },
+    {
+      "id": "ALT-005",
+      "metric": "sapm_forecast_latency_ms",
+      "severity": "WARN",
+      "condition": "p99 forecast latency > 2000ms over a 5-minute window",
+      "sloRef": "SLO-004",
+      "action": "Notify Orchestrator Team; investigate model service and provider health",
+      "runbook": "docs/OPERATIONS_RUNBOOK.md"
+    },
+    {
+      "id": "ALT-006",
+      "metric": "sapm_forecast_latency_ms",
+      "severity": "PAGE",
+      "condition": "p99 forecast latency > 3000ms over a 10-minute window",
+      "sloRef": "SLO-004",
+      "action": "Page Orchestrator Team on-call; begin incident response",
+      "runbook": "docs/OPERATIONS_RUNBOOK.md"
+    },
+    {
+      "id": "ALT-007",
+      "metric": "sapm_lifecycle_restart_count",
+      "severity": "PAGE",
+      "condition": "Provider lifecycle restart count exceeds restart budget within window",
+      "action": "Page Orchestrator Team on-call; provider is fail-closed — investigate root cause before restart",
+      "runbook": "docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md"
+    },
+    {
+      "id": "ALT-008",
+      "metric": "sapm_frontend_availability",
+      "severity": "WARN",
+      "condition": "Frontend availability probe success rate < 99% over 10 minutes",
+      "sloRef": "SLO-005",
+      "action": "Notify Frontend Platform team; begin investigation",
+      "runbook": "docs/OPERATIONS_RUNBOOK.md"
+    }
+  ],
+  "errorBudgetAlerts": [
+    {
+      "sloRef": "SLO-001",
+      "alertAt": "50% budget consumed in window",
+      "severity": "WARN",
+      "action": "Freeze non-critical feature work; prioritise stability"
+    },
+    {
+      "sloRef": "SLO-002",
+      "alertAt": "50% budget consumed in window",
+      "severity": "WARN",
+      "action": "Freeze non-critical feature work; prioritise stability"
+    },
+    {
+      "sloRef": "SLO-003",
+      "alertAt": "25% budget consumed in window",
+      "severity": "PAGE",
+      "action": "Escalate to incident commander; consider trade halt"
+    }
+  ],
+  "testingNote": "Alert thresholds are defined here and reviewed against SLO error budget policies in config/slo-definitions.json. Threshold values are tuned based on Alpha load profile and adjusted post-launch during hypercare window."
+}

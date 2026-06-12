@@ -1,0 +1,68 @@
+{
+  "_comment": "SAPM Metrics Definitions — authoritative list of metrics published by agents, frontend, and infra for observability.",
+  "_owner": "SRE + Orchestrator Team",
+  "_reviewDate": "2026-06-12",
+  "metrics": [
+    {
+      "name": "sapm_forecast_latency_ms",
+      "type": "histogram",
+      "description": "End-to-end latency of a single forecast generation cycle from input receipt to decision output",
+      "labels": ["component", "market_id", "round"],
+      "sloRef": "SLO-004",
+      "publishedBy": "agents/orchestrator + agents/trader",
+      "alertOnP99ExceedingMs": 2000
+    },
+    {
+      "name": "sapm_tx_success_rate",
+      "type": "gauge",
+      "description": "Rolling success rate (%) of submitted Sui transactions with execution status 'success' within 30s",
+      "labels": ["tx_type", "network"],
+      "sloRef": "SLO-003",
+      "publishedBy": "agents/trader/ptb_builder",
+      "alertBelowPercent": 90
+    },
+    {
+      "name": "sapm_rpc_error_rate",
+      "type": "gauge",
+      "description": "Rolling error rate (%) of Sui RPC calls returning non-200 or timeout",
+      "labels": ["endpoint", "method"],
+      "sloRef": "SLO-001",
+      "publishedBy": "agents/sui/client",
+      "alertAbovePercent": 1
+    },
+    {
+      "name": "sapm_circuit_breaker_state",
+      "type": "gauge",
+      "description": "Current circuit breaker state per market: 0=closed (healthy), 1=open (tripped)",
+      "labels": ["market_id", "breaker_name"],
+      "publishedBy": "risk-management/controls/circuit-breakers",
+      "alertOnOpen": true
+    },
+    {
+      "name": "sapm_agent_loop_error_rate",
+      "type": "gauge",
+      "description": "Rolling error rate (%) of agent decision loop iterations that result in unhandled exception or circuit-breaker trip",
+      "labels": ["agent_id", "component"],
+      "sloRef": "SLO-002",
+      "publishedBy": "agents/orchestrator",
+      "alertAbovePercent": 2
+    },
+    {
+      "name": "sapm_lifecycle_restart_count",
+      "type": "counter",
+      "description": "Total number of provider lifecycle restarts since process start",
+      "labels": ["provider_type"],
+      "publishedBy": "agents/orchestrator/core/go-hybrid-provider",
+      "alertOnExceedingBudget": true
+    },
+    {
+      "name": "sapm_frontend_availability",
+      "type": "gauge",
+      "description": "Synthetic probe success rate (%) for the markets frontend route",
+      "labels": ["route"],
+      "sloRef": "SLO-005",
+      "publishedBy": "synthetic-monitor",
+      "alertBelowPercent": 99
+    }
+  ]
+}

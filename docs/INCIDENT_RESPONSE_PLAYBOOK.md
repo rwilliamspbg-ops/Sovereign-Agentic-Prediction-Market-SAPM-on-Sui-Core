@@ -71,6 +71,59 @@ Rollback authority may not be overridden without explicit approval from Engineer
 
 ## Post-Incident Review
 
-1. Publish root-cause analysis within 48 hours.
-2. Record action items with owner and due date.
-3. Update threat model and runbooks based on lessons learned.
+**Template** — complete within 48 hours of incident close and publish to the engineering incident channel.
+
+```
+## Post-Incident Review: <Incident ID> — <Brief Title>
+
+Date: YYYY-MM-DD
+Severity: SEV-X
+Duration: HH:MM (detection to resolution)
+Incident Commander: <name>
+Participants: <names>
+
+### Summary
+One-paragraph plain-language description of what happened and the user impact.
+
+### Timeline
+| Time (UTC) | Event |
+| --- | --- |
+| HH:MM | First symptom / alert fired |
+| HH:MM | Incident declared |
+| HH:MM | Root cause identified |
+| HH:MM | Mitigation applied |
+| HH:MM | Incident resolved |
+
+### Root Cause
+Specific technical root cause. Avoid blame; focus on system/process failure modes.
+
+### Contributing Factors
+- Factor 1
+- Factor 2
+
+### Impact
+- Users affected: <count or percentage>
+- Markets/trades affected: <describe>
+- Data integrity impact: <yes/no + detail>
+
+### What Went Well
+- ...
+
+### What Could Be Improved
+- ...
+
+### Action Items
+| ID | Action | Owner | Due Date | Status |
+| --- | --- | --- | --- | --- |
+| PIR-<ID>-01 | ... | <team> | YYYY-MM-DD | Open |
+
+### Threat Model / Runbook Updates Required
+- [ ] Update threat model if new threat vector identified
+- [ ] Update runbook if procedure was unclear or missing
+- [ ] Update alert thresholds if detection was slow
+```
+
+1. Publish root-cause analysis within 48 hours using the template above.
+2. Record action items with owner and due date in the PIR document.
+3. Update `docs/THREAT_MODEL.md` and runbooks based on lessons learned.
+4. Track open PIR action items in the next weekly SLO review.
