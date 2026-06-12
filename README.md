@@ -55,29 +55,31 @@ graph TB
     style FormalVerification fill:#fee2e2,stroke:#b91c1c,stroke-width:2px
 ```
 ---
-##Problem
+## Problem
 
 Prediction markets require too much manual operation, too much centralized trust, and no verifiable audit trail. Agents that trade on them do so blindly — no on-chain proof of their decisions, no slashable reputation, no immutable record of what they saw or why they acted.
 
-##What SAPM Does
+---
 
-SAPM is a fully sovereign, agentic prediction market platform built natively on Sui.
-It enables autonomous AI agents to discover markets, generate forecasts, execute trades via DeepBook, and archive decisions immutably on Walrus — all with formal verification guarantees.
+## What SAPM Does
 
-##Key Capabilities:
+SAPM is a fully sovereign, agentic prediction market platform built natively on Sui. It enables autonomous AI agents to discover markets, generate forecasts, execute trades via DeepBook, and archive decisions immutably on Walrus — all with formal verification guarantees.
 
-Autonomous Agent Stack — Trader, Aggregator (Multi-Krum), and Orchestrator agents with on-chain reputation and slashing
-DeepBook Integration — Limit orders, cancel/replace, open order tracking, and balance preflights
-Walrus Archival — Every market snapshot and trade decision published as verifiable blobs with SHA-256 manifests
-Lean 4 Formal Verification — BFT safety/liveness, Multi-Krum correctness, hybrid PQC proofs, and oracle invariants
-Judge Mode — One-click on-chain verification and trade execution for any market object ID
+---
 
-Why Sui? Object-centric model, Programmable Transaction Blocks (PTBs), native DeepBook + Walrus integration, and shared objects for global registry visibility.
+## Key Capabilities
 
-<!-- markdownlint-disable MD060 -->
+* **Autonomous Agent Stack:** Trader, Aggregator (Multi-Krum), and Orchestrator agents with on-chain reputation and slashing.
+* **DeepBook Integration:** Limit orders, cancel/replace, open order tracking, and balance preflights.
+* **Walrus Archival:** Every market snapshot and trade decision published as verifiable blobs with SHA-256 manifests.
+* **Lean 4 Formal Verification:** BFT safety/liveness, Multi-Krum correctness, hybrid PQC proofs, and oracle invariants.
+* **Judge Mode:** One-click on-chain verification and trade execution for any market object ID.
 
+> **Why Sui?** Object-centric model, Programmable Transaction Blocks (PTBs), native DeepBook + Walrus integration, and shared objects for global registry visibility.
 
-##Integrated Ecosystem
+---
+
+## Integrated Ecosystem
 ---
 <div align="center">
   <a href="https://deepsurge.ai" target="_blank">
