@@ -54,8 +54,7 @@ graph TB
     style Walrus fill:#f3e8ff,stroke:#6b21a8,stroke-width:2px
     style FormalVerification fill:#fee2e2,stroke:#b91c1c,stroke-width:2px
 ```
----
-## Problem
+##Problem
 ---
 Prediction markets require too much manual operation, too much centralized trust, and no verifiable audit trail. Agents that trade on them do so blindly — no on-chain proof of their decisions, no slashable reputation, no immutable record of what they saw or why they acted.
 
