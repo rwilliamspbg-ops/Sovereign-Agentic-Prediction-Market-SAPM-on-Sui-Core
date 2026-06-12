@@ -85,10 +85,40 @@ Why Sui? Object-centric model, Programmable Transaction Blocks (PTBs), native De
     <img src="frontend/public/walrus-logo.svg" alt="Walrus" style="height: 60px; margin: 0 15px; vertical-align: middle;" />
   </a>
 </div>
+---
 
-Sui Overflow 2026 Target Tracks: Agentic Web (Core), DeFi & Payments (Core), DeepBook, Walrus.
+##Sui Overflow 2026 Target Tracks: Agentic Web (Core), DeFi & Payments (Core), DeepBook, Walrus.
+---
+##Live Demo — 
+---
+Judge ModeFastest way to test: Connect a Sui wallet → Paste a PredictionMarket object ID → Run Judge Mode.It performs:Wallet connection & validation
+On-chain market loading
+Micro trade execution via DeepBook
+Snapshot publication to Walrus
+Verification of returned blob
 
+Quick Start for Demobash
 
+```
+./scripts/ci_frontend_validation.sh
+cd frontend
+npm ci
+cp ../.env.example .env.local
+npm run dev
+```
+
+Open http://localhost:3000 → Connect wallet → Run Judge Mode.Tip: Leave NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS unset to let Judge Mode auto-create test markets.
+---
+##Verified Deployment (Sui Testnet)Package ID: 0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188Use these values in frontend/.env.local:
+---
+```
+env
+
+NEXT_PUBLIC_SUI_PACKAGE_ID=0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188
+NEXT_PUBLIC_SUI_NETWORK=testnet
+# NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS=... (optional)
+```
+Full transaction history and artifacts available in docs/artifacts/.
 
 
 ## Problem
