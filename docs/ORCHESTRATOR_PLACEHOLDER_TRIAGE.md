@@ -116,6 +116,7 @@ Added regression coverage in `agents/orchestrator/test/security-hardening.test.j
 - valid staging fixture ingestion preserves audited digest and evidence metadata
 - invalid fixture digest fails closed
 - committed reusable staging fixture samples now live under `agents/orchestrator/test/fixtures/`
+- fixture contract and operator usage notes now live in `agents/orchestrator/test/fixtures/README.md`
 
 Validation evidence:
 
@@ -134,6 +135,7 @@ Added deterministic regression coverage in `agents/orchestrator/test/security-ha
 
 - trusted root fingerprint accepts current certificate chain
 - non-matching trusted root fingerprint rejects current certificate chain
+- staging operator inputs for trusted-root rehearsal are documented in `agents/orchestrator/test/fixtures/README.md`
 
 Validation evidence:
 

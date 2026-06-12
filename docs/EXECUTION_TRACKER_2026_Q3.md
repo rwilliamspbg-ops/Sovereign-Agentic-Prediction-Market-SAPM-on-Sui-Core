@@ -164,6 +164,7 @@ WS-3.3 implementation notes:
 - Implemented ORCH-005 trusted-root attestation policy enforcement with configured root fingerprint allowlisting.
 - Added security-hardening tests for trusted-root accept and reject behavior.
 - Updated orchestrator regression baseline after ORCH-005 trust policy wave: 7 suites, 123 tests, 123 passed.
+- Added operator-facing fixture contract documentation in `agents/orchestrator/test/fixtures/README.md` for staged attestation and trusted-root rehearsal.
 
 ### Testing + Readiness
 
@@ -227,3 +228,4 @@ WS-4.1 status notes:
 - 2026-06-12: Added ORCH-004 staging attestation fixture validation and raised orchestrator regression evidence baseline to 121/121 pass.
 - 2026-06-12: Added committed ORCH-004 staging attestation fixture samples and removed temporary runtime fixture creation from tests.
 - 2026-06-12: Added ORCH-005 trusted-root attestation policy enforcement and raised orchestrator regression evidence baseline to 123/123 pass.
+- 2026-06-12: Added orchestrator fixture README documenting staged attestation JSON contract and trusted-root rehearsal inputs.
