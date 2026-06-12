@@ -126,7 +126,7 @@ Use this section to assign ownership and due dates for each checklist domain.
 
 | Domain | Owner | Due Date | Status | Evidence |
 | --- | --- | --- | --- | --- |
-| 1. Governance And Release Control | Platform PMO | 2026-07-05 | In Progress | artifacts/ci-logs/governance-policy-check.json |
+| 1. Governance And Release Control | Platform PMO | 2026-07-05 | In Progress | artifacts/ci-logs/governance-policy-check.json + scripts/configure_github_governance.sh |
 | 2. Architecture And Threat Model | Security Architecture | 2026-07-12 | In Progress | docs/THREAT_MODEL.md |
 | 3. Identity, Keys, And Secrets | Security Engineering | 2026-07-19 | In Progress | config/key-management-policy.json |
 | 4. Chain And Transaction Safety | Protocol Engineering | 2026-07-26 | In Progress | docs/OPERATIONS_RUNBOOK.md |
