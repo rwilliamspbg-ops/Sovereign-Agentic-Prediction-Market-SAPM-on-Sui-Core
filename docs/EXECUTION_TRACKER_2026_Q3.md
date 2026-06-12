@@ -25,9 +25,9 @@ This tracker is operational and owner-oriented. It complements:
 | ID | Workstream | Owner | Status | Target Window | Current Focus |
 | --- | --- | --- | --- | --- | --- |
 | WS-1 | Frontend stylesheet containment | Frontend Platform | Green | 2026-06-12 to 2026-06-26 | Baseline + containment complete; monitor budgets and regressions |
-| WS-2 | AF_XDP datapath implementation | Datapath Team | Amber | 2026-06-15 to 2026-07-31 | Implement first production AF_XDP path with fallback |
+| WS-2 | AF_XDP datapath implementation | Datapath Team | Green | 2026-06-15 to 2026-07-31 | Design, command matrix, and reporting template complete; implementation remains |
 | WS-3 | Agent autonomy hardening | Orchestrator Team | Amber | 2026-06-15 to 2026-08-05 | Close security-sensitive placeholder paths |
-| WS-4 | Critical-path testing expansion | QA + SRE | Amber | 2026-06-12 to 2026-07-25 | Build and enforce critical-path matrix in CI |
+| WS-4 | Critical-path testing expansion | QA + SRE | Green | 2026-06-12 to 2026-07-25 | Matrix defined and CI critical-path summary artifact wired |
 | WS-5 | Mainnet readiness and launch governance | Ops + Security | Red | 2026-07-01 to 2026-09-01 | Burn down checklist and audit gating |
 
 ## Execution Milestones
@@ -110,14 +110,24 @@ WS-1.3 implementation notes:
 ### Datapath + Benchmark Integrity
 
 - [x] WS-2.1: Document current socket-path benchmark command matrix.
-- [ ] WS-2.2: Create AF_XDP implementation design note with feature flag strategy.
-- [ ] WS-2.3: Add benchmark reporting template with commit SHA and environment metadata.
+- [x] WS-2.2: Create AF_XDP implementation design note with feature flag strategy.
+- [x] WS-2.3: Add benchmark reporting template with commit SHA and environment metadata.
 
 WS-2.1 implementation notes:
 
 - Added socket-path benchmark command matrix to `docs/PERFORMANCE_BENCHMARKS.md`.
 - Mapped each command to primary metrics, output artifacts, and owner.
 - Added explicit policy that AF_XDP theoretical values must not be presented as current measurements.
+
+WS-2.2 implementation notes:
+
+- Added AF_XDP implementation design doc at `docs/AF_XDP_IMPLEMENTATION_DESIGN.md`.
+- Defined runtime modes, feature flag strategy, telemetry requirements, rollout milestones, and rollback plan.
+
+WS-2.3 implementation notes:
+
+- Added benchmark reporting template at `docs/BENCHMARK_REPORT_TEMPLATE.md`.
+- Standardized required metadata: commit SHA, environment, workload parameters, artifact links, and claim-safety section.
 
 ### Orchestrator + Autonomy
 
@@ -128,7 +138,7 @@ WS-2.1 implementation notes:
 ### Testing + Readiness
 
 - [x] WS-4.1: Define critical-path test matrix (market create/trade/settle/dispute + failure recovery).
-- [ ] WS-4.2: Wire matrix status into CI output summary.
+- [x] WS-4.2: Wire matrix status into CI output summary.
 - [x] WS-5.1: Add owner/due-date columns to `docs/PRODUCTION_READINESS_CHECKLIST.md` process.
 
 WS-4.1 critical-path test matrix:
@@ -144,7 +154,7 @@ WS-4.1 critical-path test matrix:
 WS-4.1 status notes:
 
 - Critical path domains are now explicitly defined with owner and evidence source.
-- WS-4.2 remains open to wire this matrix into CI summary reporting artifacts.
+- WS-4.2 is complete via CI `critical-path-summary` job in `.github/workflows/ci.yml` that publishes a `critical-path-summary` artifact.
 
 ## Risk Register (Active)
 
@@ -169,3 +179,6 @@ WS-4.1 status notes:
 - 2026-06-12: Completed M3 readiness ownership setup by assigning domain owners and due dates in production readiness accountability tracker.
 - 2026-06-12: Completed WS-2.1 by adding socket-path benchmark command matrix and measurement policy to performance benchmarks documentation.
 - 2026-06-12: Completed WS-4.1 by defining critical-path test matrix with owners, current automation state, and evidence sources.
+- 2026-06-12: Completed WS-2.2 by adding AF_XDP implementation design with feature-flagged rollout and fallback strategy.
+- 2026-06-12: Completed WS-2.3 by adding standardized benchmark report template with required evidence fields.
+- 2026-06-12: Completed WS-4.2 by adding CI critical-path-summary job and published summary artifact wiring.
