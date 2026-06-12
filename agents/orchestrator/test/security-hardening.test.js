@@ -13,6 +13,20 @@ describe('Orchestrator Security Hardening', () => {
   afterEach(() => {
     process.env = { ...envSnapshot };
     goHybridProvider.resetProviderReadinessCache();
+    goHybridProvider.resetProviderLifecycleState();
+  });
+
+  test('starts, health-checks, and stops provider lifecycle explicitly', async () => {
+    const started = await goHybridProvider.startProviderLifecycle();
+    expect(started.active).toBe(true);
+    expect(started.lastHealthStatus).toBe('healthy');
+
+    const health = await goHybridProvider.healthCheckProviderLifecycle();
+    expect(health.ok).toBe(true);
+
+    const stopped = goHybridProvider.stopProviderLifecycle('unit-test-stop');
+    expect(stopped.active).toBe(false);
+    expect(stopped.lastStopReason).toBe('unit-test-stop');
   });
 
   test('performs Go provider readiness check once per invocation shape', async () => {
@@ -160,6 +174,42 @@ echo '{"algorithm":"x25519-mlkem768-go-bridge","sessionKey":"AAAAAAAAAAAAAAAAAAA
         lastErrorCategory: 'execution_failed',
         lastRecoveryAction: 'retry_2_after_execution_failed',
       }));
+
+      const lifecycleState = goHybridProvider.getProviderLifecycleState();
+      expect(lifecycleState.restartsInWindow).toBe(2);
+    } finally {
+      fs.rmSync(scriptPath, { force: true });
+    }
+  });
+
+  test('fails closed when restart budget is exceeded during recovery attempts', async () => {
+    const scriptPath = path.join('/tmp', `sapm-restart-budget-provider-${Date.now()}.sh`);
+    fs.writeFileSync(
+      scriptPath,
+      '#!/usr/bin/env bash\necho "budget fail" >&2\nexit 1\n',
+      { mode: 0o755 },
+    );
+
+    process.env.SAPM_HYBRID_KEX_BINARY = scriptPath;
+    process.env.SAPM_HYBRID_KEX_MAX_RETRIES = '3';
+    process.env.SAPM_HYBRID_KEX_RETRY_BACKOFF_MS = '0';
+    process.env.SAPM_HYBRID_KEX_RESTART_BUDGET_MAX = '1';
+    process.env.SAPM_HYBRID_KEX_RESTART_BUDGET_WINDOW_MS = '60000';
+
+    try {
+      await expect(
+        goHybridProvider.deriveSession({
+          attestationDigest: crypto.randomBytes(32),
+          peerPublicKey: Buffer.from('peer-public-key-restart-budget', 'utf8'),
+          algorithm: 'x25519-mlkem768',
+        }),
+      ).rejects.toThrow('Hybrid KEX provider derive-session failed [restart_budget_exceeded]');
+
+      const runtimeState = goHybridProvider.getProviderRuntimeState();
+      expect(runtimeState.lastErrorCategory).toBe('restart_budget_exceeded');
+
+      const lifecycleState = goHybridProvider.getProviderLifecycleState();
+      expect(lifecycleState.restartBudgetExceeded).toBe(true);
     } finally {
       fs.rmSync(scriptPath, { force: true });
     }

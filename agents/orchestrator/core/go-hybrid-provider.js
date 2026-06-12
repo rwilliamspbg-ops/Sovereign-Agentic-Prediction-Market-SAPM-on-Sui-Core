@@ -24,6 +24,20 @@ let runtimeState = {
   lastErrorCategory: null,
 };
 
+let lifecycleState = {
+  active: false,
+  startedAt: null,
+  lastStoppedAt: null,
+  lastStopReason: null,
+  lastHealthCheckAt: null,
+  lastHealthStatus: 'unknown',
+  restartWindowStartedAt: null,
+  restartsInWindow: 0,
+  restartBudgetMax: Number(process.env.SAPM_HYBRID_KEX_RESTART_BUDGET_MAX || 3),
+  restartBudgetWindowMs: Number(process.env.SAPM_HYBRID_KEX_RESTART_BUDGET_WINDOW_MS || 60000),
+  restartBudgetExceeded: false,
+};
+
 function execFilePromise(command, args, options = {}) {
   return new Promise((resolve, reject) => {
     execFile(command, args, options, (error, stdout, stderr) => {
@@ -152,6 +166,7 @@ function classifyProviderError(message) {
   if (text.includes('invalid json')) return 'invalid_json_response';
   if (text.includes('missing required fields')) return 'invalid_payload';
   if (text.includes('timed out')) return 'timeout';
+  if (text.includes('restart budget exceeded')) return 'restart_budget_exceeded';
   return 'execution_failed';
 }
 
@@ -163,6 +178,95 @@ function canRetryProviderError(category) {
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getLifecycleConfig() {
+  const configuredBudgetMax = Number(process.env.SAPM_HYBRID_KEX_RESTART_BUDGET_MAX || 3);
+  const configuredBudgetWindowMs = Number(process.env.SAPM_HYBRID_KEX_RESTART_BUDGET_WINDOW_MS || 60000);
+  return {
+    restartBudgetMax: Number.isFinite(configuredBudgetMax) && configuredBudgetMax >= 0 ? configuredBudgetMax : 3,
+    restartBudgetWindowMs: Number.isFinite(configuredBudgetWindowMs) && configuredBudgetWindowMs > 0
+      ? configuredBudgetWindowMs
+      : 60000,
+  };
+}
+
+async function startProviderLifecycle() {
+  const config = getLifecycleConfig();
+  lifecycleState.restartBudgetMax = config.restartBudgetMax;
+  lifecycleState.restartBudgetWindowMs = config.restartBudgetWindowMs;
+
+  if (lifecycleState.active) {
+    return getProviderLifecycleState();
+  }
+
+  await ensureProviderReady();
+  const nowIso = new Date().toISOString();
+  lifecycleState.active = true;
+  lifecycleState.startedAt = nowIso;
+  lifecycleState.lastHealthCheckAt = nowIso;
+  lifecycleState.lastHealthStatus = 'healthy';
+  lifecycleState.restartBudgetExceeded = false;
+  return getProviderLifecycleState();
+}
+
+async function healthCheckProviderLifecycle() {
+  const nowIso = new Date().toISOString();
+  try {
+    await ensureProviderReady();
+    lifecycleState.lastHealthCheckAt = nowIso;
+    lifecycleState.lastHealthStatus = 'healthy';
+    return {
+      ok: true,
+      checkedAt: nowIso,
+    };
+  } catch (error) {
+    lifecycleState.lastHealthCheckAt = nowIso;
+    lifecycleState.lastHealthStatus = 'unhealthy';
+    return {
+      ok: false,
+      checkedAt: nowIso,
+      error: error.message,
+    };
+  }
+}
+
+function stopProviderLifecycle(reason = 'manual') {
+  lifecycleState.active = false;
+  lifecycleState.lastStoppedAt = new Date().toISOString();
+  lifecycleState.lastStopReason = String(reason || 'manual');
+  readinessState = {
+    key: '',
+    promise: null,
+    status: null,
+  };
+  return getProviderLifecycleState();
+}
+
+function getProviderLifecycleState() {
+  return {
+    ...lifecycleState,
+  };
+}
+
+function registerProviderRestartOrThrow() {
+  const config = getLifecycleConfig();
+  lifecycleState.restartBudgetMax = config.restartBudgetMax;
+  lifecycleState.restartBudgetWindowMs = config.restartBudgetWindowMs;
+
+  const now = Date.now();
+  if (!lifecycleState.restartWindowStartedAt || now - lifecycleState.restartWindowStartedAt > lifecycleState.restartBudgetWindowMs) {
+    lifecycleState.restartWindowStartedAt = now;
+    lifecycleState.restartsInWindow = 0;
+  }
+
+  lifecycleState.restartsInWindow += 1;
+  if (lifecycleState.restartsInWindow > lifecycleState.restartBudgetMax) {
+    lifecycleState.restartBudgetExceeded = true;
+    throw new Error(
+      `Hybrid KEX provider restart budget exceeded (${lifecycleState.restartsInWindow}/${lifecycleState.restartBudgetMax}) within ${lifecycleState.restartBudgetWindowMs}ms`,
+    );
+  }
 }
 
 function validateProviderResponse(result) {
@@ -203,6 +307,22 @@ function resetProviderReadinessCache() {
   };
 }
 
+function resetProviderLifecycleState() {
+  lifecycleState = {
+    active: false,
+    startedAt: null,
+    lastStoppedAt: null,
+    lastStopReason: null,
+    lastHealthCheckAt: null,
+    lastHealthStatus: 'unknown',
+    restartWindowStartedAt: null,
+    restartsInWindow: 0,
+    restartBudgetMax: Number(process.env.SAPM_HYBRID_KEX_RESTART_BUDGET_MAX || 3),
+    restartBudgetWindowMs: Number(process.env.SAPM_HYBRID_KEX_RESTART_BUDGET_WINDOW_MS || 60000),
+    restartBudgetExceeded: false,
+  };
+}
+
 function getProviderReadinessStatus() {
   return readinessState.status ? { ...readinessState.status } : null;
 }
@@ -212,6 +332,11 @@ module.exports = {
   ensureProviderReady,
   getProviderReadinessStatus,
   getProviderRuntimeState,
+  getProviderLifecycleState,
+  startProviderLifecycle,
+  healthCheckProviderLifecycle,
+  stopProviderLifecycle,
+  resetProviderLifecycleState,
   resetProviderReadinessCache,
   async deriveSession({ attestationDigest, peerPublicKey, algorithm }) {
     runtimeState.executionMode = (process.env.SAPM_HYBRID_KEX_EXECUTION_MODE || 'per-call').trim() || 'per-call';
@@ -233,7 +358,7 @@ module.exports = {
       runtimeState.deriveAttempts += 1;
 
       try {
-        await ensureProviderReady();
+        await startProviderLifecycle();
         const invocation = buildDeriveSessionCommand(peerPublicB64, attestationDigestB64);
 
         const stdout = await execFilePromise(
@@ -275,9 +400,19 @@ module.exports = {
         const canRetry = attempt < maxRetries && canRetryProviderError(category);
 
         if (canRetry) {
+          try {
+            registerProviderRestartOrThrow();
+          } catch (restartError) {
+            const restartCategory = classifyProviderError(restartError.message);
+            runtimeState.lastCompletedAt = new Date().toISOString();
+            runtimeState.lastDurationMs = Date.now() - startedAtMs;
+            runtimeState.lastErrorCategory = restartCategory;
+            throw new Error(`Hybrid KEX provider derive-session failed [${restartCategory}]: ${restartError.message}`);
+          }
+
           runtimeState.recoveryAttempts += 1;
           runtimeState.lastRecoveryAction = `retry_${attempt + 1}_after_${category}`;
-          readinessState = { key: '', promise: null, status: null };
+          stopProviderLifecycle(`retry-after-${category}`);
 
           if (retryBackoffMs > 0) {
             await sleep(retryBackoffMs);
