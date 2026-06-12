@@ -14,6 +14,56 @@ permissions:
   contents: read
 
 jobs:
+  pentest-evidence:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ vars.PENTEST_GATING != 'true' }}
+    env:
+      PENTEST_GATING: ${{ vars.PENTEST_GATING || 'false' }}
+      PENTEST_REPORT_PATH: artifacts/ci-logs/pentest-evidence.json
+      PENTEST_CHECK_OUTPUT_PATH: artifacts/ci-logs/pentest-check.json
+      PENTEST_MAX_AGE_DAYS: ${{ vars.PENTEST_MAX_AGE_DAYS || '365' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate external pentest evidence
+        run: |
+          mkdir -p artifacts/ci-logs
+          PENTEST_GATING_MODE="${{ vars.PENTEST_GATING == 'true' && 'enforced' || 'warn-only' }}" \
+            node scripts/check_pentest_evidence.js
+      - name: Upload pentest evidence artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pentest-evidence-check
+          path: |
+            artifacts/ci-logs/pentest-evidence.json
+            artifacts/ci-logs/pentest-check.json
+          if-no-files-found: warn
+
+  go-nogo-signoff:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ vars.GONOGO_GATING != 'true' }}
+    env:
+      GONOGO_GATING: ${{ vars.GONOGO_GATING || 'false' }}
+      GONOGO_SIGNOFF_PATH: artifacts/ci-logs/go-no-go-signoff.json
+      GONOGO_CHECK_OUTPUT_PATH: artifacts/ci-logs/go-no-go-check.json
+      GONOGO_REQUIRED_APPROVERS: ${{ vars.GONOGO_REQUIRED_APPROVERS || 'engineering,security,operations' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Go/No-Go signoff evidence
+        run: |
+          mkdir -p artifacts/ci-logs
+          GONOGO_GATING_MODE="${{ vars.GONOGO_GATING == 'true' && 'enforced' || 'warn-only' }}" \
+            node scripts/check_go_nogo_signoff.js
+      - name: Upload Go/No-Go evidence artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-no-go-signoff-check
+          path: |
+            artifacts/ci-logs/go-no-go-signoff.json
+            artifacts/ci-logs/go-no-go-check.json
+          if-no-files-found: warn
+
   governance-policy:
     runs-on: ubuntu-latest
     continue-on-error: ${{ vars.GOVERNANCE_POLICY_GATING != 'true' }}
@@ -285,6 +335,8 @@ jobs:
       LIFECYCLE_MIN_RETRY_BACKOFF_MS: ${{ vars.LIFECYCLE_MIN_RETRY_BACKOFF_MS || '0' }}
       LIFECYCLE_MAX_RETRY_BACKOFF_MS: ${{ vars.LIFECYCLE_MAX_RETRY_BACKOFF_MS || '1000' }}
     needs:
+      - pentest-evidence
+      - go-nogo-signoff
       - governance-policy
       - release-check
       - frontend-prod-gate
@@ -368,6 +420,14 @@ jobs:
           SOAK_SUCCESS_RATE="n/a"
           SOAK_RPS="n/a"
           SOAK_WORST_P99="n/a"
+          PENTEST_MODE="${{ vars.PENTEST_GATING == 'true' && 'enforced' || 'warn-only' }}"
+          PENTEST_PASS="n/a"
+          PENTEST_OPEN_CRITICAL="n/a"
+          PENTEST_OPEN_HIGH="n/a"
+          GONOGO_MODE="${{ vars.GONOGO_GATING == 'true' && 'enforced' || 'warn-only' }}"
+          GONOGO_PASS="n/a"
+          GONOGO_DECISION="n/a"
+          GONOGO_APPROVAL_COUNT="n/a"
           LIFECYCLE_PREFLIGHT="n/a"
           LIFECYCLE_RESTART_ENFORCED="n/a"
           LIFECYCLE_RESTART_BUDGET_MAX="n/a"
@@ -407,6 +467,22 @@ jobs:
             GOV_SIGNED_COMMITS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/governance-policy-check.json','utf8'));const c=j.checks.find(x=>x.name==='signedCommitsRequired');process.stdout.write(String(c?c.actual:'n/a'));")
             GOV_REQUIRED_CHECKS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/governance-policy-check.json','utf8'));process.stdout.write(String((j.observedChecks||[]).length));")
           fi
+          if [[ -f artifacts/ci-logs/pentest-check.json ]]; then
+            PENTEST_MODE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/pentest-check.json','utf8'));process.stdout.write(String(j.mode));")
+            PENTEST_PASS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/pentest-check.json','utf8'));process.stdout.write(String(j.passed));")
+          fi
+          if [[ -f artifacts/ci-logs/pentest-evidence.json ]]; then
+            PENTEST_OPEN_CRITICAL=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/pentest-evidence.json','utf8'));process.stdout.write(String(j.openCritical ?? 'n/a'));")
+            PENTEST_OPEN_HIGH=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/pentest-evidence.json','utf8'));process.stdout.write(String(j.openHigh ?? 'n/a'));")
+          fi
+          if [[ -f artifacts/ci-logs/go-no-go-check.json ]]; then
+            GONOGO_MODE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/go-no-go-check.json','utf8'));process.stdout.write(String(j.mode));")
+            GONOGO_PASS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/go-no-go-check.json','utf8'));process.stdout.write(String(j.passed));")
+          fi
+          if [[ -f artifacts/ci-logs/go-no-go-signoff.json ]]; then
+            GONOGO_DECISION=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/go-no-go-signoff.json','utf8'));process.stdout.write(String(j.finalDecision ?? 'n/a'));")
+            GONOGO_APPROVAL_COUNT=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/go-no-go-signoff.json','utf8'));process.stdout.write(String((j.approvals||[]).filter(a=>a.approved===true).length));")
+          fi
           if [[ -f artifacts/ci-logs/orchestrator-lifecycle-summary.json ]]; then
             LIFECYCLE_PREFLIGHT=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.healthPreflightGate));")
             LIFECYCLE_RESTART_ENFORCED=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.restartBudgetEnforced));")
@@ -434,6 +510,8 @@ jobs:
           | orchestrator-tests | ${{ needs.orchestrator-tests.result }} |
           | resilience-tests | ${{ needs.resilience-tests.result }} |
           | governance-policy | ${{ needs.governance-policy.result }} |
+          | pentest-evidence | ${{ needs.pentest-evidence.result }} |
+          | go-nogo-signoff | ${{ needs.go-nogo-signoff.result }} |
 
           ## Critical-Path Mapping
 
@@ -454,6 +532,19 @@ jobs:
           | Branch protection enabled | __GOV_BRANCH_PROTECTED__ |
           | Signed commits required | __GOV_SIGNED_COMMITS__ |
           | Required status checks count | __GOV_REQUIRED_CHECKS__ |
+
+          ## Final Blockers Evidence
+
+          | Metric | Value |
+          | --- | --- |
+          | Pentest gate mode | __PENTEST_MODE__ |
+          | Pentest evidence checks passed | __PENTEST_PASS__ |
+          | Pentest open critical findings | __PENTEST_OPEN_CRITICAL__ |
+          | Pentest open high findings | __PENTEST_OPEN_HIGH__ |
+          | Go/No-Go gate mode | __GONOGO_MODE__ |
+          | Go/No-Go evidence checks passed | __GONOGO_PASS__ |
+          | Go/No-Go decision | __GONOGO_DECISION__ |
+          | Go/No-Go approved roles count | __GONOGO_APPROVAL_COUNT__ |
 
           ## Flake-Rate Probe
 
@@ -522,6 +613,14 @@ jobs:
           sed -i "s/__GOV_BRANCH_PROTECTED__/${GOV_BRANCH_PROTECTED}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__GOV_SIGNED_COMMITS__/${GOV_SIGNED_COMMITS}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__GOV_REQUIRED_CHECKS__/${GOV_REQUIRED_CHECKS}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__PENTEST_MODE__/${PENTEST_MODE}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__PENTEST_PASS__/${PENTEST_PASS}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__PENTEST_OPEN_CRITICAL__/${PENTEST_OPEN_CRITICAL}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__PENTEST_OPEN_HIGH__/${PENTEST_OPEN_HIGH}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__GONOGO_MODE__/${GONOGO_MODE}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__GONOGO_PASS__/${GONOGO_PASS}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__GONOGO_DECISION__/${GONOGO_DECISION}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__GONOGO_APPROVAL_COUNT__/${GONOGO_APPROVAL_COUNT}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__SOAK_PASSED__/${SOAK_PASSED}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__SOAK_ITERATIONS__/${SOAK_ITERATIONS}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__SOAK_SUCCESS_RATE__/${SOAK_SUCCESS_RATE}/g" artifacts/ci-logs/critical-path-summary.md

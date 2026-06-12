@@ -133,10 +133,10 @@ Use this section to assign ownership and due dates for each checklist domain.
 | 5. Agent Runtime And Model Safety | Orchestrator Team | 2026-08-02 | In Progress | docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md |
 | 6. Infrastructure, Reliability, And SLOs | SRE | 2026-08-09 | In Progress | scripts/release_check.sh |
 | 7. Observability And Operations | SRE + Ops | 2026-08-16 | In Progress | docs/OPERATIONS_RUNBOOK.md |
-| 8. Security Assurance | Security Engineering | 2026-08-23 | In Progress | docs/SECURITY_AUDIT_REPORT.md |
+| 8. Security Assurance | Security Engineering | 2026-08-23 | In Progress | artifacts/ci-logs/pentest-check.json + docs/SECURITY_AUDIT_REPORT.md |
 | 9. Compliance And Data Handling | Compliance + Legal Ops | 2026-08-30 | Not Started | docs/INCIDENT_RESPONSE_PLAYBOOK.md |
 | 10. Verification And Testing | QA + SRE | 2026-09-06 | In Progress | docs/PRODUCTION_STATUS.md |
-| 11. Launch Readiness Review | Engineering Leadership | 2026-09-13 | In Progress | docs/PRODUCTION_READINESS_CHECKLIST.md |
+| 11. Launch Readiness Review | Engineering Leadership | 2026-09-13 | In Progress | artifacts/ci-logs/go-no-go-check.json + config/launch-governance.json |
 | 12. Post-Launch Controls | Ops Leadership | 2026-09-20 | Not Started | docs/OPERATIONS_RUNBOOK.md |
 
 ## Top 5 Launch Risks With Mitigation Owners
