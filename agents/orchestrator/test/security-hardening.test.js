@@ -391,6 +391,32 @@ describe('Orchestrator Security Hardening', () => {
     }
   });
 
+  test('returns true when hugepages meet production threshold with free pages available', () => {
+    const orchestrator = new Orchestrator({ minHugepages: 8 });
+    const spy = jest.spyOn(fs, 'readFileSync').mockReturnValue(
+      'HugePages_Total: 8\nHugePages_Free: 2\n',
+    );
+
+    try {
+      expect(orchestrator.networkHandler._checkHugepages()).toBe(true);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  test('returns false when hugepages meet threshold but no free pages remain', () => {
+    const orchestrator = new Orchestrator({ minHugepages: 8 });
+    const spy = jest.spyOn(fs, 'readFileSync').mockReturnValue(
+      'HugePages_Total: 8\nHugePages_Free: 0\n',
+    );
+
+    try {
+      expect(orchestrator.networkHandler._checkHugepages()).toBe(false);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   test('returns false when cpu set is effectively unpinned', () => {
     const orchestrator = new Orchestrator({ requireCpuPinning: true });
     const spy = jest.spyOn(fs, 'readFileSync').mockImplementation((targetPath) => {

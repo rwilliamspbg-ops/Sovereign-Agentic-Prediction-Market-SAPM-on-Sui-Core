@@ -73,7 +73,7 @@ Wave objective: close the highest risk security and cryptographic gaps before br
 Current regression evidence from orchestrator suite:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 126 tests, 126 passed (2026-06-12)
+- Result: 7 suites, 128 tests, 128 passed (2026-06-12)
 
 | ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
 | --- | --- | --- | --- |
@@ -83,7 +83,7 @@ Current regression evidence from orchestrator suite:
 | ORCH-004 | Partial | security-hardening now covers validated staging attestation fixture ingestion and digest-mismatch fail-closed behavior | Capture hardware-backed staging evidence artifact and verify real TPM/TEE measurement ingestion |
 | ORCH-005 | Covered | security-hardening covers revoked fingerprint rejection plus trusted-root accept/reject policy enforcement | Add full chain-to-root multi-cert test vector fixture in CI |
 | ORCH-006 | Covered | security-hardening now covers unreachable endpoint plus explicit 200/404 reachable and 503 unreachable probe semantics | Extend matrix only if probe policy changes |
-| ORCH-007 | Covered | security-hardening procfs fixture validates hugepage threshold fail path | Add production profile threshold variants |
+| ORCH-007 | Covered | security-hardening now covers below-threshold fail, threshold-met pass, and zero-free-pages fail variants | Extend only if hugepage policy adds more profile dimensions |
 | ORCH-008 | Covered | security-hardening cpuset fixture validates unpinned detection path | Add cgroup-v2 specific regression fixture |
 | ORCH-009 | Partial | discovery-manager tests now cover successful key confirmation and digest-mismatch fail-closed behavior | Integrate audited hybrid provider path and key confirmation handshake beyond placeholder-design derivation |
 
@@ -178,6 +178,19 @@ Validation evidence:
 
 - Command: npm --prefix agents/orchestrator test
 - Result: 7 suites, 126 tests, 126 passed
+
+## 2026-06-12 ORCH-007 Hugepage Threshold Variant Update
+
+Added explicit ORCH-007 hugepage threshold variant coverage in `agents/orchestrator/test/security-hardening.test.js`:
+
+- below-threshold total hugepages fails closed
+- threshold-met with free hugepages passes
+- threshold-met with zero free hugepages fails closed
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 128 tests, 128 passed
 
 ## 2026-06-12 ORCH-001 Provider-Seam Update
 
