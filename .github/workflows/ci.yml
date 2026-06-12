@@ -181,6 +181,10 @@ jobs:
     env:
       FLAKE_RATE_MAX: ${{ vars.FLAKE_RATE_MAX || '0.0500' }}
       FLAKE_PROBE_RUNS: ${{ vars.FLAKE_PROBE_RUNS || '3' }}
+      SAPM_HYBRID_KEX_RESTART_BUDGET_MAX: ${{ vars.SAPM_HYBRID_KEX_RESTART_BUDGET_MAX || '3' }}
+      SAPM_HYBRID_KEX_RESTART_BUDGET_WINDOW_MS: ${{ vars.SAPM_HYBRID_KEX_RESTART_BUDGET_WINDOW_MS || '60000' }}
+      SAPM_HYBRID_KEX_MAX_RETRIES: ${{ vars.SAPM_HYBRID_KEX_MAX_RETRIES || '1' }}
+      SAPM_HYBRID_KEX_RETRY_BACKOFF_MS: ${{ vars.SAPM_HYBRID_KEX_RETRY_BACKOFF_MS || '50' }}
     needs:
       - release-check
       - frontend-prod-gate
@@ -206,6 +210,11 @@ jobs:
         run: |
           mkdir -p artifacts/ci-logs
           node scripts/summarize_resilience_reports.js
+      - name: Synthesize orchestrator lifecycle summary
+        run: |
+          mkdir -p artifacts/ci-logs
+          FLAKE_GATING_MODE="${{ vars.FLAKE_GATING == 'true' && 'enforced' || 'warn-only' }}" \
+            node scripts/summarize_orchestrator_lifecycle.js
       - name: Enforce flake-rate threshold
         run: |
           if [[ ! -f artifacts/ci-logs/flake-rate.json ]]; then
@@ -242,6 +251,12 @@ jobs:
           LOAD_SUCCESS_RATE="n/a"
           LOAD_RPS="n/a"
           LOAD_P99="n/a"
+          LIFECYCLE_PREFLIGHT="n/a"
+          LIFECYCLE_RESTART_ENFORCED="n/a"
+          LIFECYCLE_RESTART_BUDGET_MAX="n/a"
+          LIFECYCLE_RESTART_WINDOW_MS="n/a"
+          LIFECYCLE_MAX_RETRIES="n/a"
+          LIFECYCLE_RETRY_BACKOFF_MS="n/a"
           if [[ -f artifacts/ci-logs/flake-rate.json ]]; then
             FLAKE_RATE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.flakeRate));")
             FLAKE_RUNS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.probeRuns));")
@@ -254,6 +269,14 @@ jobs:
             LOAD_SUCCESS_RATE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.load.successRate));")
             LOAD_RPS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.load.rps));")
             LOAD_P99=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.load.p99LatencyMs));")
+          fi
+          if [[ -f artifacts/ci-logs/orchestrator-lifecycle-summary.json ]]; then
+            LIFECYCLE_PREFLIGHT=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.healthPreflightGate));")
+            LIFECYCLE_RESTART_ENFORCED=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.restartBudgetEnforced));")
+            LIFECYCLE_RESTART_BUDGET_MAX=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.restartBudgetMax));")
+            LIFECYCLE_RESTART_WINDOW_MS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.restartBudgetWindowMs));")
+            LIFECYCLE_MAX_RETRIES=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.maxRetries));")
+            LIFECYCLE_RETRY_BACKOFF_MS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.retryBackoffMs));")
           fi
           cat > artifacts/ci-logs/critical-path-summary.md <<'EOF'
           # Critical-Path Matrix Status
@@ -300,6 +323,17 @@ jobs:
           | Load success rate (%) | __LOAD_SUCCESS_RATE__ |
           | Load throughput (req/s) | __LOAD_RPS__ |
           | Load p99 latency (ms) | __LOAD_P99__ |
+
+          ## Provider Lifecycle Controls
+
+          | Metric | Value |
+          | --- | --- |
+          | Lifecycle preflight gate | __LIFECYCLE_PREFLIGHT__ |
+          | Restart budget enforced | __LIFECYCLE_RESTART_ENFORCED__ |
+          | Restart budget max | __LIFECYCLE_RESTART_BUDGET_MAX__ |
+          | Restart budget window (ms) | __LIFECYCLE_RESTART_WINDOW_MS__ |
+          | Max retries | __LIFECYCLE_MAX_RETRIES__ |
+          | Retry backoff (ms) | __LIFECYCLE_RETRY_BACKOFF_MS__ |
           EOF
           sed -i "s/__FLAKE_GATING_MODE__/${FLAKE_GATING_MODE}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__FLAKE_THRESHOLD__/${FLAKE_THRESHOLD}/g" artifacts/ci-logs/critical-path-summary.md
@@ -312,6 +346,12 @@ jobs:
           sed -i "s/__LOAD_SUCCESS_RATE__/${LOAD_SUCCESS_RATE}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__LOAD_RPS__/${LOAD_RPS}/g" artifacts/ci-logs/critical-path-summary.md
           sed -i "s/__LOAD_P99__/${LOAD_P99}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__LIFECYCLE_PREFLIGHT__/${LIFECYCLE_PREFLIGHT}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__LIFECYCLE_RESTART_ENFORCED__/${LIFECYCLE_RESTART_ENFORCED}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__LIFECYCLE_RESTART_BUDGET_MAX__/${LIFECYCLE_RESTART_BUDGET_MAX}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__LIFECYCLE_RESTART_WINDOW_MS__/${LIFECYCLE_RESTART_WINDOW_MS}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__LIFECYCLE_MAX_RETRIES__/${LIFECYCLE_MAX_RETRIES}/g" artifacts/ci-logs/critical-path-summary.md
+          sed -i "s/__LIFECYCLE_RETRY_BACKOFF_MS__/${LIFECYCLE_RETRY_BACKOFF_MS}/g" artifacts/ci-logs/critical-path-summary.md
       - name: Upload critical-path summary
         if: always()
         uses: actions/upload-artifact@v4
@@ -334,4 +374,11 @@ jobs:
         with:
           name: resilience-summary
           path: artifacts/ci-logs/resilience-summary.json
+          if-no-files-found: warn
+      - name: Upload orchestrator lifecycle summary artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orchestrator-lifecycle-summary
+          path: artifacts/ci-logs/orchestrator-lifecycle-summary.json
           if-no-files-found: warn

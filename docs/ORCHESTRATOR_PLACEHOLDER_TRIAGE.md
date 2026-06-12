@@ -389,6 +389,21 @@ Validation evidence:
 - Command: npm --prefix agents/orchestrator test
 - Result: 7 suites, 145 tests, 145 passed
 
+## 2026-06-12 Lifecycle Control CI Evidence Update
+
+Expanded WS-4 visibility for provider lifecycle controls:
+
+- `.github/workflows/ci.yml` now synthesizes `artifacts/ci-logs/orchestrator-lifecycle-summary.json` in `critical-path-summary`
+- critical-path markdown artifact now includes provider lifecycle control metrics (preflight gate state, restart budget, retry policy)
+- added unit coverage for lifecycle summary script generation in `scripts/summarize_orchestrator_lifecycle.test.js`
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 145 tests, 145 passed
+- Command: node --test scripts/summarize_orchestrator_lifecycle.test.js
+- Result: 1 test, 1 passed
+
 ## 2026-06-12 ORCH-001 Provider-Seam Update
 
 Implemented production-integration seam for ORCH-001 in `agents/orchestrator/core/orchestrator.js`:
