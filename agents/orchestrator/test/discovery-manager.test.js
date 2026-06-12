@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { DiscoveryManager } = require('../discovery/manager');
 const goHybridProvider = require('../core/go-hybrid-provider');
 
@@ -18,6 +19,17 @@ describe('Discovery Manager Session Hardening', () => {
   test('establishSession succeeds through Go-backed provider when key confirmation digest matches peer key', async () => {
     const fixturePath = path.join(__dirname, 'fixtures/hybrid-provider-peer-public.txt');
     const peerPubkey = fs.readFileSync(fixturePath, 'utf8').trim();
+    const peerDigest = crypto.createHash('sha256').update(peerPubkey).digest('hex');
+    const healthSpy = jest.spyOn(goHybridProvider, 'healthCheckProviderLifecycle')
+      .mockResolvedValue({ ok: true, checkedAt: new Date().toISOString() });
+    const deriveSpy = jest.spyOn(goHybridProvider, 'deriveSession')
+      .mockResolvedValue({
+        algorithm: 'x25519-mlkem768-go-bridge',
+        sessionKey: 'mock-session-key',
+        nonce: 'mock-nonce',
+        peerKeyDigest: peerDigest,
+      });
+
     const manager = new DiscoveryManager({ useGoHybridProvider: true });
     const attestationData = {
       measurements: {
@@ -31,6 +43,8 @@ describe('Discovery Manager Session Hardening', () => {
     expect(result.success).toBe(true);
     expect(result.session.status).toBe('encrypted');
     expect(result.session.keyMaterial.algorithm).toBe('x25519-mlkem768-go-bridge');
+    expect(healthSpy).toHaveBeenCalledTimes(1);
+    expect(deriveSpy).toHaveBeenCalledTimes(1);
   });
 
   test('establishSession succeeds with fallback derivation when Go-backed provider is disabled', async () => {
@@ -53,6 +67,17 @@ describe('Discovery Manager Session Hardening', () => {
   test('establishSession fails closed when key confirmation digest mismatches', async () => {
     const fixturePath = path.join(__dirname, 'fixtures/hybrid-provider-peer-public.txt');
     const peerPubkey = fs.readFileSync(fixturePath, 'utf8').trim();
+    const peerDigest = crypto.createHash('sha256').update(peerPubkey).digest('hex');
+    jest.spyOn(goHybridProvider, 'healthCheckProviderLifecycle')
+      .mockResolvedValue({ ok: true, checkedAt: new Date().toISOString() });
+    jest.spyOn(goHybridProvider, 'deriveSession')
+      .mockResolvedValue({
+        algorithm: 'x25519-mlkem768-go-bridge',
+        sessionKey: 'mock-session-key',
+        nonce: 'mock-nonce',
+        peerKeyDigest: peerDigest,
+      });
+
     const manager = new DiscoveryManager({ useGoHybridProvider: true });
     const attestationData = {
       measurements: {
