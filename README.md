@@ -1,49 +1,140 @@
 # SAPM — Sovereign Agentic Prediction Market on Sui
+<img width="2816" height="1536" alt="SAPM on SUI" src="https://github.com/user-attachments/assets/09386498-c833-4f65-92cb-33a373f7f3ce" />
+---
 
-<!-- markdownlint-disable MD060 -->
+## Platform
+[![Node >=18](https://img.shields.io/badge/node-%3E%3D18-blue.svg?logo=node.js)](https://nodejs.org/)
+[![Sui Testnet](https://img.shields.io/badge/Sui-Testnet-blue?logo=sui)](https://suiexplorer.com/?network=testnet)
+[![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+## Validation
 [![Release Gate](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=Release%20Gate)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci.yml)
 [![Stack Validation](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci_validation.yml?branch=main&style=for-the-badge&logo=docker&logoColor=white&label=Stack%20Validation)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci_validation.yml)
 [![Lean Verification](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/lean-verification.yml?branch=main&style=for-the-badge&logo=leanpub&logoColor=white&label=Lean%20Verification)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/lean-verification.yml)
 
-## Platform
-
-[![Node >=18](https://img.shields.io/badge/Node-%3E%3D18-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](package.json)
-[![Sui Testnet](https://img.shields.io/badge/Sui-Testnet-6fbcf0?style=for-the-badge&logo=sui&logoColor=0b1f3a)](https://docs.sui.io)
-[![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-D22128?style=for-the-badge&logo=apache&logoColor=white)](LICENSE.md)
-
 ## Repository Health
+[![Last Commit](https://img.shields.io/github/last-commit/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/commits/main) 
+[![Contributors](https://img.shields.io/github/contributors/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/graphs/contributors) 
+[![Dependabot Status](https://img.shields.io/badge/dependabot-enabled-blue.svg?logo=dependabot)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/security/dependabot)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/pulls)
 
-[![Last Commit](https://img.shields.io/github/last-commit/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/commits/main)
-[![Contributors](https://img.shields.io/github/contributors/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/graphs/contributors)
-[![Stars](https://img.shields.io/github/stars/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/stargazers)
-[![Forks](https://img.shields.io/github/forks/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/network/members)
-[![Open Issues](https://img.shields.io/github/issues/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/issues)
-[![Open PRs](https://img.shields.io/github/issues-pr/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/pulls)
-[![Repo Size](https://img.shields.io/github/repo-size/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core?style=for-the-badge&logo=github)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core)
-[![Live Testnet Verified](https://img.shields.io/badge/Live%20Testnet-Verified-00A86B?style=for-the-badge&logo=sui&logoColor=white)](#verified-live-deployment-sui-testnet)
+## Architecture At A Glance
+
+```mermaid
+graph TB
+    subgraph SAPM_Monorepo [SAPM Monorepo]
+        direction TB
+
+        Frontend["Next.js Frontend (frontend/)<br>• Market board<br>• Wallet connect<br>• Judge Mode<br>• DeepBook status<br>• Walrus snapshot<br>• Observability"]
+        Agents["Agents<br>(trader/, aggregator/, orchestr.)"]
+        Sui["Sui Network<br>• Move contracts<br>• Registry + Incentives"]
+        Walrus["Walrus<br>• publishMarketSnapshot<br>(manifest v1)"]
+        FormalVerification["Formal Verification (formal_verification/)<br>• Lean 4<br>• BFT safety<br>• Multi-Krum<br>• PQC proofs"]
+        Networking[/"Networking layer (future):<br>AF_XDP zero-copy kernel bypass<br>for cross-node aggregation<br>(Rust datapath scaffolded)"/]
+
+        Frontend -->|"@mysten/sui SDK"| Sui
+        Frontend -.-> Agents
+        Frontend -.-> Walrus
+        Sui -->|"DeepBook PTBs"| FormalVerification
+    end
+
+    style SAPM_Monorepo fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    style Frontend fill:#e1f5fe,stroke:#0288d1,stroke-width:1px;
+    style Agents fill:#fff3e0,stroke:#f57c00,stroke-width:1px;
+    style Sui fill:#e8f5e9,stroke:#388e3c,stroke-width:1px;
+    style Walrus fill:#ede7f6,stroke:#5e35b1,stroke-width:1px;
+    style FormalVerification fill:#ffebee,stroke:#c62828,stroke-width:1px;
+    style Networking fill:#eceff1,stroke:#455a64,stroke-width:1px,stroke-dasharray: 5 5;
+```
+---
+
+## SAPM is a sovereign, high-performance prediction market aggregator built natively on Sui. By combining low-latency agentic orchestration, mathematical formal verification, and Byzantine fault tolerance, SAPM delivers a resilient, quantum-resistant infrastructure tailored for decentralized AI agents and predictive routing.
+
+
+<!-- markdownlint-disable MD060 -->
+
 
 ## Integrated Ecosystem
 
 <a href="https://deepsurge.ai" target="_blank" rel="noopener noreferrer">
-  <img src="docs/assets/deepsurge-logo.svg" alt="DeepSurge" height="42" />
+  <img src="docs/assets/deepsurge-logo.svg" alt="DeepSurge" height="48" />
 </a>
 &nbsp;&nbsp;
 <a href="https://sui.io" target="_blank" rel="noopener noreferrer">
-  <img src="frontend/public/sui-logo.svg" alt="Sui" height="42" />
+  <img src="frontend/public/sui-logo.svg" alt="Sui" height="48" />
 </a>
 &nbsp;&nbsp;
 <a href="https://docs.sui.io/onchain-finance/deepbookv3/deepbook" target="_blank" rel="noopener noreferrer">
-  <img src="frontend/public/deepbook-logo.svg" alt="DeepBook" height="42" />
+  <img src="frontend/public/deepbook-logo.svg" alt="DeepBook" height="48" />
 </a>
 &nbsp;&nbsp;
 <a href="https://docs.wal.app" target="_blank" rel="noopener noreferrer">
-  <img src="frontend/public/walrus-logo.svg" alt="Walrus" height="42" />
+  <img src="frontend/public/walrus-logo.svg" alt="Walrus" height="48" />
 </a>
+
+
+Sui Overflow 2026 Target Tracks: Agentic Web (Core), DeFi & Payments (Core), DeepBook, and Walrus.
+
+
+## Problem
+
+Prediction markets require too much manual operation, too much centralized trust, and no verifiable audit trail. Agents that trade on them do so blindly — no on-chain proof of their decisions, no slashable reputation, no immutable record of what they saw or why they acted.
+
+## What SAPM Does
+
+SAPM is a sovereign, agentic prediction market stack built natively on Sui. It combines:
+
+- **Autonomous AI agents** (trader, aggregator, orchestrator) that discover markets, forecast outcomes, and execute trades using Sui's PTB transaction model
+- **On-chain reputation and incentives** — Move contracts that stake agents, slash Byzantine behavior, and reward accurate reports via `incentives.move`
+- **DeepBook integration** — limit order placement, cancel/replace, open-order queries, and preflight balance checks against DeepBook's on-chain orderbook
+- **Walrus archival** — every market snapshot and trade decision is published to Walrus as a verifiable blob with SHA-256 manifest and lineage tracking
+- **Lean 4 formal verification** — BFT safety/liveness theorems, Multi-Krum aggregation correctness, hybrid PQC security proofs, and oracle contract invariants
+
+
+**Why Sui?** The object model makes agent staking natural (each `AgentStake` is an owned object), PTBs let a single transaction atomically execute a trade and update reputation, shared objects give the registry global visibility, and DeepBook + Walrus as first-class Sui primitives mean every layer of the stack is composable without bridging.
+
+
+
+[![Video: Click thumbnail to play](https://img.youtube.com/vi/CEEmdBJklB0/hqdefault.jpg)](https://www.youtube.com/watch?v=CEEmdBJklB0)
+
+**Video:** Click thumbnail to play
+
+## Live Demo — Judge Mode
+
+> **The fastest path to verification:** open the app, connect a Sui wallet, paste a market object ID, and click **Run Judge Mode**. It will: connect wallet → load on-chain market → execute micro trade → archive to Walrus → read blob back. Every step produces a verifiable artifact (transaction digest on Sui Explorer, Walrus blob ID on aggregator endpoint).
+
+> **Fail-proof usage:** use only valid `PredictionMarket` object IDs in `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS`, or leave it unset to allow Judge Mode to auto-create a market.
+
+```bash
+./scripts/ci_frontend_validation.sh
+cd frontend
+npm ci
+cp ../.env.example .env.local
+# set NEXT_PUBLIC_SUI_PACKAGE_ID and NEXT_PUBLIC_SUI_NETWORK
+# set NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS only to PredictionMarket object IDs
+# or leave NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS unset for Judge auto-create
+npm run dev
+```
+
+Then open `http://localhost:3000`, connect wallet, run Judge Mode, and archive snapshot.
+
+Fail-proof demo checks:
+
+1. If Judge Mode fails preflight, reconnect wallet and verify network alignment.
+2. If on-chain market loading fails, unset `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` and retry Judge Mode.
+3. If archive fails, run Judge Mode once more so `sapm.judgeMode.lastResult` is refreshed.
+4. After any `.env.local` change, restart the frontend server.
+
+
+<img width="1733" height="1049" alt="Screenshot 2026-06-11 071231" src="https://github.com/user-attachments/assets/3aa7b037-6bef-4cb7-b9d4-d2fcd26e6ec8" />
+<img width="660" height="978" alt="Screenshot 2026-06-11 071152" src="https://github.com/user-attachments/assets/5444dff0-4cec-47c9-a5fe-d5b4def34534" />
+
 
 ## Full Functionality Evidence (2026-06-11)
 
 Evidence artifact: [docs/artifacts/full-functionality-evidence-2026-06-11.txt](docs/artifacts/full-functionality-evidence-2026-06-11.txt)
+
+[06-11-2026 completed Copilot Actions proof .json](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/blob/main/docs/artifacts/sapm-copilot-transcript-2026-06-11T18-58-58-087Z.json)
 
 Validated in this artifact:
 
@@ -72,124 +163,9 @@ Use these values in `frontend/.env.local`:
 
 ```bash
 NEXT_PUBLIC_SUI_PACKAGE_ID=0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188
+NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS=0x505c72a3abd9a42d6641593a502fbc4c90dd81b3899b94a37392b96d2f1c6bee
 NEXT_PUBLIC_SUI_NETWORK=testnet
 ```
-
-Set `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` only with actual `PredictionMarket` object IDs. Do not use the shared registry object ID for trading flows. If you do not have market IDs yet, leave `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` unset and let Judge Mode auto-create one.
-
-[![Video: Click thumbnail to play](https://img.youtube.com/vi/CEEmdBJklB0/hqdefault.jpg)](https://www.youtube.com/watch?v=CEEmdBJklB0)
-
-**Video:** Click thumbnail to play
-
-## Demo — Watch This First
-
-1. From repo root, run `./scripts/ci_frontend_validation.sh` and confirm it passes.
-2. Open the app, switch to the intended Sui network, and connect a funded wallet.
-3. Confirm `NEXT_PUBLIC_SUI_PACKAGE_ID` and `NEXT_PUBLIC_SUI_NETWORK` in `frontend/.env.local`.
-4. Set `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` only to valid `PredictionMarket` object IDs, or leave it unset for auto-create.
-5. Click **Run Judge Mode** and confirm a successful trade digest is returned.
-6. Click **Archive Snapshot** and confirm a Walrus `blobId` is returned.
-7. Independently verify the digest on Sui Explorer and snapshot payload via Walrus readback.
-
-## Architecture At A Glance
-
-| Layer | Responsibility | Primary Paths |
-|---|---|---|
-| Frontend | Wallet connect, judge flow, trade execution UI | `frontend/src/app/`, `frontend/src/components/` |
-| Agent Plane | Discovery, forecasting, orchestration, consensus | `agents/trader/`, `agents/aggregator/`, `agents/orchestrator/` |
-| On-chain Core | Registry, incentives, reputation, slashing | `agents/onchain-registry/` |
-| Market Data + Execution | DeepBook integration and PTB execution | `frontend/src/services/sui/deepbook-service.ts`, `frontend/src/components/trading/TradeExecution.tsx` |
-| Verifiable Storage | Snapshot archival and retrieval | `frontend/src/services/sui/walrus-service.ts` |
-| Formal Methods | Safety, liveness, aggregation, PQC proofs | `formal_verification/` |
-
-## Verification And Security Artifacts
-
-- [Security Audit Report](docs/SECURITY_AUDIT_REPORT.md)
-- [Threat Model](docs/THREAT_MODEL.md)
-- [Formal Verification README](formal_verification/README.md)
-- [Proof Obligations Tracker](formal_verification/OBLIGATIONS.md)
-
-## Judge Quickstart (Copy/Paste)
-
-```bash
-./scripts/ci_frontend_validation.sh
-cd frontend
-npm ci
-cp ../.env.example .env.local
-# set NEXT_PUBLIC_SUI_PACKAGE_ID and NEXT_PUBLIC_SUI_NETWORK
-# set NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS only to PredictionMarket object IDs
-# or leave NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS unset for Judge auto-create
-npm run dev
-```
-
-Then open `http://localhost:3000`, connect wallet, run Judge Mode, and archive snapshot.
-
-Fail-proof demo checks:
-
-1. If Judge Mode fails preflight, reconnect wallet and verify network alignment.
-2. If on-chain market loading fails, unset `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS` and retry Judge Mode.
-3. If archive fails, run Judge Mode once more so `sapm.judgeMode.lastResult` is refreshed.
-4. After any `.env.local` change, restart the frontend server.
-
----
-
-## Problem
-
-Prediction markets require too much manual operation, too much centralized trust, and no verifiable audit trail. Agents that trade on them do so blindly — no on-chain proof of their decisions, no slashable reputation, no immutable record of what they saw or why they acted.
-
-## What SAPM Does
-
-SAPM is a sovereign, agentic prediction market stack built natively on Sui. It combines:
-
-- **Autonomous AI agents** (trader, aggregator, orchestrator) that discover markets, forecast outcomes, and execute trades using Sui's PTB transaction model
-- **On-chain reputation and incentives** — Move contracts that stake agents, slash Byzantine behavior, and reward accurate reports via `incentives.move`
-- **DeepBook integration** — limit order placement, cancel/replace, open-order queries, and preflight balance checks against DeepBook's on-chain orderbook
-- **Walrus archival** — every market snapshot and trade decision is published to Walrus as a verifiable blob with SHA-256 manifest and lineage tracking
-- **Lean 4 formal verification** — BFT safety/liveness theorems, Multi-Krum aggregation correctness, hybrid PQC security proofs, and oracle contract invariants
-
-**Why Sui?** The object model makes agent staking natural (each `AgentStake` is an owned object), PTBs let a single transaction atomically execute a trade and update reputation, shared objects give the registry global visibility, and DeepBook + Walrus as first-class Sui primitives mean every layer of the stack is composable without bridging.
-
----
-
-## Live Demo — Judge Mode
-
-> **The fastest path to verification:** open the app, connect a Sui wallet, paste a market object ID, and click **Run Judge Mode**. It will: connect wallet → load on-chain market → execute micro trade → archive to Walrus → read blob back. Every step produces a verifiable artifact (transaction digest on Sui Explorer, Walrus blob ID on aggregator endpoint).
-
-> **Fail-proof usage:** use only valid `PredictionMarket` object IDs in `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS`, or leave it unset to allow Judge Mode to auto-create a market.
-
-The UI includes a built-in **Judge Script** modal with timestamped demo cues.
-
----
-
-## Architecture
-
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                     SAPM Monorepo                               │
-│                                                                 │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │               Next.js Frontend (frontend/)              │   │
-│  │  Market board · Wallet connect · Judge Mode            │   │
-│  │  DeepBook status · Walrus snapshot · Observability     │   │
-│  └────────────────────────┬────────────────────────────────┘   │
-│                           │ @mysten/sui SDK                     │
-│  ┌────────────┐  ┌────────▼──────────┐  ┌────────────────┐    │
-│  │  Agents    │  │   Sui Network     │  │   Walrus       │    │
-│  │ trader/    │  │ Move contracts    │  │ publishMarket  │    │
-│  │ aggregator/│  │ Registry +        │  │ Snapshot       │    │
-│  │ orchestr.  │  │ Incentives        │  │ (manifest v1)  │    │
-│  └────────────┘  └────────┬──────────┘  └────────────────┘    │
-│                           │ DeepBook PTBs                       │
-│  ┌─────────────────────────▼───────────────────────────────┐   │
-│  │  Formal Verification (formal_verification/)              │   │
-│  │  Lean 4 · BFT safety · Multi-Krum · PQC proofs         │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                                                                 │
-│  Networking layer (future): AF_XDP zero-copy kernel bypass     │
-│  for cross-node aggregation (Rust datapath scaffolded)         │
-└─────────────────────────────────────────────────────────────┘
-```
-
 ---
 
 ## Sui Integration Summary

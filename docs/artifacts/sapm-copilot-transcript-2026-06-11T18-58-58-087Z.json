@@ -1,0 +1,149 @@
+{
+  "generatedAt": "2026-06-11T19:03:20.597Z",
+  "context": {
+    "walletConnected": true,
+    "walletAddress": "0x37c30ef353cac79873290e6fabb5ff2851eeaeb8d804ae7768d7a3516dd6eaf4",
+    "activeMarketId": "0x9721eb81dba00f2726e72fcf1de5dcd0b6cafba558f88913924fdb1dcabe16b1",
+    "activeMarketQuestion": "83,65,80,77,32,74,117,100,103,101,32,77,111,100,101,32,77,97,114,107,101,116,32,50,48,50,54,45,48,54,45,49,49,84,49,52,58,48,50,58,48,55,46,54,49,57,90",
+    "activeMarketYesPrice": 0.5,
+    "activeMarketNoPrice": 0.5,
+    "activeMarketRisk": "High",
+    "deepbookReady": true,
+    "walrusReady": true,
+    "lastUpdatedAt": 1781204330365
+  },
+  "transcript": {
+    "id": "copilot_run_1781204338087",
+    "createdAt": 1781204338087,
+    "stopOnFailure": false,
+    "startedAt": 1781204327908,
+    "finishedAt": 1781204338087,
+    "total": 11,
+    "completed": 11,
+    "failed": 0,
+    "aborted": false,
+    "entries": [
+      {
+        "actionId": "copilot_action_1781198052674_s32bkm",
+        "title": "Run Judge Mode",
+        "type": "run-judge-mode",
+        "priority": "urgent",
+        "startedAt": 1781204327912,
+        "finishedAt": 1781204327913,
+        "status": "completed",
+        "ok": true,
+        "message": "Executed micro trade on 0x9721eb81dba00f2726e72fcf1de5dcd0b6cafba558f88913924fdb1dcabe16b1."
+      },
+      {
+        "actionId": "copilot_action_1781204319920_28hyav",
+        "title": "Run Judge Mode",
+        "type": "run-judge-mode",
+        "priority": "urgent",
+        "startedAt": 1781204327938,
+        "finishedAt": 1781204329372,
+        "status": "completed",
+        "ok": true,
+        "message": "Executed micro trade on 0x9721eb81dba00f2726e72fcf1de5dcd0b6cafba558f88913924fdb1dcabe16b1."
+      },
+      {
+        "actionId": "copilot_action_1781198052674_y950pu",
+        "title": "Load On-chain Markets",
+        "type": "load-onchain-markets",
+        "priority": "high",
+        "startedAt": 1781204329372,
+        "finishedAt": 1781204329372,
+        "status": "completed",
+        "ok": true,
+        "message": "Loaded 1 on-chain market(s)."
+      },
+      {
+        "actionId": "copilot_action_1781198052674_uo6ub7",
+        "title": "Refresh Integrations",
+        "type": "refresh-integrations",
+        "priority": "high",
+        "startedAt": 1781204329372,
+        "finishedAt": 1781204329372,
+        "status": "completed",
+        "ok": true,
+        "message": "Integration status refreshed."
+      },
+      {
+        "actionId": "copilot_action_1781198052674_nk01bb",
+        "title": "Archive Walrus Snapshot",
+        "type": "archive-snapshot",
+        "priority": "high",
+        "startedAt": 1781204329372,
+        "finishedAt": 1781204329372,
+        "status": "completed",
+        "ok": true,
+        "message": "Archived snapshot to Walrus blob WuDgNi76jr_N2h8aENVMYrnSL98-hi5CxpjhakLX_7w."
+      },
+      {
+        "actionId": "copilot_action_1781204272181_hyn0af",
+        "title": "Sync On-chain Markets",
+        "type": "load-onchain-markets",
+        "priority": "high",
+        "startedAt": 1781204329372,
+        "finishedAt": 1781204329372,
+        "status": "completed",
+        "ok": true,
+        "message": "Loaded 1 on-chain market(s)."
+      },
+      {
+        "actionId": "copilot_action_1781204272181_mvyn3a",
+        "title": "Focus Active Market",
+        "type": "open-market",
+        "priority": "high",
+        "startedAt": 1781204329372,
+        "finishedAt": 1781204329372,
+        "status": "completed",
+        "ok": true,
+        "message": "Focused market 0x9721eb81dba00f2726e72fcf1de5dcd0b6cafba558f88913924fdb1dcabe16b1."
+      },
+      {
+        "actionId": "copilot_action_1781204281223_t3lnq3",
+        "title": "Focus Active Market",
+        "type": "open-market",
+        "priority": "high",
+        "startedAt": 1781204329372,
+        "finishedAt": 1781204329372,
+        "status": "completed",
+        "ok": true,
+        "message": "Focused market 0x9721eb81dba00f2726e72fcf1de5dcd0b6cafba558f88913924fdb1dcabe16b1."
+      },
+      {
+        "actionId": "copilot_action_1781204319920_cfm0np",
+        "title": "Load On-chain Markets",
+        "type": "load-onchain-markets",
+        "priority": "high",
+        "startedAt": 1781204329372,
+        "finishedAt": 1781204329474,
+        "status": "completed",
+        "ok": true,
+        "message": "Loaded 1 on-chain market(s)."
+      },
+      {
+        "actionId": "copilot_action_1781204319920_qbvkxb",
+        "title": "Refresh Integrations",
+        "type": "refresh-integrations",
+        "priority": "high",
+        "startedAt": 1781204329474,
+        "finishedAt": 1781204330365,
+        "status": "completed",
+        "ok": true,
+        "message": "Integration status refreshed."
+      },
+      {
+        "actionId": "copilot_action_1781204319920_v29vwn",
+        "title": "Archive Walrus Snapshot",
+        "type": "archive-snapshot",
+        "priority": "high",
+        "startedAt": 1781204330365,
+        "finishedAt": 1781204338087,
+        "status": "completed",
+        "ok": true,
+        "message": "Archived snapshot to Walrus blob uhRh9-Zhxwr236U7EgYuGp_Yd2XBa2pnzNj3R2FfiXU."
+      }
+    ]
+  }
+}
