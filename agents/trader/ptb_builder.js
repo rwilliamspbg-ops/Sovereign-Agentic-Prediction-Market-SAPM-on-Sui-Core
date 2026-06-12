@@ -385,9 +385,10 @@ class PTBBuilder {
 }
 
 // Minimal convenience helper used by tests
-function buildTradeTransaction(meta, config = {}) {
+function buildTradeTransaction(meta, config = {}, options = {}) {
   const implied = meta.impliedProbability ?? meta.impliedProb ?? 0;
   const decision = implied >= 0.5 ? 'buy_yes' : 'hold';
+  const { dryRun = false } = options;
 
   const plan = {
     decision,
@@ -396,9 +397,11 @@ function buildTradeTransaction(meta, config = {}) {
     stake: meta.stake ?? null,
   };
 
-  const tx = { id: `ptb-sim-${Date.now()}` };
+  const tx = { id: `ptb-sim-${Date.now()}`, dryRun };
+  const result = { plan, config, tx };
+  if (dryRun) result.dryRun = true;
 
-  return { plan, config, tx };
+  return result;
 }
 
 // Export for module use

@@ -1,0 +1,48 @@
+{
+  "_comment": "SAPM network allowlist: explicit network separation policy for Sui RPC endpoints.",
+  "_policy": "Agents and transaction pipelines must validate that the active network is in the allowedNetworks list for the current SAPM_ENV before submitting transactions.",
+  "environments": {
+    "dev": {
+      "allowedNetworks": ["localnet"],
+      "rpcEndpoints": [
+        "http://127.0.0.1:9000"
+      ],
+      "faucetEndpoints": [
+        "http://127.0.0.1:9123"
+      ],
+      "mainnetEnabled": false,
+      "testnetEnabled": false
+    },
+    "testnet": {
+      "allowedNetworks": ["testnet"],
+      "rpcEndpoints": [
+        "https://fullnode.testnet.sui.io:443"
+      ],
+      "faucetEndpoints": [
+        "https://faucet.testnet.sui.io"
+      ],
+      "mainnetEnabled": false,
+      "testnetEnabled": true
+    },
+    "staging": {
+      "allowedNetworks": ["testnet"],
+      "rpcEndpoints": [
+        "https://fullnode.testnet.sui.io:443"
+      ],
+      "faucetEndpoints": [],
+      "mainnetEnabled": false,
+      "testnetEnabled": true
+    },
+    "mainnet": {
+      "allowedNetworks": ["mainnet"],
+      "rpcEndpoints": [
+        "https://fullnode.mainnet.sui.io:443"
+      ],
+      "faucetEndpoints": [],
+      "mainnetEnabled": true,
+      "testnetEnabled": false
+    }
+  },
+  "defaultEnvironment": "dev",
+  "enforcementMode": "strict"
+}

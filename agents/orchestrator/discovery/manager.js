@@ -5,6 +5,7 @@
  */
 
 const crypto = require('crypto');
+const goHybridProvider = require('../core/go-hybrid-provider');
 
 class DiscoveryManager {
   constructor(config) {
@@ -53,6 +54,12 @@ class DiscoveryManager {
     try {
       // Perform hybrid key exchange (x25519-mlkem768)
       const sessionKeys = await this._performHybridKeyExchange(attestationData, peerPubkey);
+
+      // Key confirmation guard: ensure returned peer digest matches negotiated peer key material.
+      const expectedPeerDigest = crypto.createHash('sha256').update(String(peerPubkey || '').trim()).digest('hex');
+      if (sessionKeys?.peerDigest !== expectedPeerDigest) {
+        throw new Error('Discovery key confirmation failed: peer digest mismatch');
+      }
       
       session.keyMaterial = sessionKeys;
       session.status = 'encrypted';
@@ -174,6 +181,53 @@ class DiscoveryManager {
     const peerKey = typeof peerPubkey === 'string' ? peerPubkey.trim() : '';
     if (!peerKey) {
       throw new Error('Peer public key is required for discovery key exchange');
+    }
+
+    const useGoHybridProvider = this.config.useGoHybridProvider !== undefined
+      ? this.config.useGoHybridProvider
+      : (process.env.DISCOVERY_USE_GO_HYBRID_PROVIDER || '1') !== '0';
+
+    if (useGoHybridProvider) {
+      let providerResult;
+      try {
+        if (typeof goHybridProvider.healthCheckProviderLifecycle === 'function') {
+          const health = await goHybridProvider.healthCheckProviderLifecycle();
+          if (!health?.ok) {
+            throw new Error(`Discovery provider lifecycle health check failed: ${health?.error || 'unknown health check failure'}`);
+          }
+        }
+
+        providerResult = await goHybridProvider.deriveSession({
+          attestationDigest: Buffer.from(digestB64, 'base64'),
+          peerPublicKey: Buffer.from(peerKey, 'utf8'),
+          algorithm: 'x25519-mlkem768',
+        });
+
+        const readiness = goHybridProvider.getProviderReadinessStatus();
+        const runtimeState = goHybridProvider.getProviderRuntimeState();
+        if (readiness?.ok) {
+          console.log(
+            `[DiscoveryManager] Go provider ready (${readiness.mode}) via ${readiness.command}; runtime mode=${runtimeState.executionMode}, deriveCalls=${runtimeState.deriveCalls}`,
+          );
+        }
+      } catch (error) {
+        const readiness = goHybridProvider.getProviderReadinessStatus();
+        const runtimeState = goHybridProvider.getProviderRuntimeState();
+        if (readiness && readiness.ok === false) {
+          console.error(
+            `[DiscoveryManager] Go provider readiness failed at ${readiness.checkedAt}: ${readiness.error}; lastErrorCategory=${runtimeState.lastErrorCategory || 'unknown'}`,
+          );
+        }
+        throw error;
+      }
+
+      return {
+        algorithm: providerResult.algorithm || 'x25519-mlkem768-go-bridge',
+        key: providerResult.sessionKey,
+        nonce: providerResult.nonce,
+        peerDigest: providerResult.peerKeyDigest,
+        establishedAt: new Date().toISOString(),
+      };
     }
 
     const nonce = crypto.randomBytes(32);

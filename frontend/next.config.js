@@ -3,9 +3,6 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ["@heroicons/react"],
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   reactStrictMode: true,
   // Disable telemetry at the config level.
   // This also suppresses the "Next.js (14.x) is outdated" dev-overlay banner.

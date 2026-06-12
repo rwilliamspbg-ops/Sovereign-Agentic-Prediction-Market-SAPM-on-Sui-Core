@@ -68,6 +68,8 @@ npm --prefix "$FRONTEND_DIR" run type-check -- --pretty false
 
 for attempt in $(seq 1 "$MAX_BUILD_ATTEMPTS"); do
   if run_frontend_build "$attempt"; then
+    echo "[frontend-prod-gate] Running CSS budget check..."
+    bash "$ROOT_DIR/scripts/check_frontend_css_budget.sh"
     echo "[frontend-prod-gate] PASS"
     exit 0
   fi

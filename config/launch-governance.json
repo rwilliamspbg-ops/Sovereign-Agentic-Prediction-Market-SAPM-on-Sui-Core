@@ -1,0 +1,88 @@
+{
+  "_comment": "SAPM Launch Governance Plan — Go/No-Go criteria, launch-day comms, freeze window, hypercare schedule, and deferred risk tracking.",
+  "_owner": "Engineering Leadership + Ops + Platform PMO",
+  "_reviewDate": "2026-06-12",
+  "_status": "Approved for Alpha mainnet planning; final sign-off required at Go/No-Go meeting",
+
+  "goNoGoProcess": {
+    "meetingRequired": true,
+    "scheduledDate": "2026-09-13",
+    "participants": ["Engineering Lead", "Security Lead", "SRE Lead", "Product Lead", "Ops Lead"],
+    "gatingCriteria": [
+      "Production readiness checklist >= 90% complete with no open Critical/High items",
+      "All top-5 launch risks (LR-001 through LR-005) have documented mitigations and owners",
+      "Orchestrator regression suite >= 145 tests passing",
+      "npm run release:check passes on release candidate commit",
+      "Secrets scan CI gate passes with zero findings",
+      "Dependency audit CI gate passes at --audit-level=high",
+      "DR drill executed in staging with RTO < 4 hours",
+      "Rollback drill executed in staging",
+      "Security Lead sign-off on threat model and audit report",
+      "Formal verification obligations in formal_verification/OBLIGATIONS.md reviewed and risk-accepted or closed"
+    ],
+    "decisionAuthority": "Unanimous approval from Engineering Lead, Security Lead, and Ops Lead required for Go decision"
+  },
+
+  "launchDayCommunicationsPlan": {
+    "statusChannel": "#sapm-launch-status (internal Slack)",
+    "externalStatusPage": "TBD — operator-provisioned status page URL to be linked before launch",
+    "stakeholderNotification": [
+      {"group": "Internal engineering", "channel": "#sapm-launch-status", "timing": "T-24h, T-1h, T-0, T+1h, T+4h, T+24h"},
+      {"group": "External users/partners", "channel": "Public status page + email", "timing": "T-24h announcement, T-0 go-live confirmation, any SEV-2+ incident updates"}
+    ],
+    "onCallContact": "pagerduty/sapm-oncall — active from T-1h through T+48h",
+    "communicationOwner": "Product Leadership + Platform PMO"
+  },
+
+  "freezeWindowPolicy": {
+    "codeFreeze": {
+      "startDate": "2026-09-06",
+      "endDate": "2026-09-13 (Go/No-Go meeting)",
+      "policy": "No new feature merges to main after code freeze. Only critical security patches or explicit Go/No-Go blockers permitted. Any exception requires Engineering Lead + Security Lead approval."
+    },
+    "releaseFreeze": {
+      "startDate": "2026-09-13 (post Go/No-Go Go decision)",
+      "endDate": "2026-09-27 (end of hypercare window)",
+      "policy": "No changes to production infrastructure without Incident Commander approval. Rollback is the default response to any SEV-1 or SEV-2 incident during freeze."
+    },
+    "contingencyPlan": "If Go/No-Go results in No-Go, the release is rescheduled by minimum 2 weeks. Engineering Leadership documents blocking items and assigns owners before new target date is set."
+  },
+
+  "hypercareSchedule": {
+    "window": "14 days post-launch (2026-09-13 to 2026-09-27)",
+    "onCallCoverage": "24/7 pager coverage by SRE + Orchestrator Team leads rotating on 8-hour shifts",
+    "dailyRiskReview": {
+      "time": "09:00 UTC daily",
+      "attendees": ["SRE on-call", "Engineering Lead", "Product Lead"],
+      "agenda": ["SLO burn rate review", "Open incident review", "Top-5 risk status update", "Deferred risk triage"]
+    },
+    "kpiReviewCadence": {
+      "frequency": "Daily during hypercare, weekly post-hypercare",
+      "metrics": ["sapm_rpc_error_rate", "sapm_tx_success_rate", "sapm_agent_loop_error_rate", "sapm_forecast_latency_ms", "sapm_frontend_availability"],
+      "anomalyThresholds": "Any metric crossing its alert threshold triggers immediate review per config/alert-thresholds.json"
+    },
+    "exitCriteria": "Hypercare ends when: (1) all SLOs have maintained target for 7 consecutive days, (2) no open SEV-1 or SEV-2 incidents, (3) all PIR action items from launch window are closed or deferred with owner + date"
+  },
+
+  "deferredRiskRegister": {
+    "policy": "Any risk identified during or after launch that cannot be immediately remediated must be entered in this register with owner, due date, and mitigation plan. Reviewed daily during hypercare and weekly thereafter.",
+    "items": [
+      {
+        "id": "DR-001",
+        "risk": "Full TPM attestation evidence requires production hardware provisioning",
+        "severity": "Medium",
+        "owner": "Orchestrator Team",
+        "dueDate": "2026-10-01",
+        "mitigation": "Software attestation path is functional and tested; hardware TPM path is an enhancement for post-Alpha hardening"
+      },
+      {
+        "id": "DR-002",
+        "risk": "Production HSM/KMS key custody not yet provisioned for Alpha",
+        "severity": "Medium",
+        "owner": "Security Engineering",
+        "dueDate": "2026-09-30",
+        "mitigation": "Ephemeral in-memory keys used for Alpha; KMS provisioning is gated on infrastructure approval and scheduled before Beta"
+      }
+    ]
+  }
+}

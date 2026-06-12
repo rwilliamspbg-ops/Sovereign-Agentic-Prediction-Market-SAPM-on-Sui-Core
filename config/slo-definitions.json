@@ -1,0 +1,63 @@
+{
+  "_comment": "SAPM Service Level Objectives — authoritative SLO definitions for Alpha mainnet launch gate.",
+  "_owner": "SRE + Platform Engineering",
+  "_reviewDate": "2026-06-12",
+  "slos": [
+    {
+      "id": "SLO-001",
+      "service": "RPC Connectivity",
+      "description": "Sui RPC endpoint is reachable and returns valid JSON-RPC responses",
+      "sli": "Percentage of JSON-RPC health probe requests returning HTTP 200 with a valid result field",
+      "target": 99.5,
+      "window": "30d rolling",
+      "errorBudget": "0.5% = ~3.6 hours/month",
+      "alertThreshold": 99.0,
+      "owner": "SRE"
+    },
+    {
+      "id": "SLO-002",
+      "service": "Agent Decision Loop",
+      "description": "Forecast-to-trade agent loop completes a full cycle without error",
+      "sli": "Percentage of agent loop iterations that complete without an unhandled exception or circuit-breaker trip",
+      "target": 99.0,
+      "window": "7d rolling",
+      "errorBudget": "1% = ~100 minutes/week",
+      "alertThreshold": 98.0,
+      "owner": "Orchestrator Team"
+    },
+    {
+      "id": "SLO-003",
+      "service": "Transaction Execution",
+      "description": "Trade and market-management transactions are executed successfully on-chain",
+      "sli": "Percentage of submitted transactions with execution status 'success' within 30 seconds",
+      "target": 95.0,
+      "window": "24h rolling",
+      "errorBudget": "5% = ~72 minutes/day",
+      "alertThreshold": 90.0,
+      "owner": "Protocol Engineering"
+    },
+    {
+      "id": "SLO-004",
+      "service": "Forecast Latency",
+      "description": "Agent forecast generation completes within the latency budget",
+      "sli": "p99 latency of forecast generation measured from input receipt to decision output",
+      "targetP99Ms": 2000,
+      "window": "1h rolling",
+      "alertThresholdP99Ms": 3000,
+      "owner": "Orchestrator Team"
+    },
+    {
+      "id": "SLO-005",
+      "service": "Frontend Availability",
+      "description": "Markets frontend route returns HTTP 200 and renders without JS error",
+      "sli": "Percentage of synthetic monitor probe requests returning HTTP 200 with page-level JS health",
+      "target": 99.0,
+      "window": "7d rolling",
+      "errorBudget": "1% = ~100 minutes/week",
+      "alertThreshold": 98.0,
+      "owner": "Frontend Platform"
+    }
+  ],
+  "errorBudgetPolicy": "When any SLO error budget is > 50% consumed in its window, a freeze on non-critical feature work is triggered until budget is restored above 50%.",
+  "reviewCadence": "Weekly SLO review during on-call handoff. Thresholds reviewed quarterly."
+}

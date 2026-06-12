@@ -14,6 +14,123 @@ permissions:
   contents: read
 
 jobs:
+  pentest-evidence:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ vars.PENTEST_GATING != 'true' }}
+    env:
+      PENTEST_GATING: ${{ vars.PENTEST_GATING || 'false' }}
+      PENTEST_REPORT_PATH: artifacts/ci-logs/pentest-evidence.json
+      PENTEST_CHECK_OUTPUT_PATH: artifacts/ci-logs/pentest-check.json
+      PENTEST_MAX_AGE_DAYS: ${{ vars.PENTEST_MAX_AGE_DAYS || '365' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate external pentest evidence
+        run: |
+          mkdir -p artifacts/ci-logs
+          PENTEST_GATING_MODE="${{ vars.PENTEST_GATING == 'true' && 'enforced' || 'warn-only' }}" \
+            node scripts/check_pentest_evidence.js
+      - name: Upload pentest evidence artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pentest-evidence-check
+          path: |
+            artifacts/ci-logs/pentest-evidence.json
+            artifacts/ci-logs/pentest-check.json
+          if-no-files-found: warn
+
+  go-nogo-signoff:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ vars.GONOGO_GATING != 'true' }}
+    env:
+      GONOGO_GATING: ${{ vars.GONOGO_GATING || 'false' }}
+      GONOGO_SIGNOFF_PATH: artifacts/ci-logs/go-no-go-signoff.json
+      GONOGO_CHECK_OUTPUT_PATH: artifacts/ci-logs/go-no-go-check.json
+      GONOGO_REQUIRED_APPROVERS: ${{ vars.GONOGO_REQUIRED_APPROVERS || 'engineering,security,operations' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Go/No-Go signoff evidence
+        run: |
+          mkdir -p artifacts/ci-logs
+          GONOGO_GATING_MODE="${{ vars.GONOGO_GATING == 'true' && 'enforced' || 'warn-only' }}" \
+            node scripts/check_go_nogo_signoff.js
+      - name: Upload Go/No-Go evidence artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-no-go-signoff-check
+          path: |
+            artifacts/ci-logs/go-no-go-signoff.json
+            artifacts/ci-logs/go-no-go-check.json
+          if-no-files-found: warn
+
+  governance-policy:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ vars.GOVERNANCE_POLICY_GATING != 'true' }}
+    env:
+      GOVERNANCE_POLICY_GATING: ${{ vars.GOVERNANCE_POLICY_GATING || 'false' }}
+      GOVERNANCE_BRANCH: ${{ vars.GOVERNANCE_BRANCH || 'main' }}
+      MIN_REQUIRED_STATUS_CHECKS: ${{ vars.MIN_REQUIRED_STATUS_CHECKS || '3' }}
+      REQUIRED_STATUS_CHECKS: ${{ vars.REQUIRED_STATUS_CHECKS || 'release-check,frontend-prod-gate,orchestrator-tests,resilience-tests' }}
+      GOVERNANCE_POLICY_REPORT_PATH: artifacts/ci-logs/governance-policy-check.json
+    steps:
+      - uses: actions/checkout@v4
+      - name: Evaluate GitHub governance policy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p artifacts/ci-logs
+          GOVERNANCE_POLICY_GATING_MODE="${{ vars.GOVERNANCE_POLICY_GATING == 'true' && 'enforced' || 'warn-only' }}" \
+            node scripts/check_github_governance_policy.js
+      - name: Upload governance policy artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-policy-check
+          path: artifacts/ci-logs/governance-policy-check.json
+          if-no-files-found: warn
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for private keys and secrets
+        run: |
+          chmod +x scripts/scan_secrets.sh
+          scripts/scan_secrets.sh .
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ vars.DEPENDENCY_AUDIT_GATING != 'true' }}
+    env:
+      FRONTEND_AUDIT_GATING: ${{ vars.FRONTEND_AUDIT_GATING || 'true' }}
+      FRONTEND_AUDIT_REPORT_PATH: artifacts/ci-logs/frontend-audit-gate.json
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install root dependencies
+        run: npm ci --no-fund
+      - name: Audit root dependencies (critical/high)
+        run: npm audit --audit-level=high --no-fund
+      - name: Audit orchestrator dependencies
+        run: npm --prefix agents/orchestrator audit --audit-level=high --no-fund
+      - name: Evaluate frontend dependency audit gate (high/critical)
+        run: |
+          mkdir -p artifacts/ci-logs
+          FRONTEND_AUDIT_GATING_MODE="${{ vars.FRONTEND_AUDIT_GATING == 'true' && 'enforced' || 'warn-only' }}" \
+            node scripts/check_frontend_audit_gate.js
+      - name: Upload dependency audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-logs
+          path: artifacts/ci-logs/frontend-audit-gate.json
+          if-no-files-found: warn
+
   release-check:
     runs-on: ubuntu-latest
     env:
@@ -79,6 +196,10 @@ jobs:
         run: npm --prefix agents/orchestrator ci --no-audit --no-fund
       - name: Run orchestrator test suite
         run: npm --prefix agents/orchestrator test
+      - name: Enforce orchestrator test coverage floor
+        run: |
+          chmod +x scripts/check_test_coverage_floor.sh
+          COVERAGE_MIN_TESTS=${{ vars.ORCH_COVERAGE_MIN_TESTS || '145' }} scripts/check_test_coverage_floor.sh
       - name: Run orchestrator hardening checks
         run: bash scripts/orchestrator_hardening_check.sh
 
@@ -144,8 +265,22 @@ jobs:
     env:
       REQUESTS: '120'
       CONCURRENCY: '12'
+      SOAK_ITERATIONS: ${{ vars.SOAK_ITERATIONS || '5' }}
+      SOAK_REQUESTS: ${{ vars.SOAK_REQUESTS || '100' }}
+      SOAK_CONCURRENCY: ${{ vars.SOAK_CONCURRENCY || '10' }}
       CHAOS_REPORT_PATH: artifacts/ci-logs/chaos-report.json
       LOAD_REPORT_PATH: artifacts/ci-logs/load-report.json
+      SOAK_REPORT_PATH: artifacts/ci-logs/soak-report.json
+      RESILIENCE_POLICY_GATING: ${{ vars.RESILIENCE_POLICY_GATING || 'false' }}
+      MIN_CHAOS_SCENARIO_COUNT: ${{ vars.MIN_CHAOS_SCENARIO_COUNT || '3' }}
+      MIN_LOAD_SUCCESS_RATE: ${{ vars.MIN_LOAD_SUCCESS_RATE || '95' }}
+      MAX_LOAD_P99_LATENCY_MS: ${{ vars.MAX_LOAD_P99_LATENCY_MS || '1000' }}
+      MIN_LOAD_REQUESTS: ${{ vars.MIN_LOAD_REQUESTS || '100' }}
+      MIN_LOAD_RPS: ${{ vars.MIN_LOAD_RPS || '50' }}
+      MIN_SOAK_ITERATIONS: ${{ vars.MIN_SOAK_ITERATIONS || '3' }}
+      MIN_SOAK_SUCCESS_RATE: ${{ vars.MIN_SOAK_SUCCESS_RATE || '95' }}
+      MAX_SOAK_P99_LATENCY_MS: ${{ vars.MAX_SOAK_P99_LATENCY_MS || '1000' }}
+      MIN_SOAK_RPS: ${{ vars.MIN_SOAK_RPS || '50' }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js
@@ -163,6 +298,19 @@ jobs:
         run: |
           mkdir -p artifacts/ci-logs
           npm run test:load 2>&1 | tee artifacts/ci-logs/load-tests.log
+      - name: Run soak benchmark
+        run: |
+          mkdir -p artifacts/ci-logs
+          node scripts/soak_test_trading.js 2>&1 | tee artifacts/ci-logs/soak-tests.log
+      - name: Synthesize resilience summary
+        run: |
+          mkdir -p artifacts/ci-logs
+          node scripts/summarize_resilience_reports.js
+      - name: Evaluate resilience policy thresholds
+        run: |
+          mkdir -p artifacts/ci-logs
+          RESILIENCE_POLICY_GATING_MODE="${{ vars.RESILIENCE_POLICY_GATING == 'true' && 'enforced' || 'warn-only' }}" \
+            node scripts/check_resilience_policy.js
       - name: Upload resilience logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -173,4 +321,375 @@ jobs:
             artifacts/ci-logs/load-tests.log
             artifacts/ci-logs/chaos-report.json
             artifacts/ci-logs/load-report.json
+            artifacts/ci-logs/soak-tests.log
+            artifacts/ci-logs/soak-report.json
+            artifacts/ci-logs/resilience-summary.json
+            artifacts/ci-logs/resilience-policy-check.json
+          if-no-files-found: warn
+
+  critical-path-summary:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ vars.FLAKE_GATING != 'true' }}
+    env:
+      FLAKE_RATE_MAX: ${{ vars.FLAKE_RATE_MAX || '0.0500' }}
+      FLAKE_PROBE_RUNS: ${{ vars.FLAKE_PROBE_RUNS || '3' }}
+      SAPM_HYBRID_KEX_RESTART_BUDGET_MAX: ${{ vars.SAPM_HYBRID_KEX_RESTART_BUDGET_MAX || '3' }}
+      SAPM_HYBRID_KEX_RESTART_BUDGET_WINDOW_MS: ${{ vars.SAPM_HYBRID_KEX_RESTART_BUDGET_WINDOW_MS || '60000' }}
+      SAPM_HYBRID_KEX_MAX_RETRIES: ${{ vars.SAPM_HYBRID_KEX_MAX_RETRIES || '1' }}
+      SAPM_HYBRID_KEX_RETRY_BACKOFF_MS: ${{ vars.SAPM_HYBRID_KEX_RETRY_BACKOFF_MS || '50' }}
+      RESILIENCE_POLICY_GATING: ${{ vars.RESILIENCE_POLICY_GATING || 'false' }}
+      LIFECYCLE_POLICY_GATING: ${{ vars.LIFECYCLE_POLICY_GATING || 'false' }}
+      LIFECYCLE_MIN_RESTART_BUDGET_MAX: ${{ vars.LIFECYCLE_MIN_RESTART_BUDGET_MAX || '1' }}
+      LIFECYCLE_MAX_RESTART_BUDGET_MAX: ${{ vars.LIFECYCLE_MAX_RESTART_BUDGET_MAX || '10' }}
+      LIFECYCLE_MIN_RESTART_WINDOW_MS: ${{ vars.LIFECYCLE_MIN_RESTART_WINDOW_MS || '1000' }}
+      LIFECYCLE_MAX_RESTART_WINDOW_MS: ${{ vars.LIFECYCLE_MAX_RESTART_WINDOW_MS || '300000' }}
+      LIFECYCLE_MIN_RETRIES: ${{ vars.LIFECYCLE_MIN_RETRIES || '0' }}
+      LIFECYCLE_MAX_RETRIES: ${{ vars.LIFECYCLE_MAX_RETRIES || '5' }}
+      LIFECYCLE_MIN_RETRY_BACKOFF_MS: ${{ vars.LIFECYCLE_MIN_RETRY_BACKOFF_MS || '0' }}
+      LIFECYCLE_MAX_RETRY_BACKOFF_MS: ${{ vars.LIFECYCLE_MAX_RETRY_BACKOFF_MS || '1000' }}
+    needs:
+      - pentest-evidence
+      - go-nogo-signoff
+      - governance-policy
+      - release-check
+      - frontend-prod-gate
+      - unit-tests
+      - orchestrator-tests
+      - resilience-tests
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: agents/orchestrator/package-lock.json
+      - name: Install orchestrator dependencies
+        run: npm --prefix agents/orchestrator ci --no-audit --no-fund
+      - name: Compute orchestrator flake-rate probe
+        run: |
+          chmod +x scripts/compute_test_flake_rate.sh
+          scripts/compute_test_flake_rate.sh
+      - name: Synthesize resilience summary
+        run: |
+          mkdir -p artifacts/ci-logs
+          node scripts/summarize_resilience_reports.js
+      - name: Synthesize orchestrator lifecycle summary
+        run: |
+          mkdir -p artifacts/ci-logs
+          FLAKE_GATING_MODE="${{ vars.FLAKE_GATING == 'true' && 'enforced' || 'warn-only' }}" \
+            node scripts/summarize_orchestrator_lifecycle.js
+      - name: Evaluate lifecycle policy thresholds
+        run: |
+          mkdir -p artifacts/ci-logs
+          EXPECTED_LIFECYCLE_PREFLIGHT_GATE="enabled" \
+          EXPECTED_LIFECYCLE_RESTART_ENFORCED="true" \
+          LIFECYCLE_POLICY_GATING_MODE="${{ vars.LIFECYCLE_POLICY_GATING == 'true' && 'enforced' || 'warn-only' }}" \
+            node scripts/check_orchestrator_lifecycle_policy.js
+      - name: Enforce flake-rate threshold
+        run: |
+          if [[ ! -f artifacts/ci-logs/flake-rate.json ]]; then
+            echo "Missing flake-rate report at artifacts/ci-logs/flake-rate.json"
+            exit 1
+          fi
+
+          ACTUAL=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.flakeRate));")
+          MAX_ALLOWED="${FLAKE_RATE_MAX}"
+
+          if ! node -e "const actual=Number(process.argv[1]);const max=Number(process.argv[2]); if (!Number.isFinite(actual) || !Number.isFinite(max)) { process.exit(2); } process.exit(actual <= max ? 0 : 1);" "$ACTUAL" "$MAX_ALLOWED"; then
+            STATUS=$?
+            if [[ "$STATUS" -eq 2 ]]; then
+              echo "Invalid flake threshold values: actual=${ACTUAL}, max=${MAX_ALLOWED}"
+              exit 1
+            fi
+
+            echo "Flake threshold exceeded: actual=${ACTUAL} max=${MAX_ALLOWED}"
+            exit 1
+          fi
+
+          echo "Flake threshold check passed: actual=${ACTUAL} max=${MAX_ALLOWED}"
+      - name: Generate critical-path status summary
+        run: |
+          mkdir -p artifacts/ci-logs
+          FLAKE_RATE="n/a"
+          FLAKE_RUNS="n/a"
+          FLAKE_FAILURES="n/a"
+          FLAKE_THRESHOLD="${FLAKE_RATE_MAX}"
+          FLAKE_GATING_MODE="${{ vars.FLAKE_GATING == 'true' && 'enforced' || 'warn-only' }}"
+          CHAOS_PASSED="n/a"
+          CHAOS_SCENARIOS="n/a"
+          CHAOS_FAILED="n/a"
+          LOAD_SUCCESS_RATE="n/a"
+          LOAD_RPS="n/a"
+          LOAD_P99="n/a"
+          GOV_POLICY_MODE="${{ vars.GOVERNANCE_POLICY_GATING == 'true' && 'enforced' || 'warn-only' }}"
+          GOV_POLICY_PASS="n/a"
+          GOV_BRANCH_PROTECTED="n/a"
+          GOV_SIGNED_COMMITS="n/a"
+          GOV_REQUIRED_CHECKS="n/a"
+          SOAK_PASSED="n/a"
+          SOAK_ITERATIONS="n/a"
+          SOAK_SUCCESS_RATE="n/a"
+          SOAK_RPS="n/a"
+          SOAK_WORST_P99="n/a"
+          PENTEST_MODE="${{ vars.PENTEST_GATING == 'true' && 'enforced' || 'warn-only' }}"
+          PENTEST_PASS="n/a"
+          PENTEST_OPEN_CRITICAL="n/a"
+          PENTEST_OPEN_HIGH="n/a"
+          GONOGO_MODE="${{ vars.GONOGO_GATING == 'true' && 'enforced' || 'warn-only' }}"
+          GONOGO_PASS="n/a"
+          GONOGO_DECISION="n/a"
+          GONOGO_APPROVAL_COUNT="n/a"
+          LIFECYCLE_PREFLIGHT="n/a"
+          LIFECYCLE_RESTART_ENFORCED="n/a"
+          LIFECYCLE_RESTART_BUDGET_MAX="n/a"
+          LIFECYCLE_RESTART_WINDOW_MS="n/a"
+          LIFECYCLE_MAX_RETRIES="n/a"
+          LIFECYCLE_RETRY_BACKOFF_MS="n/a"
+          RESILIENCE_POLICY_MODE="${{ vars.RESILIENCE_POLICY_GATING == 'true' && 'enforced' || 'warn-only' }}"
+          RESILIENCE_POLICY_PASS="n/a"
+          LIFECYCLE_POLICY_MODE="${{ vars.LIFECYCLE_POLICY_GATING == 'true' && 'enforced' || 'warn-only' }}"
+          LIFECYCLE_POLICY_PASS="n/a"
+          if [[ -f artifacts/ci-logs/flake-rate.json ]]; then
+            FLAKE_RATE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.flakeRate));")
+            FLAKE_RUNS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.probeRuns));")
+            FLAKE_FAILURES=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/flake-rate.json','utf8'));process.stdout.write(String(j.failures));")
+          fi
+          if [[ -f artifacts/ci-logs/resilience-summary.json ]]; then
+            CHAOS_PASSED=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.chaos.passed));")
+            CHAOS_SCENARIOS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.chaos.totalScenarios));")
+            CHAOS_FAILED=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(j.chaos.failedScenarios.length ? j.chaos.failedScenarios.join('; ') : 'none');")
+            LOAD_SUCCESS_RATE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.load.successRate));")
+            LOAD_RPS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.load.rps));")
+            LOAD_P99=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.load.p99LatencyMs));")
+            SOAK_PASSED=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.soak.passed));")
+            SOAK_ITERATIONS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.soak.iterations));")
+            SOAK_SUCCESS_RATE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.soak.avgSuccessRate));")
+            SOAK_RPS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.soak.avgRps));")
+            SOAK_WORST_P99=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-summary.json','utf8'));process.stdout.write(String(j.soak.worstP99LatencyMs));")
+          fi
+          if [[ -f artifacts/ci-logs/resilience-policy-check.json ]]; then
+            RESILIENCE_POLICY_MODE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-policy-check.json','utf8'));process.stdout.write(String(j.mode));")
+            RESILIENCE_POLICY_PASS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/resilience-policy-check.json','utf8'));process.stdout.write(String(j.passed));")
+          fi
+          if [[ -f artifacts/ci-logs/governance-policy-check.json ]]; then
+            GOV_POLICY_MODE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/governance-policy-check.json','utf8'));process.stdout.write(String(j.mode));")
+            GOV_POLICY_PASS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/governance-policy-check.json','utf8'));process.stdout.write(String(j.passed));")
+            GOV_BRANCH_PROTECTED=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/governance-policy-check.json','utf8'));const c=j.checks.find(x=>x.name==='branchProtectionEnabled');process.stdout.write(String(c?c.actual:'n/a'));")
+            GOV_SIGNED_COMMITS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/governance-policy-check.json','utf8'));const c=j.checks.find(x=>x.name==='signedCommitsRequired');process.stdout.write(String(c?c.actual:'n/a'));")
+            GOV_REQUIRED_CHECKS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/governance-policy-check.json','utf8'));process.stdout.write(String((j.observedChecks||[]).length));")
+          fi
+          if [[ -f artifacts/ci-logs/pentest-check.json ]]; then
+            PENTEST_MODE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/pentest-check.json','utf8'));process.stdout.write(String(j.mode));")
+            PENTEST_PASS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/pentest-check.json','utf8'));process.stdout.write(String(j.passed));")
+          fi
+          if [[ -f artifacts/ci-logs/pentest-evidence.json ]]; then
+            PENTEST_OPEN_CRITICAL=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/pentest-evidence.json','utf8'));process.stdout.write(String(j.openCritical ?? 'n/a'));")
+            PENTEST_OPEN_HIGH=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/pentest-evidence.json','utf8'));process.stdout.write(String(j.openHigh ?? 'n/a'));")
+          fi
+          if [[ -f artifacts/ci-logs/go-no-go-check.json ]]; then
+            GONOGO_MODE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/go-no-go-check.json','utf8'));process.stdout.write(String(j.mode));")
+            GONOGO_PASS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/go-no-go-check.json','utf8'));process.stdout.write(String(j.passed));")
+          fi
+          if [[ -f artifacts/ci-logs/go-no-go-signoff.json ]]; then
+            GONOGO_DECISION=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/go-no-go-signoff.json','utf8'));process.stdout.write(String(j.finalDecision ?? 'n/a'));")
+            GONOGO_APPROVAL_COUNT=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/go-no-go-signoff.json','utf8'));process.stdout.write(String((j.approvals||[]).filter(a=>a.approved===true).length));")
+          fi
+          if [[ -f artifacts/ci-logs/orchestrator-lifecycle-summary.json ]]; then
+            LIFECYCLE_PREFLIGHT=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.healthPreflightGate));")
+            LIFECYCLE_RESTART_ENFORCED=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.restartBudgetEnforced));")
+            LIFECYCLE_RESTART_BUDGET_MAX=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.restartBudgetMax));")
+            LIFECYCLE_RESTART_WINDOW_MS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.restartBudgetWindowMs));")
+            LIFECYCLE_MAX_RETRIES=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.maxRetries));")
+            LIFECYCLE_RETRY_BACKOFF_MS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-summary.json','utf8'));process.stdout.write(String(j.providerLifecycle.retryBackoffMs));")
+          fi
+          if [[ -f artifacts/ci-logs/orchestrator-lifecycle-policy-check.json ]]; then
+            LIFECYCLE_POLICY_MODE=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-policy-check.json','utf8'));process.stdout.write(String(j.mode));")
+            LIFECYCLE_POLICY_PASS=$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('artifacts/ci-logs/orchestrator-lifecycle-policy-check.json','utf8'));process.stdout.write(String(j.passed));")
+          fi
+          cat > artifacts/ci-logs/critical-path-summary.md <<'EOF'
+          # Critical-Path Matrix Status
+
+          Generated by CI workflow: `critical-path-summary`.
+
+          ## Upstream Job Results
+
+          | Job | Result |
+          | --- | --- |
+          | release-check | ${{ needs.release-check.result }} |
+          | frontend-prod-gate | ${{ needs.frontend-prod-gate.result }} |
+          | unit-tests | ${{ needs.unit-tests.result }} |
+          | orchestrator-tests | ${{ needs.orchestrator-tests.result }} |
+          | resilience-tests | ${{ needs.resilience-tests.result }} |
+          | governance-policy | ${{ needs.governance-policy.result }} |
+          | pentest-evidence | ${{ needs.pentest-evidence.result }} |
+          | go-nogo-signoff | ${{ needs.go-nogo-signoff.result }} |
+
+          ## Critical-Path Mapping
+
+          | Flow | Primary CI Evidence | Current Status |
+          | --- | --- | --- |
+          | Market data ingestion and display | frontend-prod-gate | ${{ needs.frontend-prod-gate.result }} |
+          | Trader decision pipeline | release-check + orchestrator-tests | ${{ needs.release-check.result }} / ${{ needs.orchestrator-tests.result }} |
+          | Trade execution resilience | resilience-tests | ${{ needs.resilience-tests.result }} |
+          | Settlement and post-trade integrity | release-check + unit-tests | ${{ needs.release-check.result }} / ${{ needs.unit-tests.result }} |
+          | Failure recovery and rollback readiness | release-check + resilience-tests | ${{ needs.release-check.result }} / ${{ needs.resilience-tests.result }} |
+
+          ## Governance Policy Gate
+
+          | Metric | Value |
+          | --- | --- |
+          | Governance policy gating mode | __GOV_POLICY_MODE__ |
+          | Governance policy checks passed | __GOV_POLICY_PASS__ |
+          | Branch protection enabled | __GOV_BRANCH_PROTECTED__ |
+          | Signed commits required | __GOV_SIGNED_COMMITS__ |
+          | Required status checks count | __GOV_REQUIRED_CHECKS__ |
+
+          ## Final Blockers Evidence
+
+          | Metric | Value |
+          | --- | --- |
+          | Pentest gate mode | __PENTEST_MODE__ |
+          | Pentest evidence checks passed | __PENTEST_PASS__ |
+          | Pentest open critical findings | __PENTEST_OPEN_CRITICAL__ |
+          | Pentest open high findings | __PENTEST_OPEN_HIGH__ |
+          | Go/No-Go gate mode | __GONOGO_MODE__ |
+          | Go/No-Go evidence checks passed | __GONOGO_PASS__ |
+          | Go/No-Go decision | __GONOGO_DECISION__ |
+          | Go/No-Go approved roles count | __GONOGO_APPROVAL_COUNT__ |
+
+          ## Flake-Rate Probe
+
+          | Metric | Value |
+          | --- | --- |
+          | Flake gating mode | __FLAKE_GATING_MODE__ |
+          | Max allowed flake rate | __FLAKE_THRESHOLD__ |
+          | Orchestrator probe runs | __FLAKE_RUNS__ |
+          | Orchestrator probe failures | __FLAKE_FAILURES__ |
+          | Orchestrator flake rate | __FLAKE_RATE__ |
+
+          ## Resilience Metrics
+
+          | Metric | Value |
+          | --- | --- |
+          | Chaos scenarios passed | __CHAOS_PASSED__ |
+          | Chaos scenario count | __CHAOS_SCENARIOS__ |
+          | Chaos failed scenarios | __CHAOS_FAILED__ |
+          | Load success rate (%) | __LOAD_SUCCESS_RATE__ |
+          | Load throughput (req/s) | __LOAD_RPS__ |
+          | Load p99 latency (ms) | __LOAD_P99__ |
+          | Soak passed | __SOAK_PASSED__ |
+          | Soak iterations | __SOAK_ITERATIONS__ |
+          | Soak success rate (%) | __SOAK_SUCCESS_RATE__ |
+          | Soak throughput (req/s) | __SOAK_RPS__ |
+          | Soak worst p99 latency (ms) | __SOAK_WORST_P99__ |
+
+          ## Resilience Policy Gate
+
+          | Metric | Value |
+          | --- | --- |
+          | Resilience policy gating mode | __RESILIENCE_POLICY_MODE__ |
+          | Resilience policy checks passed | __RESILIENCE_POLICY_PASS__ |
+
+          ## Provider Lifecycle Controls
+
+          | Metric | Value |
+          | --- | --- |
+          | Lifecycle preflight gate | __LIFECYCLE_PREFLIGHT__ |
+          | Restart budget enforced | __LIFECYCLE_RESTART_ENFORCED__ |
+          | Restart budget max | __LIFECYCLE_RESTART_BUDGET_MAX__ |
+          | Restart budget window (ms) | __LIFECYCLE_RESTART_WINDOW_MS__ |
+          | Max retries | __LIFECYCLE_MAX_RETRIES__ |
+          | Retry backoff (ms) | __LIFECYCLE_RETRY_BACKOFF_MS__ |
+
+          ## Provider Lifecycle Policy Gate
+
+          | Metric | Value |
+          | --- | --- |
+          | Lifecycle policy gating mode | __LIFECYCLE_POLICY_MODE__ |
+          | Lifecycle policy checks passed | __LIFECYCLE_POLICY_PASS__ |
+          EOF
+          replace_placeholder() {
+            local placeholder="$1"
+            local replacement="$2"
+            local escaped_replacement
+            escaped_replacement=$(printf '%s' "$replacement" | sed -e 's/[\\/&|]/\\&/g')
+            sed -i "s|${placeholder}|${escaped_replacement}|g" artifacts/ci-logs/critical-path-summary.md
+          }
+          replace_placeholder "__FLAKE_GATING_MODE__" "$FLAKE_GATING_MODE"
+          replace_placeholder "__FLAKE_THRESHOLD__" "$FLAKE_THRESHOLD"
+          replace_placeholder "__FLAKE_RATE__" "$FLAKE_RATE"
+          replace_placeholder "__FLAKE_RUNS__" "$FLAKE_RUNS"
+          replace_placeholder "__FLAKE_FAILURES__" "$FLAKE_FAILURES"
+          replace_placeholder "__CHAOS_PASSED__" "$CHAOS_PASSED"
+          replace_placeholder "__CHAOS_SCENARIOS__" "$CHAOS_SCENARIOS"
+          replace_placeholder "__CHAOS_FAILED__" "$CHAOS_FAILED"
+          replace_placeholder "__LOAD_SUCCESS_RATE__" "$LOAD_SUCCESS_RATE"
+          replace_placeholder "__LOAD_RPS__" "$LOAD_RPS"
+          replace_placeholder "__LOAD_P99__" "$LOAD_P99"
+          replace_placeholder "__GOV_POLICY_MODE__" "$GOV_POLICY_MODE"
+          replace_placeholder "__GOV_POLICY_PASS__" "$GOV_POLICY_PASS"
+          replace_placeholder "__GOV_BRANCH_PROTECTED__" "$GOV_BRANCH_PROTECTED"
+          replace_placeholder "__GOV_SIGNED_COMMITS__" "$GOV_SIGNED_COMMITS"
+          replace_placeholder "__GOV_REQUIRED_CHECKS__" "$GOV_REQUIRED_CHECKS"
+          replace_placeholder "__PENTEST_MODE__" "$PENTEST_MODE"
+          replace_placeholder "__PENTEST_PASS__" "$PENTEST_PASS"
+          replace_placeholder "__PENTEST_OPEN_CRITICAL__" "$PENTEST_OPEN_CRITICAL"
+          replace_placeholder "__PENTEST_OPEN_HIGH__" "$PENTEST_OPEN_HIGH"
+          replace_placeholder "__GONOGO_MODE__" "$GONOGO_MODE"
+          replace_placeholder "__GONOGO_PASS__" "$GONOGO_PASS"
+          replace_placeholder "__GONOGO_DECISION__" "$GONOGO_DECISION"
+          replace_placeholder "__GONOGO_APPROVAL_COUNT__" "$GONOGO_APPROVAL_COUNT"
+          replace_placeholder "__SOAK_PASSED__" "$SOAK_PASSED"
+          replace_placeholder "__SOAK_ITERATIONS__" "$SOAK_ITERATIONS"
+          replace_placeholder "__SOAK_SUCCESS_RATE__" "$SOAK_SUCCESS_RATE"
+          replace_placeholder "__SOAK_RPS__" "$SOAK_RPS"
+          replace_placeholder "__SOAK_WORST_P99__" "$SOAK_WORST_P99"
+          replace_placeholder "__RESILIENCE_POLICY_MODE__" "$RESILIENCE_POLICY_MODE"
+          replace_placeholder "__RESILIENCE_POLICY_PASS__" "$RESILIENCE_POLICY_PASS"
+          replace_placeholder "__LIFECYCLE_PREFLIGHT__" "$LIFECYCLE_PREFLIGHT"
+          replace_placeholder "__LIFECYCLE_RESTART_ENFORCED__" "$LIFECYCLE_RESTART_ENFORCED"
+          replace_placeholder "__LIFECYCLE_RESTART_BUDGET_MAX__" "$LIFECYCLE_RESTART_BUDGET_MAX"
+          replace_placeholder "__LIFECYCLE_RESTART_WINDOW_MS__" "$LIFECYCLE_RESTART_WINDOW_MS"
+          replace_placeholder "__LIFECYCLE_MAX_RETRIES__" "$LIFECYCLE_MAX_RETRIES"
+          replace_placeholder "__LIFECYCLE_RETRY_BACKOFF_MS__" "$LIFECYCLE_RETRY_BACKOFF_MS"
+          replace_placeholder "__LIFECYCLE_POLICY_MODE__" "$LIFECYCLE_POLICY_MODE"
+          replace_placeholder "__LIFECYCLE_POLICY_PASS__" "$LIFECYCLE_POLICY_PASS"
+      - name: Upload critical-path summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: critical-path-summary
+          path: artifacts/ci-logs/critical-path-summary.md
+          if-no-files-found: warn
+      - name: Upload flake-rate probe artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flake-rate-probe
+          path: |
+            artifacts/ci-logs/flake-probe.log
+            artifacts/ci-logs/flake-rate.json
+          if-no-files-found: warn
+      - name: Upload resilience summary artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resilience-summary
+          path: artifacts/ci-logs/resilience-summary.json
+          if-no-files-found: warn
+      - name: Upload orchestrator lifecycle summary artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orchestrator-lifecycle-summary
+          path: artifacts/ci-logs/orchestrator-lifecycle-summary.json
+          if-no-files-found: warn
+      - name: Upload orchestrator lifecycle policy-check artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orchestrator-lifecycle-policy-check
+          path: artifacts/ci-logs/orchestrator-lifecycle-policy-check.json
           if-no-files-found: warn

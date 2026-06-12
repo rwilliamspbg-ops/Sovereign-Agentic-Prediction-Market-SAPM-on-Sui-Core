@@ -4,8 +4,11 @@ package main
 import (
 	"bufio"
 	crand "crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/binary"
+	"encoding/hex"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -16,6 +19,15 @@ import (
 	"github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/crypto"
 	"golang.org/x/crypto/chacha20poly1305"
 )
+
+type deriveSessionOutput struct {
+	Algorithm      string `json:"algorithm"`
+	SessionKey     string `json:"sessionKey"`
+	Nonce          string `json:"nonce"`
+	PeerKeyDigest  string `json:"peerKeyDigest"`
+	Ciphertext     string `json:"ciphertext,omitempty"`
+	ProviderPublic string `json:"providerPublic,omitempty"`
+}
 
 func writeBlob(w io.Writer, b []byte) error {
 	var lenb uint32 = uint32(len(b))
@@ -265,11 +277,82 @@ func handleConn(conn net.Conn, pskFile string, isClient bool, serverPSK []byte) 
 	}
 }
 
+func exportPublic() error {
+	me, err := crypto.NewHybridKEX()
+	if err != nil {
+		return err
+	}
+	fmt.Println(base64.StdEncoding.EncodeToString(me.ExportPublic()))
+	return nil
+}
+
+func deriveSession(peerPubB64 string, attestationDigestB64 string) error {
+	peerPub, err := base64.StdEncoding.DecodeString(peerPubB64)
+	if err != nil {
+		return fmt.Errorf("decode peer public: %w", err)
+	}
+	attestationDigest, err := base64.StdEncoding.DecodeString(attestationDigestB64)
+	if err != nil {
+		return fmt.Errorf("decode attestation digest: %w", err)
+	}
+
+	me, err := crypto.NewHybridKEX()
+	if err != nil {
+		return err
+	}
+
+	shared, ct, err := me.Encapsulate(peerPub)
+	if err != nil {
+		return err
+	}
+
+	key, err := crypto.DeriveSymmetricKey(shared, attestationDigest, []byte("sapm-orchestrator-hybrid-kex-v1"), 32)
+	if err != nil {
+		return err
+	}
+
+	peerDigest := sha256.Sum256(peerPub)
+	result := deriveSessionOutput{
+		Algorithm:      "x25519-mlkem768-go-bridge",
+		SessionKey:     base64.StdEncoding.EncodeToString(key),
+		Nonce:          base64.StdEncoding.EncodeToString(ct),
+		PeerKeyDigest:  hex.EncodeToString(peerDigest[:]),
+		Ciphertext:     base64.StdEncoding.EncodeToString(ct),
+		ProviderPublic: base64.StdEncoding.EncodeToString(me.ExportPublic()),
+	}
+
+	encoded, err := json.Marshal(result)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(encoded))
+	return nil
+}
+
 func main() {
 	mode := flag.String("mode", "server", "server or client")
 	addr := flag.String("addr", ":9000", "listen address (server) or server address (client)")
 	pskFile := flag.String("psk", "", "optional resumption PSK output file")
+	peerPubB64 := flag.String("peer-public-b64", "", "peer public key material in base64 for provider mode")
+	attestationDigestB64 := flag.String("attestation-digest-b64", "", "attestation digest in base64 for provider mode")
 	flag.Parse()
+
+	if *mode == "export-public" {
+		if err := exportPublic(); err != nil {
+			log.Fatalf("export-public error: %v", err)
+		}
+		return
+	}
+
+	if *mode == "derive-session" {
+		if *peerPubB64 == "" || *attestationDigestB64 == "" {
+			log.Fatalf("derive-session requires -peer-public-b64 and -attestation-digest-b64")
+		}
+		if err := deriveSession(*peerPubB64, *attestationDigestB64); err != nil {
+			log.Fatalf("derive-session error: %v", err)
+		}
+		return
+	}
 
 	if *mode == "server" {
 		if err := runServer(*addr, *pskFile); err != nil {

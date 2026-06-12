@@ -1,0 +1,51 @@
+{
+  "_comment": "SAPM chain safety configuration: gas budgets, slippage limits, and transaction risk controls.",
+  "_policy": "All transaction-submitting agents must load and enforce these limits. Exceeding any limit must abort the transaction before submission.",
+  "gasBudgets": {
+    "createMarket": {
+      "maxGasBudgetMist": 500000000,
+      "description": "Maximum gas for a createMarket PTB (500M MIST = 0.5 SUI)"
+    },
+    "placeTrade": {
+      "maxGasBudgetMist": 200000000,
+      "description": "Maximum gas for a placeTrade PTB (200M MIST = 0.2 SUI)"
+    },
+    "resolveMarket": {
+      "maxGasBudgetMist": 300000000,
+      "description": "Maximum gas for a resolveMarket PTB (300M MIST = 0.3 SUI)"
+    },
+    "default": {
+      "maxGasBudgetMist": 100000000,
+      "description": "Default maximum gas for any other PTB (100M MIST = 0.1 SUI)"
+    }
+  },
+  "slippageLimits": {
+    "maxSlippageBps": 200,
+    "description": "Maximum acceptable price slippage in basis points (200 bps = 2%)",
+    "hardAbortThresholdBps": 500,
+    "description2": "Hard abort threshold: any trade with >5% slippage must be rejected"
+  },
+  "retryPolicy": {
+    "maxRetries": 3,
+    "retryBackoffMs": 500,
+    "retryJitterMs": 100,
+    "nonRetryableErrors": [
+      "InsufficientGas",
+      "ObjectNotFound",
+      "AuthorityCapabilityError"
+    ],
+    "description": "Bounded idempotent retry policy for failed transactions"
+  },
+  "preflight": {
+    "required": true,
+    "dryRunBeforeSubmit": true,
+    "description": "All transactions must pass dryRun preflight before mainnet submission"
+  },
+  "replayProtection": {
+    "enforced": true,
+    "mechanism": "Sui PTB object version locking — each transaction references specific object versions. Replaying a captured tx will fail with ObjectVersionUnavailableForConsumption once the object version advances.",
+    "agentGuard": "Agent state machine tracks last-submitted digest per market/round and rejects duplicate submissions for the same round ID.",
+    "nonceValidation": "Chain enforces sequence via object versioning; agent additionally validates round-scoped idempotency before PTB construction.",
+    "description": "Replay protection is enforced at both chain (object version lock) and agent (round-scoped idempotency guard) layers"
+  }
+}

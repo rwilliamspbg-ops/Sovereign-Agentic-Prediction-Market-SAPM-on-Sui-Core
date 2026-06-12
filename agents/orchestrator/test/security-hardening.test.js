@@ -3,13 +3,260 @@
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const http = require('http');
 const { Orchestrator } = require('../core/orchestrator');
+const goHybridProvider = require('../core/go-hybrid-provider');
 
 describe('Orchestrator Security Hardening', () => {
   const envSnapshot = { ...process.env };
 
   afterEach(() => {
     process.env = { ...envSnapshot };
+    goHybridProvider.resetProviderReadinessCache();
+    goHybridProvider.resetProviderLifecycleState();
+  });
+
+  test('starts, health-checks, and stops provider lifecycle explicitly', async () => {
+    const started = await goHybridProvider.startProviderLifecycle();
+    expect(started.active).toBe(true);
+    expect(started.lastHealthStatus).toBe('healthy');
+
+    const health = await goHybridProvider.healthCheckProviderLifecycle();
+    expect(health.ok).toBe(true);
+
+    const stopped = goHybridProvider.stopProviderLifecycle('unit-test-stop');
+    expect(stopped.active).toBe(false);
+    expect(stopped.lastStopReason).toBe('unit-test-stop');
+  }, 15000);
+
+  test('performs Go provider readiness check once per invocation shape', async () => {
+    const [first, second] = await Promise.all([
+      goHybridProvider.ensureProviderReady(),
+      goHybridProvider.ensureProviderReady(),
+    ]);
+
+    expect(second).toEqual(first);
+    expect(first).toEqual(expect.objectContaining({
+      mode: expect.any(String),
+      command: expect.any(String),
+    }));
+
+    const status = goHybridProvider.getProviderReadinessStatus();
+    expect(status).toEqual(expect.objectContaining({
+      ok: true,
+      mode: expect.any(String),
+      command: expect.any(String),
+      checkedAt: expect.any(String),
+    }));
+  });
+
+  test('fails closed with deterministic diagnostics when Go provider readiness check fails', async () => {
+    process.env.SAPM_HYBRID_KEX_BINARY = '/tmp/not-a-real-provider-binary';
+
+    await expect(
+      goHybridProvider.deriveSession({
+        attestationDigest: crypto.randomBytes(32),
+        peerPublicKey: Buffer.from('peer-public-key-readiness-fail', 'utf8'),
+        algorithm: 'x25519-mlkem768',
+      }),
+    ).rejects.toThrow('Hybrid KEX provider derive-session failed [readiness_failed]');
+
+    const status = goHybridProvider.getProviderReadinessStatus();
+    expect(status).toEqual(expect.objectContaining({
+      ok: false,
+      checkedAt: expect.any(String),
+      error: expect.any(String),
+    }));
+
+    const runtimeState = goHybridProvider.getProviderRuntimeState();
+    expect(runtimeState).toEqual(expect.objectContaining({
+      deriveCalls: 1,
+      lastErrorCategory: 'readiness_failed',
+      lastDurationMs: expect.any(Number),
+    }));
+  });
+
+  test('classifies invalid provider payload as invalid_payload with runtime telemetry', async () => {
+    const scriptPath = path.join('/tmp', `sapm-invalid-provider-${Date.now()}.sh`);
+    fs.writeFileSync(scriptPath, '#!/usr/bin/env bash\necho "{}"\n', { mode: 0o755 });
+    process.env.SAPM_HYBRID_KEX_BINARY = scriptPath;
+
+    try {
+      await expect(
+        goHybridProvider.deriveSession({
+          attestationDigest: crypto.randomBytes(32),
+          peerPublicKey: Buffer.from('peer-public-key-invalid-payload', 'utf8'),
+          algorithm: 'x25519-mlkem768',
+        }),
+      ).rejects.toThrow('Hybrid KEX provider derive-session failed [invalid_payload]');
+
+      const runtimeState = goHybridProvider.getProviderRuntimeState();
+      expect(runtimeState.lastErrorCategory).toBe('invalid_payload');
+    } finally {
+      fs.rmSync(scriptPath, { force: true });
+    }
+  });
+
+  test('recovers with bounded retry when provider fails once then succeeds', async () => {
+    const scriptPath = path.join('/tmp', `sapm-retry-provider-${Date.now()}.sh`);
+    const statePath = path.join('/tmp', `sapm-retry-provider-state-${Date.now()}.txt`);
+    fs.writeFileSync(
+      scriptPath,
+      `#!/usr/bin/env bash
+STATE_FILE="${statePath}"
+COUNT=0
+if [ -f "$STATE_FILE" ]; then
+  COUNT=$(cat "$STATE_FILE")
+fi
+COUNT=$((COUNT+1))
+echo "$COUNT" > "$STATE_FILE"
+if [ "$COUNT" -eq 1 ]; then
+  echo "transient failure" >&2
+  exit 1
+fi
+echo '{"algorithm":"x25519-mlkem768-go-bridge","sessionKey":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=","nonce":"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=","peerKeyDigest":"retry-peer-digest"}'
+`,
+      { mode: 0o755 },
+    );
+
+    process.env.SAPM_HYBRID_KEX_BINARY = scriptPath;
+    process.env.SAPM_HYBRID_KEX_MAX_RETRIES = '1';
+    process.env.SAPM_HYBRID_KEX_RETRY_BACKOFF_MS = '0';
+
+    try {
+      const result = await goHybridProvider.deriveSession({
+        attestationDigest: crypto.randomBytes(32),
+        peerPublicKey: Buffer.from('peer-public-key-retry-success', 'utf8'),
+        algorithm: 'x25519-mlkem768',
+      });
+
+      expect(result.algorithm).toBe('x25519-mlkem768-go-bridge');
+      const runtimeState = goHybridProvider.getProviderRuntimeState();
+      expect(runtimeState).toEqual(expect.objectContaining({
+        deriveCalls: 1,
+        deriveAttempts: 2,
+        recoveryAttempts: 1,
+        lastErrorCategory: null,
+        lastRecoveryAction: 'retry_succeeded_after_1',
+      }));
+    } finally {
+      fs.rmSync(scriptPath, { force: true });
+      fs.rmSync(statePath, { force: true });
+    }
+  });
+
+  test('fails after bounded retries are exhausted', async () => {
+    const scriptPath = path.join('/tmp', `sapm-retry-fail-provider-${Date.now()}.sh`);
+    fs.writeFileSync(
+      scriptPath,
+      '#!/usr/bin/env bash\necho "still failing" >&2\nexit 1\n',
+      { mode: 0o755 },
+    );
+
+    process.env.SAPM_HYBRID_KEX_BINARY = scriptPath;
+    process.env.SAPM_HYBRID_KEX_MAX_RETRIES = '2';
+    process.env.SAPM_HYBRID_KEX_RETRY_BACKOFF_MS = '0';
+
+    try {
+      await expect(
+        goHybridProvider.deriveSession({
+          attestationDigest: crypto.randomBytes(32),
+          peerPublicKey: Buffer.from('peer-public-key-retry-fail', 'utf8'),
+          algorithm: 'x25519-mlkem768',
+        }),
+      ).rejects.toThrow('Hybrid KEX provider derive-session failed [execution_failed]');
+
+      const runtimeState = goHybridProvider.getProviderRuntimeState();
+      expect(runtimeState).toEqual(expect.objectContaining({
+        deriveCalls: 1,
+        deriveAttempts: 3,
+        recoveryAttempts: 2,
+        lastErrorCategory: 'execution_failed',
+        lastRecoveryAction: 'retry_2_after_execution_failed',
+      }));
+
+      const lifecycleState = goHybridProvider.getProviderLifecycleState();
+      expect(lifecycleState.restartsInWindow).toBe(2);
+    } finally {
+      fs.rmSync(scriptPath, { force: true });
+    }
+  });
+
+  test('fails closed when restart budget is exceeded during recovery attempts', async () => {
+    const scriptPath = path.join('/tmp', `sapm-restart-budget-provider-${Date.now()}.sh`);
+    fs.writeFileSync(
+      scriptPath,
+      '#!/usr/bin/env bash\necho "budget fail" >&2\nexit 1\n',
+      { mode: 0o755 },
+    );
+
+    process.env.SAPM_HYBRID_KEX_BINARY = scriptPath;
+    process.env.SAPM_HYBRID_KEX_MAX_RETRIES = '3';
+    process.env.SAPM_HYBRID_KEX_RETRY_BACKOFF_MS = '0';
+    process.env.SAPM_HYBRID_KEX_RESTART_BUDGET_MAX = '1';
+    process.env.SAPM_HYBRID_KEX_RESTART_BUDGET_WINDOW_MS = '60000';
+
+    try {
+      await expect(
+        goHybridProvider.deriveSession({
+          attestationDigest: crypto.randomBytes(32),
+          peerPublicKey: Buffer.from('peer-public-key-restart-budget', 'utf8'),
+          algorithm: 'x25519-mlkem768',
+        }),
+      ).rejects.toThrow('Hybrid KEX provider derive-session failed [restart_budget_exceeded]');
+
+      const runtimeState = goHybridProvider.getProviderRuntimeState();
+      expect(runtimeState.lastErrorCategory).toBe('restart_budget_exceeded');
+
+      const lifecycleState = goHybridProvider.getProviderLifecycleState();
+      expect(lifecycleState.restartBudgetExceeded).toBe(true);
+    } finally {
+      fs.rmSync(scriptPath, { force: true });
+    }
+  });
+
+  test('builds Go hybrid provider command from explicit binary path when configured', () => {
+    process.env.SAPM_HYBRID_KEX_BINARY = '/tmp/sapm-kex-provider';
+
+    const invocation = goHybridProvider.buildDeriveSessionCommand('peer-b64', 'digest-b64');
+
+    expect(invocation.command).toBe('/tmp/sapm-kex-provider');
+    expect(invocation.args).toEqual([
+      '-mode', 'derive-session',
+      '-peer-public-b64', 'peer-b64',
+      '-attestation-digest-b64', 'digest-b64',
+    ]);
+  });
+
+  test('fails closed when orchestrator hybrid provider lifecycle health preflight is degraded', async () => {
+    const deriveSession = jest.fn();
+    const healthCheckProviderLifecycle = jest.fn().mockResolvedValue({
+      ok: false,
+      error: 'forced-orchestrator-provider-unhealthy',
+    });
+
+    const orchestrator = new Orchestrator({
+      hybridKexProvider: {
+        deriveSession,
+        healthCheckProviderLifecycle,
+      },
+    });
+
+    const attestation = {
+      measurements: {
+        sha256: crypto.randomBytes(32).toString('base64'),
+      },
+    };
+
+    await expect(
+      orchestrator.cryptoProvider.hybridKeyExchange(
+        attestation,
+        Buffer.from('peer-public-key').toString('base64'),
+      ),
+    ).rejects.toThrow('Hybrid KEX provider lifecycle health check failed: forced-orchestrator-provider-unhealthy');
+
+    expect(healthCheckProviderLifecycle).toHaveBeenCalled();
+    expect(deriveSession).not.toHaveBeenCalled();
   });
 
   test('rejects invalid peer key signature when signed mode is enabled', async () => {
@@ -62,6 +309,45 @@ describe('Orchestrator Security Hardening', () => {
       .toBe(payload.publicKey);
   });
 
+  test('accepts valid signed peer key from live local registry-style endpoint', async () => {
+    const keyPair = crypto.generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
+    const payload = {
+      publicKey: Buffer.from('peer-public-key-live-endpoint').toString('base64'),
+      algorithm: 'x25519',
+      keyId: 'peer-key-live-1',
+    };
+
+    const signer = crypto.createSign('sha256');
+    signer.update(JSON.stringify(payload));
+    signer.end();
+    const signature = signer.sign(keyPair.privateKey).toString('base64');
+
+    const server = http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ...payload, signature }));
+    });
+
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const address = server.address();
+    const peerKeyUrl = `http://127.0.0.1:${address.port}/peer-key`;
+
+    try {
+      const orchestrator = new Orchestrator({
+        peerKeyUrl,
+        requireSignedPeerKey: true,
+        registryVerificationKey: keyPair.publicKey.export({ type: 'spki', format: 'pem' }).toString(),
+      });
+
+      await expect(orchestrator.cryptoProvider.fetchPeerPublicKey())
+        .resolves
+        .toBe(payload.publicKey);
+    } finally {
+      await new Promise((resolve, reject) => {
+        server.close((err) => (err ? reject(err) : resolve()));
+      });
+    }
+  });
+
   test('fails key derivation proof verification when MAC is tampered', async () => {
     const orchestrator = new Orchestrator();
     const attestation = {
@@ -92,6 +378,111 @@ describe('Orchestrator Security Hardening', () => {
     expect(invalid).toBe(false);
   });
 
+  test('fails key derivation proof verification when attestation digest is missing', async () => {
+    const orchestrator = new Orchestrator();
+    const attestation = {
+      measurements: {
+        sha256: Buffer.from('attestation-digest').toString('base64'),
+      },
+    };
+
+    const session = await orchestrator.cryptoProvider.hybridKeyExchange(
+      attestation,
+      Buffer.from('peer-pub-key-material').toString('base64'),
+    );
+
+    orchestrator.cryptoProvider.config.attestationDigestB64 = '';
+
+    const valid = await orchestrator.cryptoProvider.verifyKeyDerivationProof(session);
+    expect(valid).toBe(false);
+  });
+
+  test('uses injected hybrid KEX provider for deterministic session derivation', async () => {
+    const attestationDigest = crypto.randomBytes(32);
+    const providerSessionKey = crypto.randomBytes(32);
+    const providerNonce = crypto.randomBytes(32);
+    const peerKeyDigest = crypto.createHash('sha256').update(Buffer.from('peer-public-key')).digest('hex');
+    const providerProofMac = crypto.createHmac('sha256', providerSessionKey)
+      .update(Buffer.concat([attestationDigest, providerNonce, Buffer.from(peerKeyDigest, 'utf8')]))
+      .digest();
+
+    const deriveSession = jest.fn().mockResolvedValue({
+      algorithm: 'x25519-mlkem768-audited-fixture',
+      sessionKey: providerSessionKey,
+      nonce: providerNonce,
+      peerKeyDigest,
+      proofMac: providerProofMac,
+    });
+
+    const orchestrator = new Orchestrator({
+      hybridKexProvider: { deriveSession },
+    });
+
+    const attestation = {
+      measurements: {
+        sha256: attestationDigest.toString('base64'),
+      },
+    };
+    const peerPublicKey = Buffer.from('peer-public-key').toString('base64');
+
+    const session = await orchestrator.cryptoProvider.hybridKeyExchange(attestation, peerPublicKey);
+    orchestrator.cryptoProvider.config.attestationDigestB64 = attestation.measurements.sha256;
+    const proofValid = await orchestrator.cryptoProvider.verifyKeyDerivationProof(session);
+
+    expect(deriveSession).toHaveBeenCalledTimes(1);
+    expect(deriveSession.mock.calls[0][0].algorithm).toBe('x25519-mlkem768');
+    expect(session.algorithm).toBe('x25519-mlkem768-audited-fixture');
+    expect(session.sessionKey).toBe(providerSessionKey.toString('base64'));
+    expect(proofValid).toBe(true);
+  });
+
+  test('uses Go-backed hybrid provider bridge through ORCH-001 seam', async () => {
+    const fixturePath = path.join(__dirname, 'fixtures/hybrid-provider-peer-public.txt');
+    const peerPublicKey = fs.readFileSync(fixturePath, 'utf8').trim();
+    const attestationDigest = crypto.randomBytes(32).toString('base64');
+
+    const orchestrator = new Orchestrator({
+      hybridKexProvider: require('../core/go-hybrid-provider'),
+    });
+
+    const session = await orchestrator.cryptoProvider.hybridKeyExchange(
+      { measurements: { sha256: attestationDigest } },
+      peerPublicKey,
+    );
+
+    orchestrator.cryptoProvider.config.attestationDigestB64 = attestationDigest;
+
+    expect(session.algorithm).toBe('x25519-mlkem768-go-bridge');
+    expect(typeof session.peerKeyDigest).toBe('string');
+    expect(session.peerKeyDigest.length).toBeGreaterThan(0);
+    await expect(orchestrator.cryptoProvider.verifyKeyDerivationProof(session)).resolves.toBe(true);
+  }, 15000);
+
+  test('fails closed when injected hybrid KEX provider returns invalid session key length', async () => {
+    const orchestrator = new Orchestrator({
+      hybridKexProvider: {
+        deriveSession: jest.fn().mockResolvedValue({
+          algorithm: 'x25519-mlkem768-audited-fixture',
+          sessionKey: crypto.randomBytes(16),
+          nonce: crypto.randomBytes(16),
+        }),
+      },
+    });
+
+    const attestation = {
+      measurements: {
+        sha256: crypto.randomBytes(32).toString('base64'),
+      },
+    };
+
+    await expect(
+      orchestrator.cryptoProvider.hybridKeyExchange(
+        attestation,
+        Buffer.from('peer-public-key').toString('base64'),
+      ),
+    ).rejects.toThrow('Hybrid KEX provider must return a 32-byte sessionKey');
+  });
+
   test('rejects revoked attestation certificate fingerprint', async () => {
     const certPath = path.join(__dirname, '../../aggregator/certs/server.crt.pem');
     const certPem = fs.readFileSync(certPath, 'utf8');
@@ -104,5 +495,284 @@ describe('Orchestrator Security Hardening', () => {
     await expect(orchestrator.attestationClient.verifyCertChain(certPem))
       .rejects
       .toThrow('Attestation certificate is revoked');
+  });
+
+  test('accepts attestation certificate when root fingerprint is explicitly trusted', async () => {
+    const certPath = path.join(__dirname, '../../aggregator/certs/server.crt.pem');
+    const certPem = fs.readFileSync(certPath, 'utf8');
+    const cert = new crypto.X509Certificate(certPem);
+
+    const orchestrator = new Orchestrator({
+      attestationTrustedRoots: cert.fingerprint256,
+    });
+
+    await expect(orchestrator.attestationClient.verifyCertChain(certPem))
+      .resolves
+      .toBe(true);
+  });
+
+  test('rejects attestation certificate when trusted root fingerprint does not match chain root', async () => {
+    const certPath = path.join(__dirname, '../../aggregator/certs/server.crt.pem');
+    const certPem = fs.readFileSync(certPath, 'utf8');
+
+    const orchestrator = new Orchestrator({
+      attestationTrustedRoots: '00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff',
+    });
+
+    await expect(orchestrator.attestationClient.verifyCertChain(certPem))
+      .rejects
+      .toThrow('Attestation root certificate is not trusted');
+  });
+
+  test('accepts valid multi-certificate chain when trusted root matches terminal certificate in chain', async () => {
+    const chainPath = path.join(__dirname, 'fixtures/attestation-chain-valid.pem');
+    const chainPem = fs.readFileSync(chainPath, 'utf8');
+    const certs = chainPem.match(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g);
+    const rootCert = new crypto.X509Certificate(certs[certs.length - 1]);
+
+    const orchestrator = new Orchestrator({
+      attestationTrustedRoots: rootCert.fingerprint256,
+    });
+
+    await expect(orchestrator.attestationClient.verifyCertChain(chainPem))
+      .resolves
+      .toBe(true);
+  });
+
+  test('rejects valid multi-certificate chain when configured trusted root does not match chain root', async () => {
+    const chainPath = path.join(__dirname, 'fixtures/attestation-chain-valid.pem');
+    const chainPem = fs.readFileSync(chainPath, 'utf8');
+
+    const orchestrator = new Orchestrator({
+      attestationTrustedRoots: 'AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99',
+    });
+
+    await expect(orchestrator.attestationClient.verifyCertChain(chainPem))
+      .rejects
+      .toThrow('Attestation root certificate is not trusted');
+  });
+
+  test('loads staging attestation fixture and preserves audited digest', async () => {
+    const fixturePath = path.join(__dirname, 'fixtures/attestation-staging-valid.json');
+    const fixture = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
+
+    const orchestrator = new Orchestrator({
+      teeRuntime: 'tpm2',
+      attestationFixturePath: fixturePath,
+    });
+
+    const attestation = await orchestrator.attestationClient.readTPM();
+    expect(attestation.measurements.sha256).toBe(fixture.measurements.sha256);
+    expect(attestation.measurements.source).toBe(fixturePath);
+    expect(attestation.evidence.mode).toBe('staging-fixture');
+    expect(attestation.evidence.platform).toBe('staging-tpm-node-a');
+  });
+
+  test('fails closed when staging attestation fixture digest does not match raw measurement', async () => {
+    const fixturePath = path.join(__dirname, 'fixtures/attestation-staging-invalid.json');
+    const orchestrator = new Orchestrator({
+      teeRuntime: 'tpm2',
+      attestationFixturePath: fixturePath,
+    });
+
+    await expect(orchestrator.attestationClient.readTPM())
+      .rejects
+      .toThrow(`Attestation fixture digest mismatch at ${fixturePath}`);
+  });
+
+  test('fails peer key retrieval on endpoint timeout', async () => {
+    const orchestrator = new Orchestrator({
+      peerKeyUrl: 'http://127.0.0.1:1/peer-key',
+      peerKeyTimeoutMs: 10,
+      requireSignedPeerKey: false,
+    });
+
+    orchestrator.cryptoProvider._getJson = jest.fn().mockRejectedValue(
+      new Error('Peer key endpoint timed out after 10ms'),
+    );
+
+    await expect(orchestrator.cryptoProvider.fetchPeerPublicKey())
+      .rejects
+      .toThrow('Peer key endpoint timed out after 10ms');
+  });
+
+  test('fails peer key retrieval when endpoint payload omits public key', async () => {
+    const orchestrator = new Orchestrator({
+      peerKeyUrl: 'https://example.invalid/peer-key',
+      requireSignedPeerKey: false,
+    });
+
+    orchestrator.cryptoProvider._getJson = jest.fn().mockResolvedValue({
+      algorithm: 'x25519',
+      keyId: 'peer-key-1',
+    });
+
+    await expect(orchestrator.cryptoProvider.fetchPeerPublicKey())
+      .rejects
+      .toThrow('Peer key payload missing publicKey');
+  });
+
+  test('rejects malformed JSON from peer key endpoint', async () => {
+    const orchestrator = new Orchestrator({ peerKeyTimeoutMs: 1000 });
+
+    const server = http.createServer((req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{"publicKey"');
+    });
+
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const address = server.address();
+    const url = `http://127.0.0.1:${address.port}/peer-key`;
+
+    try {
+      await expect(orchestrator.cryptoProvider._getJson(url))
+        .rejects
+        .toThrow('Peer key endpoint returned invalid JSON');
+    } finally {
+      await new Promise((resolve, reject) => {
+        server.close((err) => (err ? reject(err) : resolve()));
+      });
+    }
+  });
+
+  test('returns false for unreachable URL probe', async () => {
+    const orchestrator = new Orchestrator({ connectivityTimeoutMs: 15 });
+    const reachable = await orchestrator.networkHandler.isReachable('http://127.0.0.1:1/unreachable');
+    expect(reachable).toBe(false);
+  });
+
+  test('treats HTTP 200 and 404 as reachable but 503 as unreachable', async () => {
+    const orchestrator = new Orchestrator({ connectivityTimeoutMs: 1000 });
+
+    const server = http.createServer((req, res) => {
+      if (req.url === '/ok') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+        return;
+      }
+      if (req.url === '/missing') {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false }));
+        return;
+      }
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false }));
+    });
+
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const address = server.address();
+    const baseUrl = `http://127.0.0.1:${address.port}`;
+
+    try {
+      await expect(orchestrator.networkHandler.isReachable(`${baseUrl}/ok`)).resolves.toBe(true);
+      await expect(orchestrator.networkHandler.isReachable(`${baseUrl}/missing`)).resolves.toBe(true);
+      await expect(orchestrator.networkHandler.isReachable(`${baseUrl}/degraded`)).resolves.toBe(false);
+    } finally {
+      await new Promise((resolve, reject) => {
+        server.close((err) => (err ? reject(err) : resolve()));
+      });
+    }
+  });
+
+  test('returns false when hugepages are below configured threshold', () => {
+    const orchestrator = new Orchestrator({ minHugepages: 8 });
+    const spy = jest.spyOn(fs, 'readFileSync').mockReturnValue(
+      'HugePages_Total: 2\nHugePages_Free: 1\n',
+    );
+
+    try {
+      expect(orchestrator.networkHandler._checkHugepages()).toBe(false);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  test('returns true when hugepages meet production threshold with free pages available', () => {
+    const orchestrator = new Orchestrator({ minHugepages: 8 });
+    const spy = jest.spyOn(fs, 'readFileSync').mockReturnValue(
+      'HugePages_Total: 8\nHugePages_Free: 2\n',
+    );
+
+    try {
+      expect(orchestrator.networkHandler._checkHugepages()).toBe(true);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  test('returns false when hugepages meet threshold but no free pages remain', () => {
+    const orchestrator = new Orchestrator({ minHugepages: 8 });
+    const spy = jest.spyOn(fs, 'readFileSync').mockReturnValue(
+      'HugePages_Total: 8\nHugePages_Free: 0\n',
+    );
+
+    try {
+      expect(orchestrator.networkHandler._checkHugepages()).toBe(false);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  test('returns false when cpu set is effectively unpinned', () => {
+    const orchestrator = new Orchestrator({ requireCpuPinning: true });
+    const spy = jest.spyOn(fs, 'readFileSync').mockImplementation((targetPath) => {
+      if (targetPath === '/proc/self/status') {
+        return 'Name:\ttest\nCpus_allowed_list:\t0-7\n';
+      }
+      if (targetPath === '/sys/devices/system/cpu/online') {
+        return '0-7\n';
+      }
+      throw new Error(`Unexpected read path: ${targetPath}`);
+    });
+
+    try {
+      expect(orchestrator.networkHandler._checkCPUPinning()).toBe(false);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  test('returns true when cgroup-v2 effective cpuset is narrower than online CPUs', () => {
+    const orchestrator = new Orchestrator({ requireCpuPinning: true });
+    const spy = jest.spyOn(fs, 'readFileSync').mockImplementation((targetPath) => {
+      if (targetPath === '/proc/self/status') {
+        return 'Name:\ttest\nCpus_allowed_list:\t0-7\n';
+      }
+      if (targetPath === '/sys/devices/system/cpu/online') {
+        return '0-7\n';
+      }
+      if (targetPath === '/sys/fs/cgroup/cpuset.cpus.effective') {
+        return '2-3\n';
+      }
+      throw new Error(`Unexpected read path: ${targetPath}`);
+    });
+
+    try {
+      expect(orchestrator.networkHandler._checkCPUPinning()).toBe(true);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  test('returns false when cgroup-v2 effective cpuset matches all online CPUs', () => {
+    const orchestrator = new Orchestrator({ requireCpuPinning: true });
+    const spy = jest.spyOn(fs, 'readFileSync').mockImplementation((targetPath) => {
+      if (targetPath === '/proc/self/status') {
+        return 'Name:\ttest\nCpus_allowed_list:\t0-7\n';
+      }
+      if (targetPath === '/sys/devices/system/cpu/online') {
+        return '0-7\n';
+      }
+      if (targetPath === '/sys/fs/cgroup/cpuset.cpus.effective') {
+        return '0-7\n';
+      }
+      throw new Error(`Unexpected read path: ${targetPath}`);
+    });
+
+    try {
+      expect(orchestrator.networkHandler._checkCPUPinning()).toBe(false);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

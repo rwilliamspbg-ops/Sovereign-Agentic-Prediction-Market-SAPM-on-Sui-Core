@@ -1,0 +1,58 @@
+{
+  "_comment": "SAPM Key Management Policy — defines generation, storage, rotation, distribution, revocation, and break-glass procedures for all key material.",
+  "_owner": "Security Engineering",
+  "_reviewDate": "2026-06-12",
+  "_status": "Approved for Alpha mainnet launch gate",
+
+  "keyGenerationPolicy": {
+    "approved": true,
+    "mechanism": "Ed25519 ephemeral keypairs generated via @mysten/sui/keypairs/ed25519; never derived from weak entropy or static seeds in production",
+    "seedEntropy": "Minimum 256-bit cryptographically secure random source (crypto.randomBytes in Node.js runtime)",
+    "storageTarget": "Ephemeral keys held only in process memory; persistent keys use operator-provisioned KMS (AWS KMS, HashiCorp Vault, or equivalent HSM-backed store)",
+    "prohibition": "No private key material may be written to disk, repository, container image, environment variable file committed to VCS, or log output",
+    "ciEnforcement": "scripts/scan_secrets.sh run as CI gate (secrets-scan job) on every push and PR"
+  },
+
+  "keyRotationPolicy": {
+    "sessionKeys": {
+      "rotationTrigger": "Per-connection; a new session key is derived for every peer discovery exchange",
+      "procedure": "Orchestrator lifecycle controller resets provider state; new readiness check and key derivation on next exchange",
+      "tested": true,
+      "testEvidence": "agents/orchestrator/test/security-hardening.test.js — lifecycle stop/start and key derivation regression tests"
+    },
+    "operatorSigningKeys": {
+      "rotationPeriod": "90 days or immediately on compromise indication",
+      "procedure": "1. Generate replacement key in KMS. 2. Update registry verification key reference. 3. Run attestation validation smoke test. 4. Revoke old key in registry. 5. Confirm fail-closed behavior with stale key.",
+      "tested": false,
+      "testEvidence": "Pending: requires production KMS environment; documented procedure above is the tested runbook target"
+    }
+  },
+
+  "secretDistributionPolicy": {
+    "mechanism": "Secrets injected at runtime via KMS API calls or operator-managed secret manager (never baked into images or config files)",
+    "accessControl": "Least-privilege IAM roles; agent runtime reads only the specific secrets it needs",
+    "revocationProcedure": [
+      "1. Identify compromised secret and notify incident commander.",
+      "2. Immediately revoke in KMS/secret manager — this blocks any new reads.",
+      "3. Rotate dependent keys (session keys, signing keys) per rotation policy above.",
+      "4. Re-deploy affected agents with replacement secrets.",
+      "5. Confirm all service health checks pass before declaring incident closed.",
+      "6. Perform post-incident review within 48 hours."
+    ],
+    "auditLog": "All secret read and rotation events are logged in KMS audit trail with timestamp, principal, and secret identifier"
+  },
+
+  "breakGlassPolicy": {
+    "defined": true,
+    "credentials": "Break-glass credentials are stored in a dedicated, isolated KMS key store accessible only to Engineering Leadership and Security Lead",
+    "auditRequirement": "Every break-glass access event must be logged with timestamp, accessor identity, reason, and incident reference",
+    "inventoryReviewCadence": "Quarterly — verify break-glass accounts exist, are scoped correctly, and have not been used without a corresponding incident record",
+    "revocationOnUse": "After any break-glass use, the credential is rotated and the prior credential is revoked before incident is closed"
+  },
+
+  "complianceNotes": [
+    "Key material stored outside this policy (e.g., locally for development) must use .gitignore exclusion and must never be committed.",
+    "This policy is reviewed at each release gate and updated after any security incident involving key material.",
+    "Production deployment requires HSM or cloud KMS backing. Software-only key stores are not approved for mainnet."
+  ]
+}
