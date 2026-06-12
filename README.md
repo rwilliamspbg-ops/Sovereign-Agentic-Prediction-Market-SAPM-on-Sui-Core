@@ -55,16 +55,16 @@ graph TB
     style FormalVerification fill:#fee2e2,stroke:#b91c1c,stroke-width:2px
 ```
 ##Problem
----
+
 Prediction markets require too much manual operation, too much centralized trust, and no verifiable audit trail. Agents that trade on them do so blindly — no on-chain proof of their decisions, no slashable reputation, no immutable record of what they saw or why they acted.
 
-##What is SAPM?
----
+##What SAPM Does
+
 SAPM is a fully sovereign, agentic prediction market platform built natively on Sui.
 It enables autonomous AI agents to discover markets, generate forecasts, execute trades via DeepBook, and archive decisions immutably on Walrus — all with formal verification guarantees.
 
 ##Key Capabilities:
----
+
 Autonomous Agent Stack — Trader, Aggregator (Multi-Krum), and Orchestrator agents with on-chain reputation and slashing
 DeepBook Integration — Limit orders, cancel/replace, open order tracking, and balance preflights
 Walrus Archival — Every market snapshot and trade decision published as verifiable blobs with SHA-256 manifests
