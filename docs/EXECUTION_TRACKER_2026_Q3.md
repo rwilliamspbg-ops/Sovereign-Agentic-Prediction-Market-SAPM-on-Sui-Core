@@ -26,7 +26,7 @@ This tracker is operational and owner-oriented. It complements:
 | --- | --- | --- | --- | --- | --- |
 | WS-1 | Frontend stylesheet containment | Frontend Platform | Green | 2026-06-12 to 2026-06-26 | Baseline + containment complete; monitor budgets and regressions |
 | WS-2 | AF_XDP datapath implementation | Datapath Team | Green | 2026-06-15 to 2026-07-31 | Design, command matrix, and reporting template complete; implementation remains |
-| WS-3 | Agent autonomy hardening | Orchestrator Team | Amber | 2026-06-15 to 2026-08-05 | Close security-sensitive placeholder paths |
+| WS-3 | Agent autonomy hardening | Orchestrator Team | Green | 2026-06-15 to 2026-08-05 | Placeholder reconciliation, closure wave, and regression mapping completed |
 | WS-4 | Critical-path testing expansion | QA + SRE | Green | 2026-06-12 to 2026-07-25 | Matrix defined and CI critical-path summary artifact wired |
 | WS-5 | Mainnet readiness and launch governance | Ops + Security | Red | 2026-07-01 to 2026-09-01 | Burn down checklist and audit gating |
 
@@ -131,9 +131,24 @@ WS-2.3 implementation notes:
 
 ### Orchestrator + Autonomy
 
-- [ ] WS-3.1: Reconcile ORCH placeholder table with current code state.
-- [ ] WS-3.2: Mark critical security-sensitive items for first closure wave.
-- [ ] WS-3.3: Ensure each closure has linked regression tests.
+- [x] WS-3.1: Reconcile ORCH placeholder table with current code state.
+- [x] WS-3.2: Mark critical security-sensitive items for first closure wave.
+- [x] WS-3.3: Ensure each closure has linked regression tests.
+
+WS-3.1 implementation notes:
+
+- Added 2026-06-12 reconciliation section in `docs/ORCHESTRATOR_PLACEHOLDER_TRIAGE.md`.
+- Reclassified ORCH-001..ORCH-009 into closed-in-code vs partial with explicit evidence and gaps.
+
+WS-3.2 implementation notes:
+
+- Added first closure wave with prioritized ORCH IDs (P0/P1), owners, and target dates.
+- Prioritized cryptographic and attestation risks for earliest closure.
+
+WS-3.3 implementation notes:
+
+- Added regression test mapping table tying each ORCH ID to current test evidence and missing tests.
+- Captured orchestrator regression baseline: `npm --prefix agents/orchestrator test` => 6 suites, 109 tests, 109 passed.
 
 ### Testing + Readiness
 
@@ -182,3 +197,6 @@ WS-4.1 status notes:
 - 2026-06-12: Completed WS-2.2 by adding AF_XDP implementation design with feature-flagged rollout and fallback strategy.
 - 2026-06-12: Completed WS-2.3 by adding standardized benchmark report template with required evidence fields.
 - 2026-06-12: Completed WS-4.2 by adding CI critical-path-summary job and published summary artifact wiring.
+- 2026-06-12: Completed WS-3.1 by reconciling ORCH placeholder ledger with current orchestrator/discovery code paths.
+- 2026-06-12: Completed WS-3.2 by defining first placeholder-closure wave with priority, owner, and date.
+- 2026-06-12: Completed WS-3.3 by mapping ORCH items to regression coverage and recording current orchestrator test baseline (109/109 pass).

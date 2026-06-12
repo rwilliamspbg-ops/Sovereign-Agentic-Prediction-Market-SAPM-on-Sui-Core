@@ -1,6 +1,6 @@
 # Orchestrator Placeholder Triage
 
-Last updated: 2026-06-06
+Last updated: 2026-06-12
 Scope: Orchestrator placeholders requiring production implementation
 
 ## Ownership And Milestone Ledger
@@ -35,3 +35,54 @@ Remaining for milestone closure:
 1. Replace the deterministic derivation fallback with full audited x25519-mlkem768 runtime integration.
 2. Add deterministic integration tests for signed key retrieval and proof-verification failure modes.
 3. Add hardware-backed attestation evidence tests in staging.
+
+## 2026-06-12 Reconciliation (WS-3.1)
+
+Current implementation status was reconciled against orchestrator code paths in:
+
+- agents/orchestrator/core/orchestrator.js
+- agents/orchestrator/discovery/manager.js
+- agents/orchestrator/test/security-hardening.test.js
+
+| ID | Reconciled Status | Evidence | Remaining Gap |
+| --- | --- | --- | --- |
+| ORCH-001 | Partial | Hybrid KEX derives key material via HKDF and attestation digest in core orchestrator path | Still not full audited runtime x25519-mlkem768 integration |
+| ORCH-002 | Closed-in-code | Key derivation proof now verified and fails on tampering | Keep deterministic failure-mode tests in CI (already present) |
+| ORCH-003 | Closed-in-code | Peer-key fetch supports signed payload verification and fail-closed behavior | Keep integration coverage for endpoint and timeout variations |
+| ORCH-004 | Partial | TPM path reads measurement file and hashes evidence; mock fallback controlled by env | Hardware-backed attestation evidence still required for staging closure |
+| ORCH-005 | Closed-in-code | Certificate chain checks include validity, issuer/signature chain, and optional revocation denylist | Add staging evidence for full root trust policy |
+| ORCH-006 | Closed-in-code | Reachability check performs active HTTP/S probe with timeout handling | Add endpoint matrix coverage for degraded network scenarios |
+| ORCH-007 | Closed-in-code | Hugepage check reads procfs and enforces minimum availability threshold | Add environment-specific thresholds for production profiles |
+| ORCH-008 | Closed-in-code | CPU pinning check validates cpuset against online CPU list | Add cgroup-v2 specific regression fixture |
+| ORCH-009 | Partial | Discovery KEX path derives session material from attestation digest and peer digest | Replace placeholder-design derivation with audited x25519-mlkem768 path |
+
+## First Closure Wave (WS-3.2)
+
+Wave objective: close the highest risk security and cryptographic gaps before broader hardening.
+
+| Priority | ORCH ID | Owner | Target Date | Why First |
+| --- | --- | --- | --- | --- |
+| P0 | ORCH-001 | Orchestrator Crypto Team | 2026-07-15 | Core session establishment path still lacks full audited hybrid runtime |
+| P0 | ORCH-009 | Orchestrator Crypto Team | 2026-07-15 | Discovery path uses placeholder-design hybrid derivation |
+| P1 | ORCH-004 | Security Attestation Team | 2026-08-05 | Mock-capable attestation path needs hardware-backed staging evidence |
+| P1 | ORCH-003 | Orchestrator Networking Team | 2026-07-29 | Keep signed key retrieval hardened with endpoint resilience tests |
+| P1 | ORCH-005 | Security Attestation Team | 2026-08-05 | Chain verification implemented; requires staging trust-root evidence |
+
+## Regression Test Mapping (WS-3.3)
+
+Current regression evidence from orchestrator suite:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 6 suites, 109 tests, 109 passed (2026-06-12)
+
+| ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
+| --- | --- | --- | --- |
+| ORCH-001 | Partial | security-hardening tamper test validates proof integrity behavior in KEX output | Add deterministic integration test with audited x25519-mlkem768 provider wiring |
+| ORCH-002 | Covered | security-hardening MAC tamper test fails proof verification as expected | Add explicit negative-path test for missing attestation digest |
+| ORCH-003 | Covered | security-hardening signed peer-key accept/reject tests | Add timeout and invalid JSON endpoint tests for peer key fetch path |
+| ORCH-004 | Partial | Core code enforces TEE runtime or explicit mock opt-in | Add staging test fixture that validates real TPM/TEE measurement ingestion |
+| ORCH-005 | Covered | security-hardening revoked certificate fingerprint test | Add full chain-to-root test vector fixture in CI |
+| ORCH-006 | Partial | Reachability implementation present in core path | Add unit tests for status-code and timeout matrix |
+| ORCH-007 | Partial | Hugepage implementation present in core path | Add procfs fixture tests for threshold pass/fail |
+| ORCH-008 | Partial | CPU pinning implementation present in core path | Add cpuset/online CPU mismatch fixture tests |
+| ORCH-009 | Partial | Discovery manager hybrid KEX derives context-bound session material | Add discovery integration test with audited hybrid provider and key confirmation |
