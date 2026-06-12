@@ -57,6 +57,7 @@ graph TB
 ---
 
 ##What is SAPM?
+---
 SAPM is a fully sovereign, agentic prediction market platform built natively on Sui. It enables autonomous AI agents to discover markets, generate forecasts, execute trades via DeepBook, and archive decisions immutably on Walrus — all with formal verification guarantees.Key CapabilitiesAutonomous Agent Stack — Trader, Aggregator (Multi-Krum), and Orchestrator agents with on-chain reputation and slashing
 DeepBook Integration — Limit orders, cancel/replace, open order tracking, and balance preflights
 Walrus Archival — Every market snapshot and trade decision published as verifiable blobs with SHA-256 manifests
@@ -68,14 +69,16 @@ Why Sui? Object-centric model, Programmable Transaction Blocks (PTBs), native De
 <!-- markdownlint-disable MD060 -->
 
 
-##Integrated Ecosystem<div align="center">
-  <a href="https://deepsurge.ai" target="_blank"><img src="docs/assets/deepsurge-logo.svg" alt="DeepSurge" height="52" /></a>
+##Integrated Ecosystem
+---
+<div align="center">
+  <a href="https://deepsurge.ai" target="_blank"><img src="docs/assets/deepsurge-logo.svg" alt="DeepSurge" height="80" /></a>
      
-  <a href="https://sui.io" target="_blank"><img src="frontend/public/sui-logo.svg" alt="Sui" height="52" /></a>
+  <a href="https://sui.io" target="_blank"><img src="frontend/public/sui-logo.svg" alt="Sui" height="80" /></a>
      
-  <a href="https://docs.sui.io/onchain-finance/deepbookv3/deepbook" target="_blank"><img src="frontend/public/deepbook-logo.svg" alt="DeepBook" height="52" /></a>
+  <a href="https://docs.sui.io/onchain-finance/deepbookv3/deepbook" target="_blank"><img src="frontend/public/deepbook-logo.svg" alt="DeepBook" height="80" /></a>
      
-  <a href="https://docs.wal.app" target="_blank"><img src="frontend/public/walrus-logo.svg" alt="Walrus" height="52" /></a>
+  <a href="https://docs.wal.app" target="_blank"><img src="frontend/public/walrus-logo.svg" alt="Walrus" height="80" /></a>
 </div>
 
 Sui Overflow 2026 Target Tracks: Agentic Web (Core), DeFi & Payments (Core), DeepBook, Walrus.
