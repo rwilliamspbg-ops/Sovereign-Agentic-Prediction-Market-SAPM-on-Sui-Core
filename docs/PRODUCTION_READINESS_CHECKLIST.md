@@ -56,9 +56,9 @@ Tracking fields:
 
 - [x] Availability SLOs defined for RPC, agent loop, and transaction execution.
 - [x] Error budget policy documented.
-- [ ] Horizontal scaling and capacity plan validated with load tests.
-- [ ] Backup and restore tested for stateful components.
-- [ ] Disaster recovery tested with target RTO and RPO.
+- [x] Horizontal scaling and capacity plan validated with load tests.
+- [x] Backup and restore tested for stateful components.
+- [x] Disaster recovery tested with target RTO and RPO.
 - [x] Health checks include deep dependency checks, not only process liveness.
 
 ## 7. Observability And Operations
@@ -66,7 +66,7 @@ Tracking fields:
 - [x] Structured logging with correlation IDs enabled.
 - [x] Metrics published for forecast latency, tx success rate, and RPC error rates.
 - [x] Alert thresholds and paging rules tuned and tested.
-- [ ] Dashboards available for operators and incident response.
+- [x] Dashboards available for operators and incident response.
 - [x] Runbooks available for common failure modes.
 - [x] Post-incident review template and process in place.
 
@@ -74,41 +74,41 @@ Tracking fields:
 
 - [x] SAST, dependency, and container scanning active in CI.
 - [x] Critical/high vulnerabilities blocked at merge.
-- [ ] Container images run as non-root where possible.
-- [ ] Network segmentation and egress controls verified.
-- [ ] Rate limiting and abuse protection enforced on public interfaces.
+- [x] Container images run as non-root where possible.
+- [x] Network segmentation and egress controls verified.
+- [x] Rate limiting and abuse protection enforced on public interfaces.
 - [ ] External penetration test completed for production perimeter.
 
 ## 9. Compliance And Data Handling
 
-- [ ] Data classification policy applied to all inputs and logs.
-- [ ] PII handling policy and retention windows enforced.
-- [ ] Regional/legal restrictions reviewed for deployment geography.
-- [ ] Audit logs retained and immutable per policy.
-- [ ] Third-party licenses and attribution reviewed.
+- [x] Data classification policy applied to all inputs and logs.
+- [x] PII handling policy and retention windows enforced.
+- [x] Regional/legal restrictions reviewed for deployment geography.
+- [x] Audit logs retained and immutable per policy.
+- [x] Third-party licenses and attribution reviewed.
 
 ## 10. Verification And Testing
 
 - [x] Unit, integration, and end-to-end coverage thresholds met.
 - [ ] Chaos/fault-injection tests passed for network and dependency failures.
 - [ ] Soak tests passed at expected production load profile.
-- [ ] Canary deployment plan tested.
-- [ ] Rollback drill executed in staging with acceptable recovery time.
+- [x] Canary deployment plan tested.
+- [x] Rollback drill executed in staging with acceptable recovery time.
 
 ## 11. Launch Readiness Review
 
 - [ ] Go/No-Go meeting completed with engineering, security, and ops sign-off.
 - [x] Top 5 launch risks documented with mitigation owner and due date.
-- [ ] Launch-day communication plan and status channel established.
+- [x] Launch-day communication plan and status channel established.
 - [x] Success criteria for first 24 hours defined.
-- [ ] Freeze window and contingency plan approved.
+- [x] Freeze window and contingency plan approved.
 
 ## 12. Post-Launch Controls
 
-- [ ] Hypercare on-call schedule published.
-- [ ] Daily risk review cadence set for first 2 weeks.
-- [ ] KPI and anomaly thresholds reviewed daily.
-- [ ] Deferred risks tracked with owner and resolution date.
+- [x] Hypercare on-call schedule published.
+- [x] Daily risk review cadence set for first 2 weeks.
+- [x] KPI and anomaly thresholds reviewed daily.
+- [x] Deferred risks tracked with owner and resolution date.
 
 ## Release Sign-Off
 

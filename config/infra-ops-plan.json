@@ -1,0 +1,102 @@
+{
+  "_comment": "SAPM Infrastructure Operations Plan — capacity, backup/restore, and disaster recovery policies for Alpha mainnet launch.",
+  "_owner": "SRE",
+  "_reviewDate": "2026-06-12",
+  "_status": "Approved for Alpha mainnet launch gate",
+
+  "capacityPlan": {
+    "scalingStrategy": "Horizontal",
+    "components": [
+      {
+        "component": "sapm-aggregator",
+        "minReplicas": 2,
+        "maxReplicas": 10,
+        "scalingTrigger": "CPU > 70% for 2 minutes OR request queue depth > 50",
+        "helmChart": "production-deployment-manifests/helm/sapm-aggregator",
+        "loadTestEvidence": "npm run test:load — baseline throughput and p99 latency captured in artifacts/ci-logs/load-report.json"
+      },
+      {
+        "component": "sapm-frontend",
+        "minReplicas": 2,
+        "maxReplicas": 6,
+        "scalingTrigger": "CPU > 70% for 2 minutes",
+        "note": "Stateless Next.js; horizontal scale is safe with no sticky sessions required"
+      },
+      {
+        "component": "sapm-orchestrator",
+        "minReplicas": 1,
+        "maxReplicas": 3,
+        "scalingTrigger": "Manual scale only; lifecycle controller manages provider restarts",
+        "note": "Stateful provider lifecycle — horizontal scale requires session affinity or leader election"
+      }
+    ],
+    "loadTestValidation": {
+      "command": "npm run test:load",
+      "targetRps": 100,
+      "targetP99Ms": 500,
+      "reportPath": "artifacts/ci-logs/load-report.json",
+      "status": "Baseline captured in CI; production-profile soak test pending hardware provisioning"
+    }
+  },
+
+  "backupPolicy": {
+    "statefulComponents": [
+      {
+        "component": "On-chain market state",
+        "storage": "Sui blockchain (immutable, globally replicated)",
+        "backupRequired": false,
+        "note": "Sui fullnode replication provides inherent durability; no additional backup required for on-chain state"
+      },
+      {
+        "component": "Agent reputation scores",
+        "storage": "In-memory + optional Walrus snapshot",
+        "backupFrequency": "Snapshot to Walrus at end of each resolution round",
+        "restoreProcedure": "Replay Walrus snapshot digest through `agents/aggregator/reputation/engine.js` init path",
+        "rpoTarget": "1 resolution round (configurable; default ~1 hour)"
+      },
+      {
+        "component": "Operator configuration and secrets",
+        "storage": "KMS + operator-managed secret manager",
+        "backupFrequency": "KMS provides built-in replication; operator responsible for cross-region key backup per KMS policy",
+        "restoreProcedure": "Restore from KMS cross-region backup; re-provision agents with restored credentials"
+      }
+    ],
+    "restoreValidation": "Restore drill must be executed in staging before each mainnet release. Evidence of successful restore must be linked in the Go/No-Go package."
+  },
+
+  "disasterRecoveryPlan": {
+    "rtoTarget": "4 hours (SEV-1 complete outage to service restoration)",
+    "rpoTarget": "1 resolution round for reputation state; 0 for on-chain state (blockchain is source of truth)",
+    "scenarios": [
+      {
+        "scenario": "Orchestrator node failure",
+        "detection": "Kubernetes liveness probe failure + ALT-003 agent loop error rate alert",
+        "recovery": "Kubernetes restarts pod automatically; if restart budget exceeded, page SRE for manual intervention",
+        "runbook": "docs/OPERATIONS_RUNBOOK.md#rollback-procedure",
+        "rtoEstimate": "< 5 minutes automated; < 30 minutes manual"
+      },
+      {
+        "scenario": "Sui RPC endpoint unavailable",
+        "detection": "ALT-001 RPC error rate alert",
+        "recovery": "Switch RPC endpoint to backup fullnode via network-allowlist.json env override; circuit breaker prevents cascading failures",
+        "runbook": "docs/OPERATIONS_RUNBOOK.md#4-validate-rpc-health",
+        "rtoEstimate": "< 10 minutes"
+      },
+      {
+        "scenario": "Complete infrastructure failure (AZ/region outage)",
+        "detection": "Synthetic monitor probe failure + on-call page",
+        "recovery": "Deploy from git tag to secondary region using production-deployment-manifests/; restore reputation snapshot from Walrus; validate per runbook sections 3-5",
+        "runbook": "docs/OPERATIONS_RUNBOOK.md",
+        "rtoEstimate": "< 4 hours"
+      },
+      {
+        "scenario": "Security incident requiring emergency shutdown",
+        "detection": "SEV-1 alert or manual declaration by Incident Commander",
+        "recovery": "Execute rollback per docs/OPERATIONS_RUNBOOK.md#rollback-procedure; restore from last known-good git tag",
+        "runbook": "docs/INCIDENT_RESPONSE_PLAYBOOK.md",
+        "rtoEstimate": "< 30 minutes (rollback) + validation"
+      }
+    ],
+    "drTestStatus": "DR runbook and scenario procedures are documented. Live DR drill required in staging before Go/No-Go; planned for 2026-08-09 window."
+  }
+}

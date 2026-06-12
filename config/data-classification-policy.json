@@ -1,0 +1,72 @@
+{
+  "_comment": "SAPM Data Classification and Compliance Policy — data handling, PII policy, audit log retention, regional restrictions, and license review.",
+  "_owner": "Compliance + Legal Ops",
+  "_reviewDate": "2026-06-12",
+  "_status": "Approved for Alpha mainnet launch gate",
+
+  "dataClassification": {
+    "tiers": [
+      {
+        "tier": "PUBLIC",
+        "description": "Market metadata, aggregated forecast outcomes, on-chain transaction digests, and published API responses. May be freely shared.",
+        "examples": ["market names", "resolution outcomes", "public trade volumes", "on-chain tx digests"],
+        "retentionPolicy": "Indefinite or until market is archived"
+      },
+      {
+        "tier": "INTERNAL",
+        "description": "Agent telemetry, structured logs without user-identifying fields, CI/CD artifacts, and deployment configs.",
+        "examples": ["orchestrator logs", "CI build artifacts", "performance benchmarks"],
+        "retentionPolicy": "90 days rolling"
+      },
+      {
+        "tier": "SENSITIVE",
+        "description": "Wallet addresses, user session tokens, trade amounts, and portfolio positions. Restricted to service principals with need-to-know.",
+        "examples": ["wallet addresses", "user trade history", "position sizes", "session keys"],
+        "retentionPolicy": "Minimum required for dispute resolution; maximum 2 years",
+        "piiCategory": true,
+        "accessControl": "Encrypted at rest and in transit; least-privilege service accounts only"
+      },
+      {
+        "tier": "RESTRICTED",
+        "description": "Private key material, attestation secrets, break-glass credentials, and signing keys. Never logged, never transmitted unencrypted.",
+        "examples": ["private keys", "TPM attestation material", "KMS key IDs"],
+        "retentionPolicy": "In-process only; purged on process exit or key rotation",
+        "accessControl": "HSM/KMS only; no plaintext storage permitted"
+      }
+    ]
+  },
+
+  "piiHandlingPolicy": {
+    "piiFields": ["wallet_address", "user_id", "session_token", "ip_address"],
+    "logRedaction": "PII fields must not appear in structured log output. Wallet addresses in logs must be truncated to first 6 + last 4 characters.",
+    "storageEncryption": "All SENSITIVE-tier data persisted to disk must use AES-256 encryption at rest.",
+    "transmissionEncryption": "All SENSITIVE-tier data transmitted over network must use TLS 1.2 or higher.",
+    "retentionEnforcement": "Automated retention cleanup runs are required for any SENSITIVE-tier data store with a defined maximum retention window.",
+    "deletionOnRequest": "User data deletion requests must be processed within 30 days per applicable privacy regulation."
+  },
+
+  "auditLogPolicy": {
+    "retained": true,
+    "retentionPeriod": "1 year minimum; 3 years for security-relevant events (key rotations, break-glass access, admin actions)",
+    "immutability": "Audit logs are written to append-only storage. Log entries must not be modified or deleted after creation. Immutability enforced via write-once storage or cryptographic chaining.",
+    "scope": "All security-relevant events: authentication, key access, privilege escalation, circuit-breaker trips, rollback events, break-glass credential use.",
+    "format": "Structured JSON with timestamp (ISO 8601 UTC), principal, action, resource, outcome, and correlation ID."
+  },
+
+  "regionalPolicy": {
+    "reviewed": true,
+    "targetRegions": ["Global — no region-specific data residency requirements identified for Alpha mainnet"],
+    "restrictions": "No personally identifiable financial data is stored server-side. On-chain data is public by nature of the Sui blockchain. Users are responsible for compliance with applicable local regulations for cryptocurrency participation.",
+    "futureReview": "Regional restrictions review must be repeated before expansion into EU (GDPR), US (FinCEN), or APAC-regulated jurisdictions."
+  },
+
+  "thirdPartyLicenseReview": {
+    "reviewed": true,
+    "reviewDate": "2026-06-12",
+    "method": "package.json and frontend/package.json license fields audited; primary dependencies use Apache-2.0, MIT, and BSD licenses. All are compatible with SAPM Apache-2.0 license.",
+    "primaryLicenses": ["Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause", "ISC"],
+    "incompatibleLicenses": [],
+    "openItems": "Periodic re-review required on each release to catch newly added dependencies.",
+    "ciEnforcement": "Recommend adding license-checker to dependency-audit CI job for automated detection of GPL or proprietary licenses."
+  }
+}
