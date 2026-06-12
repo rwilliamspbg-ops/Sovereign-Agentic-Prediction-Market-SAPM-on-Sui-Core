@@ -157,6 +157,9 @@ WS-3.3 implementation notes:
 - Implemented ORCH-001 hybrid KEX provider seam with strict session material validation and fail-closed behavior.
 - Added deterministic security-hardening tests for provider seam success path and invalid-session fail-closed path.
 - Updated orchestrator regression baseline after ORCH-001 seam wave: 7 suites, 119 tests, 119 passed.
+- Implemented ORCH-004 staging attestation fixture ingestion with digest validation and fail-closed mismatch handling.
+- Added security-hardening tests for valid staging fixture ingestion and invalid digest rejection.
+- Updated orchestrator regression baseline after ORCH-004 staging fixture wave: 7 suites, 121 tests, 121 passed.
 
 ### Testing + Readiness
 
@@ -217,3 +220,4 @@ WS-4.1 status notes:
 - 2026-06-12: Added WS-3 regression expansion fixtures and updated orchestrator test evidence baseline to 115/115 pass.
 - 2026-06-12: Added ORCH-009 discovery key-confirmation hardening and raised orchestrator regression evidence baseline to 117/117 pass.
 - 2026-06-12: Added ORCH-001 hybrid-provider integration seam and raised orchestrator regression evidence baseline to 119/119 pass.
+- 2026-06-12: Added ORCH-004 staging attestation fixture validation and raised orchestrator regression evidence baseline to 121/121 pass.

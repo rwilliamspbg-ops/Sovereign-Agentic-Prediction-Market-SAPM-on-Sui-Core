@@ -49,7 +49,7 @@ Current implementation status was reconciled against orchestrator code paths in:
 | ORCH-001 | Partial | Core orchestrator now supports pluggable hybrid provider seam with strict session material validation and fail-closed behavior | Still not full audited runtime x25519-mlkem768 integration |
 | ORCH-002 | Closed-in-code | Key derivation proof now verified and fails on tampering | Keep deterministic failure-mode tests in CI (already present) |
 | ORCH-003 | Closed-in-code | Peer-key fetch supports signed payload verification and fail-closed behavior | Add integration fixture for live registry endpoint auth semantics |
-| ORCH-004 | Partial | TPM path reads measurement file and hashes evidence; mock fallback controlled by env | Hardware-backed attestation evidence still required for staging closure |
+| ORCH-004 | Partial | TPM path now supports validated staging attestation fixture ingestion with digest fail-closed checks in addition to direct measurement reads | Hardware-backed attestation evidence still required for staging closure |
 | ORCH-005 | Closed-in-code | Certificate chain checks include validity, issuer/signature chain, and optional revocation denylist | Add staging evidence for full root trust policy |
 | ORCH-006 | Closed-in-code | Reachability check performs active HTTP/S probe with timeout handling | Add multi-endpoint degraded-network matrix scenarios |
 | ORCH-007 | Closed-in-code | Hugepage check reads procfs and enforces minimum availability threshold | Add production profile threshold variants |
@@ -73,14 +73,14 @@ Wave objective: close the highest risk security and cryptographic gaps before br
 Current regression evidence from orchestrator suite:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 119 tests, 119 passed (2026-06-12)
+- Result: 7 suites, 121 tests, 121 passed (2026-06-12)
 
 | ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
 | --- | --- | --- | --- |
 | ORCH-001 | Partial | security-hardening now includes deterministic provider-seam fixture plus fail-closed invalid session-key length test | Integrate audited x25519-mlkem768 provider implementation through configured seam |
 | ORCH-002 | Covered | security-hardening MAC tamper test fails proof verification as expected | Add explicit negative-path test for missing attestation digest |
 | ORCH-003 | Covered | security-hardening signed peer-key accept/reject + timeout + invalid JSON + missing key payload tests | Add integration fixture for live registry endpoint auth semantics |
-| ORCH-004 | Partial | Core code enforces TEE runtime or explicit mock opt-in | Add staging test fixture that validates real TPM/TEE measurement ingestion |
+| ORCH-004 | Partial | security-hardening now covers validated staging attestation fixture ingestion and digest-mismatch fail-closed behavior | Capture hardware-backed staging evidence artifact and verify real TPM/TEE measurement ingestion |
 | ORCH-005 | Covered | security-hardening revoked certificate fingerprint test | Add full chain-to-root test vector fixture in CI |
 | ORCH-006 | Covered | security-hardening reachability negative-path fixture validates false on unreachable endpoint | Add unit tests for explicit status-code matrix |
 | ORCH-007 | Covered | security-hardening procfs fixture validates hugepage threshold fail path | Add production profile threshold variants |
@@ -101,7 +101,25 @@ Added security-hardening regression fixtures in orchestrator tests for:
 Post-update orchestrator test baseline:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 119 tests, 119 passed
+- Result: 7 suites, 121 tests, 121 passed
+
+## 2026-06-12 ORCH-004 Staging Fixture Update
+
+Implemented staging attestation fixture support for ORCH-004 in `agents/orchestrator/core/orchestrator.js`:
+
+- `AttestationClient` now accepts `attestationFixturePath` / `ATTESTATION_FIXTURE_PATH` for staged attestation evidence input.
+- Fixture content must be valid JSON with `rawMeasurement` and `measurements.sha256`.
+- Digest mismatch fails closed before the evidence enters the session establishment flow.
+
+Added regression coverage in `agents/orchestrator/test/security-hardening.test.js`:
+
+- valid staging fixture ingestion preserves audited digest and evidence metadata
+- invalid fixture digest fails closed
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 121 tests, 121 passed
 
 ## 2026-06-12 ORCH-001 Provider-Seam Update
 

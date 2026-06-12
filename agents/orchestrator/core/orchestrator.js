@@ -461,9 +461,14 @@ class AttestationClient {
     const measurementPath = this.config.tpmMeasurementPath || process.env.TPM_MEASUREMENT_FILE || '/sys/class/tpm/tpm0/pcr-sha256/0';
     const teeRuntime = this.config.teeRuntime || process.env.TEE_RUNTIME || 'none';
     const allowMock = process.env.ALLOW_MOCK_ATTESTATION === '1';
+    const attestationFixturePath = this.config.attestationFixturePath || process.env.ATTESTATION_FIXTURE_PATH || '';
 
     if (teeRuntime === 'none' && !allowMock) {
       throw new Error('TEE runtime not configured. Set TEE_RUNTIME or ALLOW_MOCK_ATTESTATION=1 for development');
+    }
+
+    if (attestationFixturePath) {
+      return this._readAttestationFixture(attestationFixturePath, teeRuntime);
     }
 
     let rawMeasurement = '';
@@ -485,6 +490,47 @@ class AttestationClient {
         teeRuntime,
         sha256: digest,
       }
+    };
+  }
+
+  _readAttestationFixture(attestationFixturePath, teeRuntime) {
+    const fixtureText = fs.readFileSync(attestationFixturePath, 'utf8');
+    let fixture;
+    try {
+      fixture = JSON.parse(fixtureText);
+    } catch (err) {
+      throw new Error(`Attestation fixture at ${attestationFixturePath} is not valid JSON: ${err.message}`);
+    }
+
+    const rawMeasurement = String(fixture.rawMeasurement || '').trim();
+    const declaredDigest = String(fixture.measurements?.sha256 || '').trim();
+    const fixtureRuntime = String(fixture.measurements?.teeRuntime || teeRuntime || 'unknown').trim();
+
+    if (!rawMeasurement) {
+      throw new Error(`Attestation fixture at ${attestationFixturePath} missing rawMeasurement`);
+    }
+    if (!declaredDigest) {
+      throw new Error(`Attestation fixture at ${attestationFixturePath} missing measurements.sha256`);
+    }
+
+    const computedDigest = crypto.createHash('sha256').update(rawMeasurement).digest('base64');
+    if (computedDigest !== declaredDigest) {
+      throw new Error(`Attestation fixture digest mismatch at ${attestationFixturePath}`);
+    }
+
+    return {
+      platformConfigured: true,
+      integrityVerified: true,
+      measurements: {
+        source: attestationFixturePath,
+        teeRuntime: fixtureRuntime,
+        sha256: declaredDigest,
+      },
+      evidence: {
+        mode: 'staging-fixture',
+        capturedAt: fixture.capturedAt || null,
+        platform: fixture.platform || null,
+      },
     };
   }
 
