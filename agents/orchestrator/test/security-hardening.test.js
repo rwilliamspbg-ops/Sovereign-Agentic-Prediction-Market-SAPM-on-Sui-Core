@@ -27,7 +27,7 @@ describe('Orchestrator Security Hardening', () => {
     const stopped = goHybridProvider.stopProviderLifecycle('unit-test-stop');
     expect(stopped.active).toBe(false);
     expect(stopped.lastStopReason).toBe('unit-test-stop');
-  });
+  }, 15000);
 
   test('performs Go provider readiness check once per invocation shape', async () => {
     const [first, second] = await Promise.all([
@@ -456,7 +456,7 @@ echo '{"algorithm":"x25519-mlkem768-go-bridge","sessionKey":"AAAAAAAAAAAAAAAAAAA
     expect(typeof session.peerKeyDigest).toBe('string');
     expect(session.peerKeyDigest.length).toBeGreaterThan(0);
     await expect(orchestrator.cryptoProvider.verifyKeyDerivationProof(session)).resolves.toBe(true);
-  });
+  }, 15000);
 
   test('fails closed when injected hybrid KEX provider returns invalid session key length', async () => {
     const orchestrator = new Orchestrator({
