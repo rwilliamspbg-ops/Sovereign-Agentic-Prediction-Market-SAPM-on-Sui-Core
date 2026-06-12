@@ -93,6 +93,25 @@ describe('Orchestrator Security Hardening', () => {
     expect(invalid).toBe(false);
   });
 
+  test('fails key derivation proof verification when attestation digest is missing', async () => {
+    const orchestrator = new Orchestrator();
+    const attestation = {
+      measurements: {
+        sha256: Buffer.from('attestation-digest').toString('base64'),
+      },
+    };
+
+    const session = await orchestrator.cryptoProvider.hybridKeyExchange(
+      attestation,
+      Buffer.from('peer-pub-key-material').toString('base64'),
+    );
+
+    orchestrator.cryptoProvider.config.attestationDigestB64 = '';
+
+    const valid = await orchestrator.cryptoProvider.verifyKeyDerivationProof(session);
+    expect(valid).toBe(false);
+  });
+
   test('uses injected hybrid KEX provider for deterministic session derivation', async () => {
     const attestationDigest = crypto.randomBytes(32);
     const providerSessionKey = crypto.randomBytes(32);

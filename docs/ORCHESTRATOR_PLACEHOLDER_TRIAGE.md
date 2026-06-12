@@ -73,12 +73,12 @@ Wave objective: close the highest risk security and cryptographic gaps before br
 Current regression evidence from orchestrator suite:
 
 - Command: npm --prefix agents/orchestrator test
-- Result: 7 suites, 123 tests, 123 passed (2026-06-12)
+- Result: 7 suites, 124 tests, 124 passed (2026-06-12)
 
 | ORCH ID | Test Coverage Status | Current Evidence | Required Additional Test |
 | --- | --- | --- | --- |
 | ORCH-001 | Partial | security-hardening now includes deterministic provider-seam fixture plus fail-closed invalid session-key length test | Integrate audited x25519-mlkem768 provider implementation through configured seam |
-| ORCH-002 | Covered | security-hardening MAC tamper test fails proof verification as expected | Add explicit negative-path test for missing attestation digest |
+| ORCH-002 | Covered | security-hardening now covers MAC tamper and missing-attestation-digest fail-closed verification paths | Keep CI baseline current as proof verification logic evolves |
 | ORCH-003 | Covered | security-hardening signed peer-key accept/reject + timeout + invalid JSON + missing key payload tests | Add integration fixture for live registry endpoint auth semantics |
 | ORCH-004 | Partial | security-hardening now covers validated staging attestation fixture ingestion and digest-mismatch fail-closed behavior | Capture hardware-backed staging evidence artifact and verify real TPM/TEE measurement ingestion |
 | ORCH-005 | Covered | security-hardening covers revoked fingerprint rejection plus trusted-root accept/reject policy enforcement | Add full chain-to-root multi-cert test vector fixture in CI |
@@ -141,6 +141,18 @@ Validation evidence:
 
 - Command: npm --prefix agents/orchestrator test
 - Result: 7 suites, 123 tests, 123 passed
+
+## 2026-06-12 ORCH-002 Missing-Digest Coverage Update
+
+Added explicit ORCH-002 negative-path regression coverage in `agents/orchestrator/test/security-hardening.test.js`:
+
+- proof verification now has dedicated test coverage for missing attestation digest input
+- verification continues to fail closed when attestation digest context is absent
+
+Validation evidence:
+
+- Command: npm --prefix agents/orchestrator test
+- Result: 7 suites, 124 tests, 124 passed
 
 ## 2026-06-12 ORCH-001 Provider-Seam Update
 
