@@ -55,10 +55,17 @@ graph TB
     style FormalVerification fill:#fee2e2,stroke:#b91c1c,stroke-width:2px
 ```
 ---
+## Problem
+---
+Prediction markets require too much manual operation, too much centralized trust, and no verifiable audit trail. Agents that trade on them do so blindly — no on-chain proof of their decisions, no slashable reputation, no immutable record of what they saw or why they acted.
 
 ##What is SAPM?
 ---
-SAPM is a fully sovereign, agentic prediction market platform built natively on Sui. It enables autonomous AI agents to discover markets, generate forecasts, execute trades via DeepBook, and archive decisions immutably on Walrus — all with formal verification guarantees.Key Capabilities
+SAPM is a fully sovereign, agentic prediction market platform built natively on Sui.
+It enables autonomous AI agents to discover markets, generate forecasts, execute trades via DeepBook, and archive decisions immutably on Walrus — all with formal verification guarantees.
+
+##Key Capabilities:
+---
 Autonomous Agent Stack — Trader, Aggregator (Multi-Krum), and Orchestrator agents with on-chain reputation and slashing
 DeepBook Integration — Limit orders, cancel/replace, open order tracking, and balance preflights
 Walrus Archival — Every market snapshot and trade decision published as verifiable blobs with SHA-256 manifests
@@ -91,7 +98,7 @@ Why Sui? Object-centric model, Programmable Transaction Blocks (PTBs), native De
 Sui Overflow 2026 Target Tracks: Agentic Web (Core), DeFi & Payments (Core), DeepBook, Walrus.
 ---
 ## Live Demo — Judge Mode
-
+---
 > **The fastest path to verification:** open the app, connect a Sui wallet, paste a market object ID, and click **Run Judge Mode**. It will: connect wallet → load on-chain market → execute micro trade → archive to Walrus → read blob back. Every step produces a verifiable artifact (transaction digest on Sui Explorer, Walrus blob ID on aggregator endpoint).
 
 > **Fail-proof usage:** use only valid `PredictionMarket` object IDs in `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS`, or leave it unset to allow Judge Mode to auto-create a market.
@@ -127,26 +134,6 @@ NEXT_PUBLIC_SUI_NETWORK=testnet
 # NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS=... (optional)
 ```
 Full transaction history and artifacts available in docs/artifacts/.
-
-
-## Problem
-
-Prediction markets require too much manual operation, too much centralized trust, and no verifiable audit trail. Agents that trade on them do so blindly — no on-chain proof of their decisions, no slashable reputation, no immutable record of what they saw or why they acted.
-
-## What SAPM Does
-
-SAPM is a sovereign, agentic prediction market stack built natively on Sui. It combines:
-
-- **Autonomous AI agents** (trader, aggregator, orchestrator) that discover markets, forecast outcomes, and execute trades using Sui's PTB transaction model
-- **On-chain reputation and incentives** — Move contracts that stake agents, slash Byzantine behavior, and reward accurate reports via `incentives.move`
-- **DeepBook integration** — limit order placement, cancel/replace, open-order queries, and preflight balance checks against DeepBook's on-chain orderbook
-- **Walrus archival** — every market snapshot and trade decision is published to Walrus as a verifiable blob with SHA-256 manifest and lineage tracking
-- **Lean 4 formal verification** — BFT safety/liveness theorems, Multi-Krum aggregation correctness, hybrid PQC security proofs, and oracle contract invariants
-
-
-**Why Sui?** The object model makes agent staking natural (each `AgentStake` is an owned object), PTBs let a single transaction atomically execute a trade and update reputation, shared objects give the registry global visibility, and DeepBook + Walrus as first-class Sui primitives mean every layer of the stack is composable without bridging.
-
-
 
 [![Video: Click thumbnail to play](https://img.youtube.com/vi/CEEmdBJklB0/hqdefault.jpg)](https://www.youtube.com/watch?v=CEEmdBJklB0)
 
