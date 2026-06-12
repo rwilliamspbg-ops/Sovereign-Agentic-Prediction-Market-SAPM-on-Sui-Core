@@ -1,50 +1,58 @@
 # SAPM — Sovereign Agentic Prediction Market on Sui
-<img width="2816" height="1536" alt="SAPM on SUI" src="https://github.com/user-attachments/assets/09386498-c833-4f65-92cb-33a373f7f3ce" />
+
+<div align="center">
+  <img width="1200" alt="SAPM on Sui" src="https://github.com/user-attachments/assets/09386498-c833-4f65-92cb-33a373f7f3ce" />
+
+  <h3>Sovereign • Agentic • Formally Verified • Built Natively on Sui</h3>
+
+  <p>High-performance prediction market infrastructure combining autonomous AI agents, DeepBook trading, Walrus archiving, and Lean 4 formal verification.</p>
+</div>
+
 ---
 
 ## Platform
-[![Node >=18](https://img.shields.io/badge/node-%3E%3D18-blue.svg?logo=node.js)](https://nodejs.org/)
-[![Sui Testnet](https://img.shields.io/badge/Sui-Testnet-blue?logo=sui)](https://suiexplorer.com/?network=testnet)
-[![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-## Validation
-[![Release Gate](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=Release%20Gate)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci.yml)
-[![Stack Validation](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci_validation.yml?branch=main&style=for-the-badge&logo=docker&logoColor=white&label=Stack%20Validation)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/ci_validation.yml)
-[![Lean Verification](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/lean-verification.yml?branch=main&style=for-the-badge&logo=leanpub&logoColor=white&label=Lean%20Verification)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/actions/workflows/lean-verification.yml)
+![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-339933?logo=node.js&logoColor=white)
+![Sui Testnet](https://img.shields.io/badge/Sui-Testnet-5C5CFF?logo=sui&logoColor=white)
+![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)
 
-## Repository Health
-[![Last Commit](https://img.shields.io/github/last-commit/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/commits/main) 
-[![Contributors](https://img.shields.io/github/contributors/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/graphs/contributors) 
-[![Dependabot Status](https://img.shields.io/badge/dependabot-enabled-blue.svg?logo=dependabot)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/security/dependabot)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/pulls)
+## Validation & Health
+
+![Release Gate](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=Release%20Gate)
+![Stack Validation](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/ci_validation.yml?branch=main&style=for-the-badge&logo=docker&logoColor=white&label=Stack%20Validation)
+![Lean Verification](https://img.shields.io/github/actions/workflow/status/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/lean-verification.yml?branch=main&style=for-the-badge&logo=leanpub&logoColor=white&label=Lean%20Verification)
+
+![Last Commit](https://img.shields.io/github/last-commit/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core)
+![Contributors](https://img.shields.io/github/contributors/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core)
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)
+
+---
 
 ## Architecture At A Glance
 
 ```mermaid
 graph TB
-    subgraph SAPM_Monorepo [SAPM Monorepo]
+    subgraph SAPM_Monorepo ["SAPM Monorepo"]
         direction TB
 
-        Frontend["Next.js Frontend (frontend/)<br>• Market board<br>• Wallet connect<br>• Judge Mode<br>• DeepBook status<br>• Walrus snapshot<br>• Observability"]
-        Agents["Agents<br>(trader/, aggregator/, orchestr.)"]
-        Sui["Sui Network<br>• Move contracts<br>• Registry + Incentives"]
-        Walrus["Walrus<br>• publishMarketSnapshot<br>(manifest v1)"]
-        FormalVerification["Formal Verification (formal_verification/)<br>• Lean 4<br>• BFT safety<br>• Multi-Krum<br>• PQC proofs"]
-        Networking[/"Networking layer (future):<br>AF_XDP zero-copy kernel bypass<br>for cross-node aggregation<br>(Rust datapath scaffolded)"/]
+        Frontend["Next.js Frontend<br/>• Market Board • Wallet Connect<br/>• Judge Mode • DeepBook Status"]
+        Agents["Autonomous Agents<br/>(Trader • Aggregator • Orchestrator)"]
+        Sui["Sui Network<br/>• Move Contracts • PTBs • DeepBook"]
+        Walrus["Walrus<br/>• Market Snapshots & Blobs"]
+        FormalVerification["Formal Verification<br/>• Lean 4 • BFT • Multi-Krum • PQC"]
 
         Frontend -->|"@mysten/sui SDK"| Sui
-        Frontend -.-> Agents
+        Agents --> Sui
         Frontend -.-> Walrus
-        Sui -->|"DeepBook PTBs"| FormalVerification
+        Sui --> FormalVerification
     end
 
-    style SAPM_Monorepo fill:#f9f9f9,stroke:#333,stroke-width:2px;
-    style Frontend fill:#e1f5fe,stroke:#0288d1,stroke-width:1px;
-    style Agents fill:#fff3e0,stroke:#f57c00,stroke-width:1px;
-    style Sui fill:#e8f5e9,stroke:#388e3c,stroke-width:1px;
-    style Walrus fill:#ede7f6,stroke:#5e35b1,stroke-width:1px;
-    style FormalVerification fill:#ffebee,stroke:#c62828,stroke-width:1px;
-    style Networking fill:#eceff1,stroke:#455a64,stroke-width:1px,stroke-dasharray: 5 5;
+    style SAPM_Monorepo fill:#f8fafc,stroke:#334155,stroke-width:3px
+    style Frontend fill:#dbeafe,stroke:#1e40af,stroke-width:2px
+    style Agents fill:#fef3c7,stroke:#d97706,stroke-width:2px
+    style Sui fill:#dcfce7,stroke:#166534,stroke-width:2px
+    style Walrus fill:#f3e8ff,stroke:#6b21a8,stroke-width:2px
+    style FormalVerification fill:#fee2e2,stroke:#b91c1c,stroke-width:2px
 ```
 ---
 
