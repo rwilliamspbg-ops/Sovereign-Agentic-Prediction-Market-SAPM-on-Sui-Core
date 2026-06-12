@@ -105,10 +105,6 @@ SAPM is a sovereign, agentic prediction market stack built natively on Sui. It c
 
 > **Fail-proof usage:** use only valid `PredictionMarket` object IDs in `NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS`, or leave it unset to allow Judge Mode to auto-create a market.
 
-
-[06-11-2026 completed Copilot Actions proof .json](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/blob/main/docs/artifacts/sapm-copilot-transcript-2026-06-11T18-58-58-087Z.json)
-
-
 ```bash
 ./scripts/ci_frontend_validation.sh
 cd frontend
@@ -137,6 +133,8 @@ Fail-proof demo checks:
 ## Full Functionality Evidence (2026-06-11)
 
 Evidence artifact: [docs/artifacts/full-functionality-evidence-2026-06-11.txt](docs/artifacts/full-functionality-evidence-2026-06-11.txt)
+
+[06-11-2026 completed Copilot Actions proof .json](https://github.com/rwilliamspbg-ops/Sovereign-Agentic-Prediction-Market-SAPM-on-Sui-Core/blob/main/docs/artifacts/sapm-copilot-transcript-2026-06-11T18-58-58-087Z.json)
 
 Validated in this artifact:
 
