@@ -22,6 +22,15 @@ class MemoryEntry {
     this.outcome = outcome; // null (pending) or actual result
     this.timestamp = timestamp;
     this.metadata = metadata;
+
+    // Support direct property access for prediction/confidence/etc.
+    this.prediction = metadata?.prediction;
+    this.confidence = metadata?.confidence;
+    this.stake = metadata?.stake;
+    this.impliedProbability = metadata?.impliedProbability;
+
+    // Cache numerical timestamp for optimized retrieval
+    this._timestampNum = timestamp ? Date.parse(timestamp) : Date.now();
   }
 
   toJSON() {
@@ -79,7 +88,11 @@ class EpisodicMemory extends EventEmitter {
       this.memoryStores.set(agentId, new Map());
     }
 
-    const marketStore = this.memoryStores.get(agentId).get(marketId) || [];
+    const agentStore = this.memoryStores.get(agentId);
+    if (!agentStore.has(marketId)) {
+      agentStore.set(marketId, []);
+    }
+    const marketStore = agentStore.get(marketId);
     
     // Create entry
     const outcome = data?.outcome || null; // Outcome may be null initially
@@ -139,14 +152,14 @@ class EpisodicMemory extends EventEmitter {
     }
 
     // Filter out expired entries
-    const now = new Date();
-    const cutoffDate = new Date(now.getTime() - (this.retentionDays * 24 * 60 * 60 * 1000));
+    const cutoffTime = Date.now() - (this.retentionDays * 24 * 60 * 60 * 1000);
     
-    marketStore = marketStore.filter(entry => 
-      new Date(entry.timestamp) >= cutoffDate
-    );
-
-    return marketStore;
+    return marketStore.filter(entry => {
+      if (entry._timestampNum === undefined) {
+        entry._timestampNum = entry.timestamp ? Date.parse(entry.timestamp) : Date.now();
+      }
+      return entry._timestampNum >= cutoffTime;
+    });
   }
 
   /**
@@ -161,17 +174,21 @@ class EpisodicMemory extends EventEmitter {
 
     const allEntries = [];
     
-    for (const [marketId, entries] of this.memoryStores.get(agentId).entries()) {
+    for (const entries of this.memoryStores.get(agentId).values()) {
       allEntries.push(...entries);
     }
 
     // Filter expired and sort by timestamp
-    const now = new Date();
-    const cutoffDate = new Date(now.getTime() - (this.retentionDays * 24 * 60 * 60 * 1000));
+    const cutoffTime = Date.now() - (this.retentionDays * 24 * 60 * 60 * 1000);
     
     return allEntries
-      .filter(entry => new Date(entry.timestamp) >= cutoffDate)
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      .filter(entry => {
+        if (entry._timestampNum === undefined) {
+          entry._timestampNum = entry.timestamp ? Date.parse(entry.timestamp) : Date.now();
+        }
+        return entry._timestampNum >= cutoffTime;
+      })
+      .sort((a, b) => a._timestampNum - b._timestampNum);
   }
 
   /**
@@ -349,20 +366,15 @@ class EpisodicMemory extends EventEmitter {
    * @param {Object} metrics - Accuracy metrics object
    */
   _setAccuracyMetric(agentId, marketId, metrics) {
-    // Store accuracy metric with memory entry
-    if (!this.memoryStores.has(agentId)) {
-      this.memoryStores.set(agentId, new Map());
-    }
-
     const agentStore = this.memoryStores.get(agentId);
-    
-    for (const [mid, entries] of agentStore.entries()) {
-      if (mid === marketId) {
-        const latestEntry = entries[entries.length - 1];
-        if (latestEntry) {
-          latestEntry.accuracyMetrics = metrics;
-        }
-        break;
+    if (!agentStore) {
+      return;
+    }
+    const entries = agentStore.get(marketId);
+    if (entries) {
+      const latestEntry = entries[entries.length - 1];
+      if (latestEntry) {
+        latestEntry.accuracyMetrics = metrics;
       }
     }
   }
@@ -378,7 +390,7 @@ class EpisodicMemory extends EventEmitter {
       status: 'healthy',
       agents: stats.agents,
       totalEntries: stats.totalEntries,
-      averageEntriesPerAgent: Math.round(stats.totalEntries / stats.agents) if stats.agents > 0 else 0,
+      averageEntriesPerAgent: stats.agents > 0 ? Math.round(stats.totalEntries / stats.agents) : 0,
       memoryUsage: ((stats.totalEntries / (stats.agents * this.maxEntriesPerMarket)) * 100).toFixed(2) + '%'
     };
   }
