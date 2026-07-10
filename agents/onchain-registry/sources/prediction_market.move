@@ -290,7 +290,7 @@ module 0x0::prediction_market {
         let total_pot = balance::value(&market.yes_pool) + balance::value(&market.no_pool);
         
         // FIX: Use u128 for intermediate multiplication to prevent overflow
-        let payout_mist = (((shares as u128) * (total_pot as u128)) / (winning_shares_total as u128));
+        let payout_mist = ((shares as u128) * (total_pot as u128)) / (winning_shares_total as u128);
         let payout_mist_u64 = payout_mist as u64;
 
         // Extract payout from the winning pool
@@ -345,7 +345,7 @@ module 0x0::prediction_market {
     public fun get_no_pool(market: &PredictionMarket): u64        { balance::value(&market.no_pool) }
     public fun get_total_trades(market: &PredictionMarket): u64   { market.total_trades }
     public fun get_yes_shares(market: &PredictionMarket): u64     { market.yes_shares_total }
-    public fn get_no_shares(market: &PredictionMarket): u64     { market.no_shares_total }
+    public fun get_no_shares(market: &PredictionMarket): u64     { market.no_shares_total }
 
     public fun get_implied_yes_prob(market: &PredictionMarket): u64 {
         let yes   = balance::value(&market.yes_pool);
