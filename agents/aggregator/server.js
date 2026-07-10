@@ -24,6 +24,7 @@ const SEEN_CACHE_LIMIT = Number(process.env.SEEN_CACHE_LIMIT || 10000);
 const REGISTRY_FILE = path.resolve(MODEL_DIR, 'registry.json');
 const SEEN_FILE = path.resolve(MODEL_DIR, 'seen.json');
 const SUI_RPC = process.env.SUI_RPC || 'http://sui-local:9000';
+const suiClient = new SuiClient({ url: SUI_RPC });
 const PUBKEY_REGISTRY_OBJ = process.env.PUBKEY_REGISTRY_OBJ || null;
 const REGISTRY_OBJ_ID = process.env.REGISTRY_OBJ_ID || PUBKEY_REGISTRY_OBJ || null;
 const AGG_SECRET = process.env.AGG_SECRET || null;
@@ -92,7 +93,7 @@ async function fetchOnchainRegistry() {
   const now = Date.now();
   if (registryCache && (now - registryCacheTs) < REGISTRY_CACHE_TTL_MS) return registryCache;
   try {
-    const sui = new SuiClient({ url: SUI_RPC });
+    const sui = suiClient;
     const obj = await sui.request({ method: 'sui_getObject', params: [PUBKEY_REGISTRY_OBJ] });
     const txt = JSON.stringify(obj || {});
     // Simple heuristic: find any base64/hex pubkeys in object text and return as set
@@ -459,7 +460,7 @@ async function emitOnchainCommitment(meta) {
 
   if (payload.onchain.configured) {
     try {
-      const sui = new SuiClient({ url: SUI_RPC });
+      const sui = suiClient;
       const signer = loadAggSuiSigner();
       if (!signer) throw new Error('missing signer from AGG_SUI_SECRET');
 
