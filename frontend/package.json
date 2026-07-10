@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "SAPM Production Frontend - Next.js with TypeScript and Tailwind CSS",
   "scripts": {
-    "dev": "NEXT_DISABLE_FILE_SYSTEM_CACHE=1 NEXT_DISABLE_VERSION_CHECK=1 next dev",
+    "dev": "npx cross-env NEXT_DISABLE_FILE_SYSTEM_CACHE=1 NEXT_DISABLE_VERSION_CHECK=1 next dev",
     "clean": "rm -rf .next node_modules",
     "reset": "npm run clean && npm install",
     "prebuild": "npm run type-check",
@@ -42,6 +42,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.5.0",
+    "cross-env": "^7.0.3",
     "eslint": "^9.29.0",
     "eslint-config-next": "16.2.9",
     "jest": "^29.7.0",

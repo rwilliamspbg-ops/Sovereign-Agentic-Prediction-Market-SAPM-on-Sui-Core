@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 module 0x0::incentives {
+    use std::vector;
     use sui::object;
     use sui::transfer;
     use sui::tx_context::{Self, TxContext};
@@ -7,7 +8,9 @@ module 0x0::incentives {
     use sui::coin::{Self, Coin};
     use sui::sui::SUI;
     use sui::event;
-    use std::vector;
+
+    /// Capability to manage incentives and agent reputation.
+    public struct IncentivesCap has key { id: object::UID }
 
     /// Agent staking and reputation tracking
     public struct AgentStake has key {
@@ -28,7 +31,15 @@ module 0x0::incentives {
         total_slashes_applied: u64,
     }
 
-    /// Events for tracking
+    /// Risk parameters for the incentive system.
+    public struct RiskParameters has key {
+        id: object::UID,
+        min_unstake_reputation: u64,
+        max_slash_amount_percent: u64,
+        reward_decay_rate: u64,
+    }
+
+    // ─── Events ──────────────────────────────────────────────────────────────
     public struct AgentStaked has copy, drop {
         agent: address,
         amount: u64,
@@ -56,7 +67,9 @@ module 0x0::incentives {
         change_reason: vector<u8>,
     }
 
-    /// Initialize reputation registry
+    // ─── Initialization ─────────────────────────────────────────────────────
+
+    /// Initialize reputation registry. Returns the management capability.
     public fun init_reputation_registry(ctx: &mut TxContext) {
         let registry = ReputationRegistry {
             id: object::new(ctx),
@@ -65,14 +78,28 @@ module 0x0::incentives {
             total_slashes_applied: 0,
         };
         transfer::share_object(registry);
+        transfer::transfer(IncentivesCap { id: object::new(ctx) }, ctx.sender());
     }
 
+    /// Initialize risk parameters. Returns the management capability.
+    public fun init_risk_parameters(ctx: &mut TxContext) : RiskParameters {
+        let rp = RiskParameters {
+            id: object::new(ctx),
+            min_unstake_reputation: 50,
+            max_slash_amount_percent: 20, // Max 20% slash per event
+            reward_decay_rate: 1,
+        };
+        transfer::share_object(rp);
+        rp
+    }
+
+    // ─── Agent Management ──────────────────────────────────────────────────
+
     /// Agent stakes SUI to become a predictor
-    /// Minimum stake: 1 SUI (1_000_000_000 MIST)
     public fun stake(
         amount: Coin<SUI>,
         registry: &mut ReputationRegistry,
-        ctx: &mut TxContext
+        ctx: &mut TxContext,
     ) {
         let amount_val = coin::value(&amount);
         assert!(amount_val >= 1_000_000_000, 1001);  // Minimum 1 SUI
@@ -98,27 +125,49 @@ module 0x0::incentives {
         transfer::share_object(agent_stake);
     }
 
-    /// Slash an agent for Byzantine behavior
-    /// Removes portion of stake and reduces reputation
+    /// Update risk parameters. Requires IncentivesCap.
+    public fun update_risk_parameters(
+        cap: &IncentivesCap,
+        params: RiskParameters,
+        ctx: &mut TxContext,
+    ) {
+        let old_params = object::take(params);
+        delete(old_params);
+        transfer::share_object(RiskParameters {
+            id: object::new(ctx),
+            min_unstake_reputation: params.min_unstake_reputation,
+            max_slash_amount_percent: params.max_slash_amount_percent,
+            reward_decay_rate: params.reward_decay_rate,
+        });
+    }
+
+    /// Slash an agent for Byzantine behavior. Requires IncentivesCap.
     public fun slash_agent(
+        cap: &IncentivesCap,
         stake: &mut AgentStake,
         amount: u64,
         reason: vector<u8>,
         registry: &mut ReputationRegistry,
-        ctx: &mut TxContext
+        ctx: &mut TxContext,
     ) {
         let available = balance::value(&stake.stake);
-        let slash_amount = if (amount > available) {
-            available  // Slash up to what's available
+        // Cap the slash amount to a percentage of current stake to prevent total wipeout in one go
+        let max_slashable = (available * 20) / 100; // 20% cap
+        let slash_amount = if (amount > max_slashable) {
+            max_slashable
         } else {
             amount
         };
 
-        // Slash 20% of position
-        let slashed = balance::split(&mut stake.stake, slash_amount);
-        
+        // Ensure we don't slash more than available
+        let actual_slash = if (slash_amount > available) {
+            available
+        } else {
+            slash_amount
+        };
+
         // Reduce reputation
-        let reputation_penalty = 15;  // Lose 15 points
+        let reputation_penalty = 15;
         stake.reputation = if (stake.reputation > reputation_penalty) {
             stake.reputation - reputation_penalty
         } else {
@@ -130,34 +179,31 @@ module 0x0::incentives {
 
         // Send slashed amount to treasury (burn)
         transfer::public_transfer(
-            coin::from_balance(slashed, ctx),
-            @0x0  // Treasury address (can be updated)
+            coin::from_balance(balance::split(&mut stake.stake, actual_slash), ctx),
+            @0x0  // Treasury address
         );
 
         event::emit(AgentSlashed {
             agent: stake.agent,
-            slash_amount,
+            slash_amount: actual_slash,
             reason,
             timestamp: tx_context::epoch_timestamp_ms(ctx),
         });
     }
 
-    /// Reward an agent for honest reporting
-    /// Adds to stake and increases reputation
+    /// Reward an agent for honest reporting. Requires IncentivesCap.
     public fun reward_honest_agent(
+        cap: &IncentivesCap,
         stake: &mut AgentStake,
         reward: Coin<SUI>,
         registry: &mut ReputationRegistry,
-        ctx: &mut TxContext
+        ctx: &mut TxContext,
     ) {
         let reward_val = coin::value(&reward);
-        
-        // Add reward to stake
         let reward_balance = coin::into_balance(reward);
         balance::join(&mut stake.stake, reward_balance);
 
-        // Increase reputation (up to max 100)
-        let reputation_gain = 5;  // Gain 5 points
+        let reputation_gain = 5;
         stake.reputation = if (stake.reputation + reputation_gain > 100) {
             100
         } else {
@@ -175,20 +221,19 @@ module 0x0::incentives {
         });
     }
 
-    /// Record a report and update stats
+    /// Record a report and update stats. Requires IncentivesCap.
     public fun record_report(
+        cap: &IncentivesCap,
         stake: &mut AgentStake,
         was_correct: bool,
         _registry: &mut ReputationRegistry,
-        _ctx: &mut TxContext
+        _ctx: &mut TxContext,
     ) {
         let old_reputation = stake.reputation;
         stake.total_reports = stake.total_reports + 1;
         
         if (was_correct) {
             stake.correct_reports = stake.correct_reports + 1;
-            
-            // Bonus reputation for accuracy
             let accuracy_bonus = 2;
             stake.reputation = if (stake.reputation + accuracy_bonus > 100) {
                 100
@@ -203,12 +248,11 @@ module 0x0::incentives {
                 change_reason: b"accurate_report",
             });
         } else {
-            // Penalty for inaccuracy
             let accuracy_penalty = 5;
             stake.reputation = if (stake.reputation > accuracy_penalty) {
-                stake.reputation - accuracy_penalty
-            } else {
                 0
+            } else {
+                stake.reputation - accuracy_penalty
             };
 
             event::emit(ReputationUpdated {
@@ -220,63 +264,43 @@ module 0x0::incentives {
         }
     }
 
-    /// Get agent reputation (read-only)
+    // ─── Getters ────────────────────────────────────────────────────────────
+
     public fun get_reputation(stake: &AgentStake): u64 {
         stake.reputation
     }
 
-    /// Get agent stake balance
     public fun get_stake_balance(stake: &AgentStake): u64 {
         balance::value(&stake.stake)
     }
 
-    /// Get agent accuracy (correct_reports / total_reports)
     public fun get_accuracy(stake: &AgentStake): u64 {
         if (stake.total_reports == 0) {
-            50  // Default neutral if no reports
+            50
         } else {
             (stake.correct_reports * 100) / stake.total_reports
         }
     }
 
-    /// Calculate agent score (reputation + accuracy)
     public fun calculate_agent_score(stake: &AgentStake): u64 {
         let accuracy = get_accuracy(stake);
         let reputation = stake.reputation;
-        
-        // Weighted score: 60% reputation, 40% accuracy
         (reputation * 60 + accuracy * 40) / 100
     }
 
     /// Unstake (requires minimum reputation of 50)
     public fun unstake(
         stake: AgentStake,
-        ctx: &mut TxContext
+        ctx: &mut TxContext,
     ) {
-        assert!(stake.reputation >= 50, 1002);  // Minimum reputation to unstake
-        
-        let AgentStake {
-            id,
-            agent,
-            stake: balance_stake,
-            reputation: _,
-            total_reports: _,
-            correct_reports: _,
-            slash_count: _,
-        } = stake;
-
+        assert!(stake.reputation >= 50, 1002);
+        let AgentStake { id, agent, stake: balance_stake, reputation: _, total_reports: _, correct_reports: _, slash_count: _ } = stake;
         object::delete(id);
-        
         let coin = coin::from_balance(balance_stake, ctx);
         transfer::public_transfer(coin, agent);
     }
 
-    /// Get registry stats (read-only)
     public fun get_registry_stats(registry: &ReputationRegistry): (u64, u64, u64) {
-        (
-            registry.total_agents,
-            registry.total_rewards_distributed,
-            registry.total_slashes_applied
-        )
+        (registry.total_agents, registry.total_rewards_distributed, registry.total_slashes_applied)
     }
 }
