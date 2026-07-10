@@ -1,31 +1,50 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
  * SAPM Trading Demo for DeepSurge Hackathon
- * Shows market discovery + order placement on Sui Testnet
+ * Shows market discovery + order placement on Sui network
  * 
- * Package ID: 0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8
+ * Uses environment variables:
+ * - NEXT_PUBLIC_SUI_PACKAGE_ID: SAPM package ID (defaults to testnet)
+ * - SUI_RPC: Sui RPC endpoint (defaults to testnet)
+ * - SUI_NETWORK: Network to use (testnet, mainnet, devnet)
  */
 
 class SAPMTradingDemo {
   constructor(config) {
     this.config = config || {};
     this.client = null;
-    this.rpcEndpoint = this.config.rpcEndpoint || 'https://fullnode.testnet.sui.io:443';
-    this.packageId = this.config.packageId || '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
+    this.network = process.env.SUI_NETWORK || 'testnet';
+    this.rpcEndpoint = this.config.rpcEndpoint || process.env.SUI_RPC || this.getDefaultRpc(this.network);
+    this.packageId = this.config.packageId || process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
     this.walletAddress = this.config.walletAddress || process.env.SUI_WALLET || '';
     this.marketObjectIds = this.config.marketObjectIds || [];
   }
 
   /**
-   * Initialize Sui client with testnet RPC
+   * Get default RPC endpoint based on network
    */
-  async initialize(rpcEndpoint = this.config.rpcEndpoint || 'https://fullnode.testnet.sui.io:443') {
+  getDefaultRpc(network = 'testnet') {
+    const rpcMap = {
+      mainnet: 'https://fullnode.mainnet.sui.io:443',
+      testnet: 'https://fullnode.testnet.sui.io:443',
+      devnet: 'https://fullnode.devnet.sui.io:443',
+      localnet: 'http://127.0.0.1:9000'
+    };
+    return rpcMap[network] || rpcMap.testnet;
+  }
+
+  /**
+   * Initialize Sui client with RPC endpoint
+   */
+  async initialize(rpcEndpoint = null) {
     console.log('🔗 Initializing SAPM Trading Demo');
-    console.log(`   RPC Endpoint: ${rpcEndpoint}`);
+    const endpoint = rpcEndpoint || this.rpcEndpoint;
+    console.log(`   Network: ${this.network}`);
+    console.log(`   RPC Endpoint: ${endpoint}`);
     console.log(`   Package ID: ${this.packageId}`);
     
-    this.rpcEndpoint = rpcEndpoint;
-    this.client = { url: rpcEndpoint };
+    this.rpcEndpoint = endpoint;
+    this.client = { url: endpoint };
     console.log('✅ Client initialized successfully\n');
     
     return true;
