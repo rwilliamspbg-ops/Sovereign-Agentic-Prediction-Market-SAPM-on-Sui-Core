@@ -290,7 +290,7 @@ module 0x0::prediction_market {
         let total_pot = balance::value(&market.yes_pool) + balance::value(&market.no_pool);
         
         // FIX: Use u128 for intermediate multiplication to prevent overflow
-        let payout_mist = (shares as u128 * total_pot as u128) / winning_shares_total as u128;
+        let payout_mist = (((shares as u128) * (total_pot as u128)) / (winning_shares_total as u128));
         let payout_mist_u64 = payout_mist as u64;
 
         // Extract payout from the winning pool
