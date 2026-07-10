@@ -3,7 +3,7 @@ MCP Server for SAPM Agents - Model Context Protocol
 Provides live agent data as interactive UI components
 """
 
-from mcp.server import Server
+from mcp.server.fastmcp import FastMCP
 from mcp.types import TextContent, ImageContent, Resource
 import json
 from typing import List, Dict, Any
@@ -28,8 +28,11 @@ except ImportError:
         def get_market_data(self, market_id):
             return {"volume": 1500000, "tvl": 2500000, "price": 0.68}
 
+    Aggregator = MockAggregator
+    Trader = MockTrader
+
 # Create MCP server
-server = Server("sapm-agents")
+server = FastMCP("sapm-agents")
 
 
 class RateLimitedHandler:
