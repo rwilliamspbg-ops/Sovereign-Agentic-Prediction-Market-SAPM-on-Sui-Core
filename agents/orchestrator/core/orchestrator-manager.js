@@ -93,15 +93,62 @@ class Orchestrator {
   _nextTaskId() { return `task-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`; }
 
   enqueueTask(data = {}) {
+    if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+      throw new Error('Task data must be a valid object');
+    }
+
+    // Prevent Prototype Pollution
+    const forbiddenKeys = ['__proto__', 'constructor', 'prototype'];
+    for (const key of forbiddenKeys) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
+        throw new Error(`Invalid property: ${key}`);
+      }
+    }
+
+    // Validate type
+    if (data.type !== undefined) {
+      if (typeof data.type !== 'string' || data.type.trim() === '') {
+        throw new Error('Task type must be a non-empty string');
+      }
+    }
+
+    // Validate priority
+    if (data.priority !== undefined) {
+      if (typeof data.priority !== 'string') {
+        throw new Error('Task priority must be a string');
+      }
+      const allowedPriorities = ['LOW', 'NORMAL', 'HIGH', 'CRITICAL'];
+      if (!allowedPriorities.includes(data.priority.toUpperCase())) {
+        throw new Error(`Task priority must be one of: ${allowedPriorities.join(', ')}`);
+      }
+    }
+
+    // Validate deadline
+    if (data.deadline !== undefined && data.deadline !== null) {
+      if (typeof data.deadline !== 'number' || isNaN(data.deadline) || data.deadline < 0) {
+        throw new Error('Task deadline must be a valid positive number');
+      }
+    }
+
     const id = this._nextTaskId();
+
+    // Sanitize and prevent field injection / overwrite of system fields
+    const sanitizedData = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (['id', 'status', 'assignedAgent'].includes(key)) {
+        continue;
+      }
+      sanitizedData[key] = value;
+    }
+
     this.taskQueue.set(id, {
+      ...sanitizedData,
       id,
       status: 'PENDING',
       assignedAgent: null,
-      priority: data.priority || 'NORMAL',
+      priority: data.priority ? data.priority.toUpperCase() : 'NORMAL',
       deadline: data.deadline || null,
       type: data.type || 'generic',
-      ...data,
     });
     return id;
   }

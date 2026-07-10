@@ -103,6 +103,46 @@ describe('Orchestrator Core', () => {
       const expired = orchestrator.checkExpiredTasks();
       expect(expired).toContain(taskId);
     });
+
+    describe('Security Hardening / Validation', () => {
+      test('should reject invalid or non-object task data', () => {
+        expect(() => orchestrator.enqueueTask(null)).toThrow();
+        expect(() => orchestrator.enqueueTask('invalid')).toThrow();
+        expect(() => orchestrator.enqueueTask([])).toThrow();
+      });
+
+      test('should prevent prototype pollution in task data', () => {
+        expect(() => orchestrator.enqueueTask(JSON.parse('{"__proto__": {"admin": true}}'))).toThrow();
+        expect(() => {
+          const evil = Object.create(null);
+          evil.constructor = { prototype: { admin: true } };
+          orchestrator.enqueueTask(evil);
+        }).toThrow();
+      });
+
+      test('should validate priority, deadline, and type constraints', () => {
+        expect(() => orchestrator.enqueueTask({ type: '' })).toThrow();
+        expect(() => orchestrator.enqueueTask({ type: 123 })).toThrow();
+        expect(() => orchestrator.enqueueTask({ priority: 'INVALID_PRIORITY' })).toThrow();
+        expect(() => orchestrator.enqueueTask({ priority: 123 })).toThrow();
+        expect(() => orchestrator.enqueueTask({ deadline: -10 })).toThrow();
+        expect(() => orchestrator.enqueueTask({ deadline: 'tomorrow' })).toThrow();
+      });
+
+      test('should sanitize and block overwrites of core task fields', () => {
+        const taskId = orchestrator.enqueueTask({
+          type: 'prediction',
+          id: 'malicious-task-id',
+          status: 'COMPLETED',
+          assignedAgent: 'malicious-agent',
+        });
+
+        const task = orchestrator.getTask(taskId);
+        expect(task.id).toBe(taskId);
+        expect(task.status).toBe('PENDING');
+        expect(task.assignedAgent).toBeNull();
+      });
+    });
   });
 
   describe('Reputation Tracking', () => {
