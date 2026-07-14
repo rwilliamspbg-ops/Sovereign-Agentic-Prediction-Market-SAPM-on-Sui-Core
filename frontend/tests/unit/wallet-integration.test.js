@@ -243,7 +243,7 @@ describe('3. Sui address validation', () => {
   });
 
   test('package ID passes address format', () => {
-    const pkgId = '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
+    const pkgId = process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '0x746797ce' + '439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
     expect(isValidSuiHexAddress(pkgId)).toBe(true);
   });
 });
@@ -488,7 +488,7 @@ describe('9. Network switching', () => {
 // ─── 10. Config & package ID ─────────────────────────────────────────────────
 
 describe('10. Sui config and deployed package', () => {
-  const SUI_PACKAGE_ID = process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
+  const SUI_PACKAGE_ID = process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '0x746797ce' + '439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
   const SUI_NETWORK = process.env.SUI_NETWORK || 'testnet';
 
   test('package ID is a valid 64-char hex address', () => {

@@ -120,7 +120,7 @@ router.post('/orders/execute', async (req, res) => {
     const mistVal = toMist(amountSui);
 
     const tx = new Transaction();
-    tx.setGasBudget(8_000_000);
+    tx.setGasBudget(parseInt(process.env.SUI_GAS_BUDGET || "20000000"));
     const [stakeCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(mistVal)]);
     tx.moveCall({
       target:    `${PACKAGE_ID}::prediction_market::open_position`,
@@ -148,7 +148,7 @@ router.post('/orders/batch', async (req, res) => {
       const sideU8  = o.side === 'YES' ? 1 : 2;
       const mistVal = toMist(o.amountSui);
       const tx      = new Transaction();
-      tx.setGasBudget(8_000_000);
+      tx.setGasBudget(parseInt(process.env.SUI_GAS_BUDGET || "20000000"));
       const [stakeCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(mistVal)]);
       tx.moveCall({
         target:    `${PACKAGE_ID}::prediction_market::open_position`,
