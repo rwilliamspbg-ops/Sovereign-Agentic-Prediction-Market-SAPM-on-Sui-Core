@@ -20,7 +20,10 @@ const router = express.Router();
 const SUI_NETWORK   = process.env.SUI_NETWORK || 'testnet';
 const SUI_RPC_URL   = process.env.SUI_RPC || getFullnodeUrl(SUI_NETWORK);
 const PACKAGE_ID    = process.env.REGISTRY_PACKAGE_ID ||
-  '0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188';
+  process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '';
+if (!PACKAGE_ID) {
+  console.warn('[SUI] WARNING: REGISTRY_PACKAGE_ID / NEXT_PUBLIC_SUI_PACKAGE_ID not set');
+}
 
 // Signer: base64-encoded 32-byte seed stored in AGG_SUI_SECRET.
 // Falls back to a deterministic test keypair when the env is absent.
@@ -120,7 +123,7 @@ router.post('/orders/execute', async (req, res) => {
     const mistVal = toMist(amountSui);
 
     const tx = new Transaction();
-    tx.setGasBudget(parseInt(process.env.SUI_GAS_BUDGET || "20000000"));
+    tx.setGasBudget(parseInt(process.env.SUI_GAS_BUDGET || '20000000', 10));
     const [stakeCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(mistVal)]);
     tx.moveCall({
       target:    `${PACKAGE_ID}::prediction_market::open_position`,
@@ -148,7 +151,7 @@ router.post('/orders/batch', async (req, res) => {
       const sideU8  = o.side === 'YES' ? 1 : 2;
       const mistVal = toMist(o.amountSui);
       const tx      = new Transaction();
-      tx.setGasBudget(parseInt(process.env.SUI_GAS_BUDGET || "20000000"));
+      tx.setGasBudget(parseInt(process.env.SUI_GAS_BUDGET || '20000000', 10));
       const [stakeCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(mistVal)]);
       tx.moveCall({
         target:    `${PACKAGE_ID}::prediction_market::open_position`,
@@ -180,7 +183,7 @@ router.post('/gas/estimate', async (req, res) => {
       ok: true,
       contractId,
       functionName,
-      estimatedGasBudget: 8_000_000,
+      estimatedGasBudget: parseInt(process.env.SUI_GAS_BUDGET || '20000000', 10),
       walletBalanceMist: bal.totalBalance,
     });
   } catch (e) {

@@ -41,8 +41,8 @@ export async function registerCopilotActions(): Promise<void> {
   });
 
   // Listen for wallet updates and refresh context
-  window.addEventListener('sapm:wallet-updated', (event) => {
-    const detail = event.detail as { connected: boolean; address: string | null };
+  window.addEventListener('sapm:wallet-updated', (event: Event) => {
+    const detail = (event as CustomEvent).detail as { connected: boolean; address: string | null };
     copilotBridge.setContext({
       walletConnected: detail.connected,
       walletAddress: detail.address,

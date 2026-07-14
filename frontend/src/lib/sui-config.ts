@@ -1,32 +1,59 @@
-// SAPM deployed Move package (Registry + incentives + prediction_market)
-// Updated to 2026-06-08 testnet deployment (EqyVmTFegJVTSkLmf2v2VMC8o1cz17dKSGtQKjTuBwak)
-export const SUI_PACKAGE_ID = process.env.NEXT_PUBLIC_SUI_PACKAGE_ID ||
-  '0xee0b87415139cc95ec2b9c684f0abb0b6befeb21a02a7ca246c16dd8e25b8188';
+export const SUI_PACKAGE_ID = process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '';
 export const SUI_NETWORK = (process.env.NEXT_PUBLIC_SUI_NETWORK as 'testnet' | 'mainnet') || 'testnet';
 
 export const SUISCAN_PACKAGE_URL = `https://suiscan.xyz/${SUI_NETWORK}/object/${SUI_PACKAGE_ID}`;
 export const SUISCAN_TX_URL = (digest: string) =>
   `https://suiscan.xyz/${SUI_NETWORK}/tx/${digest}`;
 
-// ─── DeepBook Predict (testnet, predict-testnet-4-16 branch) ─────────────────
-// Source: https://docs.sui.io/onchain-finance/deepbook-predict/contract-information
-export const DEEPBOOK_PREDICT_PACKAGE_ID =
-  process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID ||
-  '0xf5ea2b3749c65d6e56507cc35388719aadb28f9cab873696a2f8687f5c785138';
+export const SUI_EXPLORER_TX_URL = (digest: string) =>
+  `https://suiexplorer.com/txblock/${digest}?network=${SUI_NETWORK}`;
+
+function resolveDeepBookPredictPackageId(): string {
+  if (process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID) {
+    return process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_PACKAGE_ID;
+  }
+  return '';
+}
+
+function resolveDeepBookPredictServer(): string {
+  if (process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_SERVER) {
+    return process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_SERVER;
+  }
+  return SUI_NETWORK === 'mainnet'
+    ? 'https://predict-server.mainnet.mystenlabs.com'
+    : 'https://predict-server.testnet.mystenlabs.com';
+}
+
+export const DEEPBOOK_PREDICT_PACKAGE_ID = resolveDeepBookPredictPackageId();
 export const DEEPBOOK_PREDICT_REGISTRY =
-  '0x43af14fed5480c20ff77e2263d5f794c35b9fab7e2212903127062f4fe2a6e64';
+  process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_REGISTRY || '';
 export const DEEPBOOK_PREDICT_OBJECT_ID =
-  '0xc8736204d12f0a7277c86388a68bf8a194b0a14c5538ad13f22cbd8e2a38028a';
-export const DEEPBOOK_PREDICT_SERVER = 'https://predict-server.testnet.mystenlabs.com';
+  process.env.NEXT_PUBLIC_DEEPBOOK_PREDICT_OBJECT_ID || '';
+export const DEEPBOOK_PREDICT_SERVER = resolveDeepBookPredictServer();
 export const DEEPBOOK_PREDICT_DUSDC_TYPE =
   '0xe95040085976bfd54a1a07225cd46c8a2b4e8e2b6732f140a0fc49850ba73e1a::dusdc::DUSDC';
 export const DEEPBOOK_SANDBOX_URL = 'https://github.com/MystenLabs/deepbook-sandbox';
 
-// ─── Walrus (testnet) ─────────────────────────────────────────────────────────
-export const WALRUS_AGGREGATOR_URL = process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL ||
-  'https://aggregator.walrus-testnet.walrus.space';
-export const WALRUS_PUBLISHER_URL = process.env.NEXT_PUBLIC_WALRUS_PUBLISHER_URL ||
-  'https://publisher.walrus-testnet.walrus.space';
+function resolveWalrusAggregator(): string {
+  if (process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL) {
+    return process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL;
+  }
+  return SUI_NETWORK === 'mainnet'
+    ? 'https://aggregator.walrus.app'
+    : 'https://aggregator.walrus-testnet.walrus.space';
+}
+
+function resolveWalrusPublisher(): string {
+  if (process.env.NEXT_PUBLIC_WALRUS_PUBLISHER_URL) {
+    return process.env.NEXT_PUBLIC_WALRUS_PUBLISHER_URL;
+  }
+  return SUI_NETWORK === 'mainnet'
+    ? 'https://publisher.walrus.app'
+    : 'https://publisher.walrus-testnet.walrus.space';
+}
+
+export const WALRUS_AGGREGATOR_URL = resolveWalrusAggregator();
+export const WALRUS_PUBLISHER_URL = resolveWalrusPublisher();
 
 export type ResourceCategory = {
   title: string;
@@ -65,7 +92,7 @@ export const SUI_RESOURCE_HUB: ResourceCategory[] = [
       { label: 'MemWal Playground', url: 'https://docs.memwal.ai/' },
       { label: 'MemWal GitHub', url: 'https://github.com/MystenLabs/MemWal' },
       { label: 'MemWal Workshop', url: 'https://youtu.be/GncjVUEJw9Y?si=tzWeNi_3gAIkVT6f' },
-      { label: 'MemWal Walkthrough', url: 'https://app.notion.com/3666d9dcb4e9801dadb0e67ad368235e?pvs=21' },
+      { label: 'MemWal Walkthrough', url: 'https://app.notion.com/3666d9dcb4e980235e2c0030960235e2?pvs=21' },
       { label: 'Seal Docs', url: 'https://seal-docs.wal.app/' },
       { label: 'Sui Stack Messaging', url: 'https://github.com/MystenLabs/sui-stack-messaging' },
       { label: 'Walrus Telegram Group', url: 'https://go.sui.io/ofw-walrus-tg' },
@@ -74,7 +101,7 @@ export const SUI_RESOURCE_HUB: ResourceCategory[] = [
   },
   {
     title: 'DeepBook',
-    description: 'Predict and on-chain market infra primitives for Sui finance apps.',
+    description: 'Predict and on-chain market infra primitives for Sui finance.',
     links: [
       { label: 'DeepBook Predict (Testnet)', url: 'https://github.com/MystenLabs/deepbookv3/tree/predict-testnet-4-16/packages/predict' },
       { label: 'DeepBook Sandbox', url: 'https://github.com/MystenLabs/deepbook-sandbox' },

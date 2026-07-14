@@ -8,8 +8,6 @@ module 0x0::prediction_market {
     use sui::sui::SUI;
     use sui::event;
 
-    // ─── Market state ────────────────────────────────────────────────────────
-
     const STATUS_OPEN: u8      = 0;
     const STATUS_RESOLVED: u8  = 1;
     const STATUS_CANCELLED: u8 = 2;
@@ -19,26 +17,35 @@ module 0x0::prediction_market {
     const OUTCOME_YES:  u8 = 1;
     const OUTCOME_NO:   u8 = 2;
 
-    const MIN_STAKE_MIST: u64 = 10_000_000; // 0.01 SUI minimum position
-    const MAX_POSITION_MIST: u64 = 10_000_000_000; // 100 SUI cap per single position
+    const MIN_STAKE_MIST: u64 = 10_000_000;
+    const MAX_POSITION_MIST: u64 = 10_000_000_000;
 
-    // ─── Error codes ─────────────────────────────────────────────────────────
+    const FEE_BASIS_POINTS: u64 = 250;
+    const FEE_DENOMINATOR: u64 = 10000;
 
     const E_MARKET_NOT_OPEN:     u64 = 2001;
     const E_INVALID_SIDE:        u64 = 2002;
     const E_STAKE_TOO_SMALL:     u64 = 2003;
-    const E_STAKE_TOO_LARGE:    u64 = 2004;
+    const E_STAKE_TOO_LARGE:     u64 = 2004;
     const E_MARKET_ALREADY_DONE: u64 = 2005;
     const E_INVALID_OUTCOME:     u64 = 2006;
     const E_MARKET_NOT_RESOLVED: u64 = 3001;
     const E_WRONG_SIDE:          u64 = 3002;
     const E_ZERO_WINNING_POOL:   u64 = 3003;
+    const E_MARKET_HALTED:       u64 = 3004;
     const E_MARKET_NOT_CANCELLED:u64 = 4001;
-    const E_MARKET_HALTED:       u64 = 3002;
-
-    // ─── Structs ─────────────────────────────────────────────────────────────
+    const E_INVALID_FEE:         u64 = 5002;
 
     public struct MarketCap has key { id: object::UID }
+
+    public struct AdminCap has key { id: object::UID }
+
+    public struct FeeConfig has key {
+        id: object::UID,
+        fee_basis_points: u64,
+        treasury_address: address,
+        total_fees_collected: u64,
+    }
 
     public struct PredictionMarket has key {
         id: object::UID,
@@ -46,26 +53,23 @@ module 0x0::prediction_market {
         question: vector<u8>,
         yes_pool: Balance<SUI>,
         no_pool:  Balance<SUI>,
-        /// Total shares outstanding on the winning side (tracked at open_position time)
         yes_shares_total: u64,
         no_shares_total:  u64,
         status: u8,
         outcome: u8,
         resolution_epoch: u64,
         total_trades: u64,
-        /// Circuit breaker state (0 = normal, 1 = tripped)
         circuit_breaker_tripped: bool,
+        fees_collected: u64,
     }
 
     public struct Position has key {
         id: object::UID,
         market_id: address,
         trader: address,
-        side: u8,   // OUTCOME_YES or OUTCOME_NO
+        side: u8,
         shares: u64,
     }
-
-    // ─── Events ──────────────────────────────────────────────────────────────
 
     public struct MarketCreated has copy, drop {
         market_id: address,
@@ -80,6 +84,7 @@ module 0x0::prediction_market {
         side: u8,
         stake_mist: u64,
         shares: u64,
+        fee_mist: u64,
     }
 
     public struct MarketResolved has copy, drop {
@@ -116,17 +121,55 @@ module 0x0::prediction_market {
         reason: vector<u8>,
     }
 
-    // ─── Market lifecycle ────────────────────────────────────────────────────
+    public struct FeeCollected has copy, drop {
+        market_id: address,
+        trader: address,
+        fee_mist: u64,
+        treasury: address,
+    }
 
-    /// Create a new binary prediction market (shared object).
-    /// Returns a MarketCap to the creator for administrative actions.
+    public struct FeeConfigUpdated has copy, drop {
+        fee_basis_points: u64,
+        treasury_address: address,
+    }
+
+    public fun init_prediction_market(ctx: &mut TxContext) {
+        let admin_cap = AdminCap { id: object::new(ctx) };
+        transfer::transfer(admin_cap, tx_context::sender(ctx));
+
+        let fee_config = FeeConfig {
+            id: object::new(ctx),
+            fee_basis_points: FEE_BASIS_POINTS,
+            treasury_address: tx_context::sender(ctx),
+            total_fees_collected: 0,
+        };
+        transfer::share_object(fee_config);
+    }
+
+    public fun update_fee_config(
+        _admin: &AdminCap,
+        fee_config: &mut FeeConfig,
+        new_fee_basis_points: u64,
+        new_treasury_address: address,
+        _ctx: &mut TxContext,
+    ) {
+        assert!(new_fee_basis_points <= 1000, E_INVALID_FEE);
+        fee_config.fee_basis_points = new_fee_basis_points;
+        fee_config.treasury_address = new_treasury_address;
+
+        event::emit(FeeConfigUpdated {
+            fee_basis_points: new_fee_basis_points,
+            treasury_address: new_treasury_address,
+        });
+    }
+
     public fun create_market(
         question: vector<u8>,
         resolution_epoch: u64,
         ctx: &mut TxContext,
-    ) : MarketCap {
+    ) {
         let market_id_uid = object::new(ctx);
-        let market_addr   = object::uid_to_address(&market_id_uid);
+        let market_addr = object::uid_to_address(&market_id_uid);
         let market = PredictionMarket {
             id: market_id_uid,
             creator: tx_context::sender(ctx),
@@ -140,6 +183,7 @@ module 0x0::prediction_market {
             resolution_epoch,
             total_trades: 0,
             circuit_breaker_tripped: false,
+            fees_collected: 0,
         };
         event::emit(MarketCreated {
             market_id: market_addr,
@@ -148,28 +192,44 @@ module 0x0::prediction_market {
             resolution_epoch,
         });
         transfer::share_object(market);
-        
+
         let cap = MarketCap { id: object::new(ctx) };
         transfer::transfer(cap, tx_context::sender(ctx));
-        cap
     }
 
-    /// Open a YES or NO position. `side` must be OUTCOME_YES (1) or OUTCOME_NO (2).
     public fun open_position(
         market: &mut PredictionMarket,
+        fee_config: &mut FeeConfig,
         side: u8,
-        stake: Coin<SUI>,
+        mut stake: Coin<SUI>,
         ctx: &mut TxContext,
     ) {
         assert!(market.status == STATUS_OPEN, E_MARKET_NOT_OPEN);
-        assert!(market.status != STATUS_HALTED, E_MARKET_HALTED);
-        assert!(not market.circuit_breaker_tripped, E_MARKET_HALTED);
+        assert!(!market.circuit_breaker_tripped, E_MARKET_HALTED);
         assert!(side == OUTCOME_YES || side == OUTCOME_NO, E_INVALID_SIDE);
         let stake_val = coin::value(&stake);
         assert!(stake_val >= MIN_STAKE_MIST, E_STAKE_TOO_SMALL);
         assert!(stake_val <= MAX_POSITION_MIST, E_STAKE_TOO_LARGE);
 
-        let shares        = stake_val; // 1 share per MIST
+        let fee_amount = (stake_val * fee_config.fee_basis_points) / FEE_DENOMINATOR;
+        let net_stake_val = stake_val - fee_amount;
+
+        let shares = net_stake_val;
+
+        if (fee_amount > 0) {
+            let fee_coin = coin::split(&mut stake, fee_amount, ctx);
+            transfer::public_transfer(fee_coin, fee_config.treasury_address);
+            fee_config.total_fees_collected = fee_config.total_fees_collected + fee_amount;
+            market.fees_collected = market.fees_collected + fee_amount;
+
+            event::emit(FeeCollected {
+                market_id: object::uid_to_address(&market.id),
+                trader: tx_context::sender(ctx),
+                fee_mist: fee_amount,
+                treasury: fee_config.treasury_address,
+            });
+        };
+
         let stake_balance = coin::into_balance(stake);
 
         if (side == OUTCOME_YES) {
@@ -189,6 +249,7 @@ module 0x0::prediction_market {
             side,
             stake_mist: stake_val,
             shares,
+            fee_mist: fee_amount,
         });
 
         let position = Position {
@@ -201,12 +262,11 @@ module 0x0::prediction_market {
         transfer::transfer(position, tx_context::sender(ctx));
     }
 
-    /// Resolve the market. Requires MarketCap.
     public fun resolve_market(
         _cap: &MarketCap,
         market: &mut PredictionMarket,
         outcome: u8,
-        ctx: &mut TxContext,
+        _ctx: &mut TxContext,
     ) {
         assert!(market.status == STATUS_OPEN, E_MARKET_ALREADY_DONE);
         assert!(outcome == OUTCOME_YES || outcome == OUTCOME_NO, E_INVALID_OUTCOME);
@@ -222,12 +282,11 @@ module 0x0::prediction_market {
         });
     }
 
-    /// Trip the circuit breaker. Requires MarketCap.
     public fun trip_circuit_breaker(
         _cap: &MarketCap,
         market: &mut PredictionMarket,
         reason: vector<u8>,
-        ctx: &mut TxContext,
+        _ctx: &mut TxContext,
     ) {
         assert!(market.status == STATUS_OPEN, E_MARKET_ALREADY_DONE);
         market.circuit_breaker_tripped = true;
@@ -237,12 +296,11 @@ module 0x0::prediction_market {
         });
     }
 
-    /// Halt a market. Requires MarketCap.
     public fun halt_market(
         _cap: &MarketCap,
         market: &mut PredictionMarket,
         reason: vector<u8>,
-        ctx: &mut TxContext,
+        _ctx: &mut TxContext,
     ) {
         assert!(market.status == STATUS_OPEN, E_MARKET_ALREADY_DONE);
         market.status = STATUS_HALTED;
@@ -252,32 +310,28 @@ module 0x0::prediction_market {
         });
     }
 
-    /// Cancel the market. Requires MarketCap.
     public fun cancel_market(
         _cap: &MarketCap,
         market: &mut PredictionMarket,
-        ctx: &mut TxContext,
+        _ctx: &mut TxContext,
     ) {
         assert!(market.status == STATUS_OPEN, E_MARKET_ALREADY_DONE);
-
         market.status = STATUS_CANCELLED;
         event::emit(MarketCancelled {
             market_id: object::uid_to_address(&market.id),
         });
     }
 
-    // ─── Position redemption ─────────────────────────────────────────────────
-
-    /// Redeem a winning position after market resolution.
     public fun redeem_position(
         market: &mut PredictionMarket,
+        fee_config: &FeeConfig,
         position: Position,
         ctx: &mut TxContext,
     ) {
         assert!(market.status == STATUS_RESOLVED, E_MARKET_NOT_RESOLVED);
         assert!(position.side == market.outcome, E_WRONG_SIDE);
 
-        let Position { id, market_id: _, trader, side, shares } = position;
+        let Position { id, market_id: _, trader, side: _, shares } = position;
         object::delete(id);
 
         let winning_shares_total = if (market.outcome == OUTCOME_YES) {
@@ -288,18 +342,34 @@ module 0x0::prediction_market {
         assert!(winning_shares_total > 0, E_ZERO_WINNING_POOL);
 
         let total_pot = balance::value(&market.yes_pool) + balance::value(&market.no_pool);
-        
-        // FIX: Use u128 for intermediate multiplication to prevent overflow
-        let payout_mist = ((shares as u128) * (total_pot as u128)) / (winning_shares_total as u128);
-        let payout_mist_u64 = payout_mist as u64;
 
-        // Extract payout from the winning pool
-        let payout_balance = if (market.outcome == OUTCOME_YES) {
-            balance::split(&mut market.yes_pool, payout_mist_u64)
-        } else {
-            balance::split(&mut market.no_pool, payout_mist_u64)
+        let shares_u128 = shares as u128;
+        let total_pot_u128 = total_pot as u128;
+        let winning_u128 = winning_shares_total as u128;
+        let gross_payout = (shares_u128 * total_pot_u128) / winning_u128;
+
+        let fee_bps = (fee_config.fee_basis_points as u128);
+        let fee_denom = (FEE_DENOMINATOR as u128);
+        let redemption_fee = (gross_payout * fee_bps) / fee_denom;
+        let net_payout = gross_payout - redemption_fee;
+        let net_payout_u64 = (net_payout as u64);
+        let fee_u64 = (redemption_fee as u64);
+
+        if (fee_u64 > 0) {
+            let fee_balance = if (market.outcome == OUTCOME_YES) {
+                balance::split(&mut market.yes_pool, fee_u64)
+            } else {
+                balance::split(&mut market.no_pool, fee_u64)
+            };
+            let fee_coin_val = coin::from_balance(fee_balance, ctx);
+            transfer::public_transfer(fee_coin_val, fee_config.treasury_address);
         };
 
+        let payout_balance = if (market.outcome == OUTCOME_YES) {
+            balance::split(&mut market.yes_pool, net_payout_u64)
+        } else {
+            balance::split(&mut market.no_pool, net_payout_u64)
+        };
         let payout_coin = coin::from_balance(payout_balance, ctx);
         transfer::public_transfer(payout_coin, trader);
 
@@ -307,11 +377,10 @@ module 0x0::prediction_market {
             market_id: object::uid_to_address(&market.id),
             trader,
             shares,
-            payout_mist: payout_mist_u64,
+            payout_mist: net_payout_u64,
         });
     }
 
-    /// Refund a position from a cancelled market.
     public fun cancel_position(
         market: &mut PredictionMarket,
         position: Position,
@@ -338,14 +407,18 @@ module 0x0::prediction_market {
         });
     }
 
-    // ─── Read helpers ────────────────────────────────────────────────────────
     public fun get_market_status(market: &PredictionMarket): u8  { market.status }
     public fun get_market_outcome(market: &PredictionMarket): u8  { market.outcome }
     public fun get_yes_pool(market: &PredictionMarket): u64       { balance::value(&market.yes_pool) }
     public fun get_no_pool(market: &PredictionMarket): u64        { balance::value(&market.no_pool) }
     public fun get_total_trades(market: &PredictionMarket): u64   { market.total_trades }
     public fun get_yes_shares(market: &PredictionMarket): u64     { market.yes_shares_total }
-    public fun get_no_shares(market: &PredictionMarket): u64     { market.no_shares_total }
+    public fun get_no_shares(market: &PredictionMarket): u64      { market.no_shares_total }
+    public fun get_fees_collected(market: &PredictionMarket): u64 { market.fees_collected }
+
+    public fun get_fee_config(fee_config: &FeeConfig): (u64, address, u64) {
+        (fee_config.fee_basis_points, fee_config.treasury_address, fee_config.total_fees_collected)
+    }
 
     public fun get_implied_yes_prob(market: &PredictionMarket): u64 {
         let yes   = balance::value(&market.yes_pool);

@@ -1,25 +1,20 @@
-```gitignore
-# Dependencies
 node_modules/
 
-# Build outputs
 dist/
 build/
 .next/
 out/
 
-# Environment variables
 .env
 .env.local
-*.env.*
+*.env.local
+.env.*.local
 
-# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Python
 __pycache__/
 *.pyc
 *.pyo
@@ -28,25 +23,24 @@ __pycache__/
 env/
 venv/
 .venv/
-.ENV
 
-# Logs
 *.log
 
-# OS generated files
 .DS_Store
 Thumbs.db
 
-# Coverage reports
 coverage/
 htmlcov/
 .coverage
 
-# Temporary files
 *.tmp
 *.temp
-```
 
-Wait, let me reconsider the file changes. The modified files are only TypeScript/React source files (`frontend/src/app/api/copilotkit/[[...slug]]/route.ts` and `frontend/src/app/layout.tsx`). There are no build artifacts, dependency directories, or temporary files in the changes shown. This appears to be just source code modifications.
+*.bak
+*.bak2
+*.backup
 
-(empty)
+build/
+
+Move.lock
+build/

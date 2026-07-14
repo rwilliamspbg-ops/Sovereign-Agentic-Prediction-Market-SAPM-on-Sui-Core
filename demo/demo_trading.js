@@ -15,7 +15,10 @@ class SAPMTradingDemo {
     this.client = null;
     this.network = process.env.SUI_NETWORK || 'testnet';
     this.rpcEndpoint = this.config.rpcEndpoint || process.env.SUI_RPC || this.getDefaultRpc(this.network);
-    this.packageId = this.config.packageId || process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '0x746797ce' + '439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
+    this.packageId = this.config.packageId || process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '';
+    if (!this.packageId) {
+      console.warn('[WARN] NEXT_PUBLIC_SUI_PACKAGE_ID not set. Set it via environment or config.');
+    }
     this.walletAddress = this.config.walletAddress || process.env.SUI_WALLET || '';
     this.marketObjectIds = this.config.marketObjectIds || [];
   }
@@ -321,8 +324,12 @@ async function main() {
       .filter(Boolean);
 
     const config = {
-      rpcEndpoint: process.env.SUI_RPC || 'https://fullnode.testnet.sui.io:443',
-      packageId: process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '0x746797ce' + '439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8',
+      rpcEndpoint: process.env.SUI_RPC || (() => {
+        const net = (process.env.SUI_NETWORK || 'testnet').toLowerCase();
+        const map = { mainnet: 'https://fullnode.mainnet.sui.io:443', testnet: 'https://fullnode.testnet.sui.io:443', devnet: 'https://fullnode.devnet.sui.io:443' };
+        return map[net] || map.testnet;
+      })(),
+      packageId: process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '',
       walletAddress: process.env.SUI_WALLET || '',
       marketObjectIds
     };

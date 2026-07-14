@@ -98,7 +98,11 @@ jobs:
       
       - name: Check for secrets in code
         run: |
-          grep -r "password\|secret\|key" --include="*.js" --exclude-dir=node_modules . || true
+          if rg -n "(suiprivkey|sk-proj-[A-Za-z0-9]{20,}|-----BEGIN (RSA |EC |DSA )?PRIVATE KEY)" --include="*.js" --include="*.ts" --include="*.move" --glob='!node_modules/**' .; then
+            echo "Potential secret found in source code. Review above matches."
+            exit 1
+          fi
+          echo "No hardcoded secrets detected in source files."
 
   formal-contracts-verify:
     name: Formal Contract Verification

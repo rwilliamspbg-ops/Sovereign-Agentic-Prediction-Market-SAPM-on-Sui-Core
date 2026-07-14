@@ -28,6 +28,12 @@ jobs:
           bash -n scripts/phase2_sim.sh
           bash -n scripts/phase2_go_nogo.sh
 
+      - name: Install aggregator dependencies
+        run: npm --prefix agents/aggregator ci --no-audit --no-fund
+
+      - name: Install sample agent dependencies
+        run: npm --prefix agents/sample ci --no-audit --no-fund
+
       - name: Run go/no-go gate
         run: ./scripts/phase2_go_nogo.sh
 

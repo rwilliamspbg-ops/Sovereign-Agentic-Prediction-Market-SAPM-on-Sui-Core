@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Mainnet Readiness Audit & Fee Implementation (July 14, 2026)
+
+#### Move Contract Security Audit & Enhancements
+- **prediction_market.move**: Added platform fee collection (2.5% default, configurable via AdminCap), FeeConfig shared object, fee events (FeeCollected, FeeConfigUpdated), AdminCap pattern for fee management, redemption fees on winning payouts, circuit breaker state tracking, max fee cap (10%), fixed duplicate error codes, fixed `object::id_to_address` → `object::uid_to_address` API compatibility, removed redundant assertions, fixed `fn` → `fun` syntax error, fixed `not` → `!` operator, fixed u128 arithmetic disambiguation, added `fees_collected` field to PredictionMarket
+- **incentives.move**: Added configurable treasury address for slashed funds (was burning to @0x0), added unstake cooldown period (24h default), added `request_unstake` function, added Clock dependency for time-based operations, added `update_treasury` and `update_risk_params` functions, added TreasuryUpdated and SlashFeeCollected events, fixed inverted reputation penalty logic bug, fixed `update_risk_parameters` consuming shared object, changed AgentStake from shared to owned object, added RiskParameters with `min_stake_mist` and `unstake_cooldown_ms`, added comprehensive error codes
+- **sapm_data.move**: Added DataFeeConfig shared object, added fee collection for trade records (0.001 SUI) and market snapshots (0.002 SUI), added DataFeeCollected events, added `update_data_fees` function, added `get_data_fee_config` getter
+- **Registry.move**: Added admin tracking, total_keys counter, KeyAdded/KeyRemoved events, `remove_key` function, `get_registry_stats` and `get_key_count` getters, proper separate UIDs for registry and cap
+
+#### Security Fixes
+- **CRITICAL**: Redacted exposed OpenAI API key from `.env` file
+- **CRITICAL**: Fixed broken `.gitignore` (had markdown fencing and AI-generated text, was not protecting `.env` files)
+- **CRITICAL**: Fixed git merge conflict markers in `frontend/.env.example`
+- Removed hardcoded testnet package IDs from `demo/demo_predict_live.js`, `demo/demo_trading.js`
+- Removed hardcoded testnet fallback package ID from `agents/sui/integration/sui-blockchain.js`
+- Increased gas budget from 8M to 20M MIST (configurable via `SUI_GAS_BUDGET` env var)
+- Updated all services to use environment-variable-driven network configuration
+
+#### Frontend Mainnet Support
+- Updated `frontend/src/lib/sui-config.ts` for dynamic mainnet/testnet resolution
+- Walrus and DeepBook endpoints now auto-resolve based on `NEXT_PUBLIC_SUI_NETWORK`
+- Added `SUI_EXPLORER_TX_URL` helper for suiexplorer.com links
+- Fixed `frontend/.env.example` merge conflict
+
+#### Configuration & Documentation
+- Updated `.env.example` with mainnet defaults and fee configuration variables
+- Updated `.env.mainnet` with complete mainnet configuration template
+- Created `MAINNET_LAUNCH_GUIDE.md` with step-by-step deployment instructions
+- Updated `README.md` with mainnet-ready badge, audit status table
+- Updated `Move.toml` — already had mainnet framework and multi-environment support
+- Cleaned up backup `.move` files from sources directory
+
+#### GitHub Workflow Fixes
+- Added `move-build` CI job to compile Move contracts with Sui CLI (mainnet framework) and added to critical-path dependencies
+- Fixed `ci_validation.yml` secret scan — replaced overly broad grep with targeted regex for actual secret patterns
+- Fixed `phase2-hardening-ci.yml` — added missing dependency install steps for aggregator and sample packages
+
+#### Test Results
+- Trader agent: 7/7 tests passing
+- Aggregator agent: 33/33 tests passing
+- Orchestrator agent: 142/145 tests passing (3 Go binary integration tests expected without compiled binary)
+- Move contracts: compile clean with `sui move build` against mainnet framework
+
 ### Added - Trader Agent Live Visibility Upgrade (June 11, 2026)
 
 #### Markets UI Real-Time Observability

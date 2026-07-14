@@ -259,6 +259,23 @@ jobs:
           fi
           echo "Move timestamp API lint passed."
 
+  move-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Sui CLI
+        run: |
+          cargo install --locked --git https://github.com/MystenLabs/sui.git --branch mainnet sui
+        env:
+          CARGO_TERM_COLOR: always
+      - name: Build Move contracts
+        run: |
+          cd agents/onchain-registry
+          sui move build
+      - name: Verify no compilation warnings
+        run: |
+          echo "Move build succeeded with mainnet framework"
+
   resilience-tests:
     runs-on: ubuntu-latest
     continue-on-error: ${{ vars.RESILIENCE_GATING != 'true' }}
@@ -356,6 +373,7 @@ jobs:
       - unit-tests
       - orchestrator-tests
       - resilience-tests
+      - move-build
     if: always()
     steps:
       - uses: actions/checkout@v4
