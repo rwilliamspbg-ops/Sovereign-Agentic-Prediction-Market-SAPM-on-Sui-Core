@@ -20,7 +20,7 @@ class PTBBuilder {
     this.config = config || {};
     this.client = null;
     this.keypair = null;
-    this.gasBudget = config.gasBudget || 5_000_000; // 0.005 SUI — safe floor for Move calls
+    this.gasBudget = config.gasBudget || parseInt(process.env.SUI_GAS_BUDGET || "20000000"); // 0.005 SUI — safe floor for Move calls
     this.defaultGasObject = config.defaultGasObject || null;
   }
 

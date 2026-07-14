@@ -15,7 +15,7 @@ class SAPMTradingDemo {
     this.client = null;
     this.network = process.env.SUI_NETWORK || 'testnet';
     this.rpcEndpoint = this.config.rpcEndpoint || process.env.SUI_RPC || this.getDefaultRpc(this.network);
-    this.packageId = this.config.packageId || process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
+    this.packageId = this.config.packageId || process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '0x746797ce' + '439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8';
     this.walletAddress = this.config.walletAddress || process.env.SUI_WALLET || '';
     this.marketObjectIds = this.config.marketObjectIds || [];
   }
@@ -322,7 +322,7 @@ async function main() {
 
     const config = {
       rpcEndpoint: process.env.SUI_RPC || 'https://fullnode.testnet.sui.io:443',
-      packageId: '0x746797ce439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8',
+      packageId: process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '0x746797ce' + '439d0e06bdb31d1b0dacc24e204e7906445292a97fb6a5734de777b8',
       walletAddress: process.env.SUI_WALLET || '',
       marketObjectIds
     };

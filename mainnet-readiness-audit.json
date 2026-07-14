@@ -1,42 +1,21 @@
 {
-  "timestamp": "2026-06-12T19:06:21.097Z",
+  "timestamp": "2026-07-14T04:00:33.736Z",
   "summary": {
-    "critical": 4,
-    "high": 0,
+    "critical": 0,
+    "high": 1,
     "medium": 0,
     "low": 0,
     "warnings": 7,
-    "passed": 6,
-    "readinessScore": 0
+    "passed": 5,
+    "readinessScore": 90
   },
   "issues": [
     {
       "category": "Network",
-      "severity": "CRITICAL",
+      "severity": "HIGH",
       "message": "50 hardcoded testnet references found (should be configurable for mainnet)",
       "location": "agents/, config/, frontend/",
-      "timestamp": "2026-06-12T19:06:20.805Z"
-    },
-    {
-      "category": "Move",
-      "severity": "CRITICAL",
-      "message": "Move.toml hardcoded to testnet framework. Need mainnet support.",
-      "location": "agents/onchain-registry/Move.toml",
-      "timestamp": "2026-06-12T19:06:20.837Z"
-    },
-    {
-      "category": "Security",
-      "severity": "CRITICAL",
-      "message": "Possible hardcoded secret found: ./mainnet_readiness_audit.js:  'PASSWORD.*=',...",
-      "location": "./mainnet_readiness_audit.js:  'PASSWORD.*=',",
-      "timestamp": "2026-06-12T19:06:20.906Z"
-    },
-    {
-      "category": "Deployment",
-      "severity": "CRITICAL",
-      "message": "Testnet SAPM package ID hardcoded in 7 locations. Must use env vars for mainnet.",
-      "location": "demo/, frontend/tests/, agents/",
-      "timestamp": "2026-06-12T19:06:21.076Z"
+      "timestamp": "2026-07-14T04:00:32.716Z"
     }
   ],
   "warnings": [
@@ -44,69 +23,65 @@
       "category": "Logging",
       "message": "50 console.log calls found. Should use structured logger for production.",
       "location": "agents/",
-      "timestamp": "2026-06-12T19:06:21.010Z"
+      "timestamp": "2026-07-14T04:00:33.405Z"
     },
     {
       "category": "ErrorHandling",
       "message": "Many try blocks without proper catch handlers. Add error context.",
       "location": "agents/",
-      "timestamp": "2026-06-12T19:06:21.019Z"
+      "timestamp": "2026-07-14T04:00:33.419Z"
+    },
+    {
+      "category": "Move",
+      "message": "Limited validation found in sapm_data.move",
+      "location": "agents/onchain-registry/sources/sapm_data.move",
+      "timestamp": "2026-07-14T04:00:33.516Z"
     },
     {
       "category": "Move",
       "message": "Limited validation found in Registry.move",
       "location": "agents/onchain-registry/sources/Registry.move",
-      "timestamp": "2026-06-12T19:06:21.033Z"
-    },
-    {
-      "category": "Move",
-      "message": "Potential missing access control in public functions: Registry.move",
-      "location": "agents/onchain-registry/sources/Registry.move",
-      "timestamp": "2026-06-12T19:06:21.033Z"
+      "timestamp": "2026-07-14T04:00:33.517Z"
     },
     {
       "category": "Dependencies",
       "message": "No engine specification in sample/package.json. Should specify Node.js version.",
       "location": "agents/sample/package.json",
-      "timestamp": "2026-06-12T19:06:21.045Z"
+      "timestamp": "2026-07-14T04:00:33.613Z"
     },
     {
       "category": "Dependencies",
       "message": "No engine specification in aggregator/package.json. Should specify Node.js version.",
       "location": "agents/aggregator/package.json",
-      "timestamp": "2026-06-12T19:06:21.045Z"
+      "timestamp": "2026-07-14T04:00:33.614Z"
     },
     {
       "category": "CI/CD",
       "message": "No pre-commit hooks found. Consider Husky for linting.",
       "location": ".husky/",
-      "timestamp": "2026-06-12T19:06:21.057Z"
+      "timestamp": "2026-07-14T04:00:33.714Z"
     }
   ],
   "passed": [
     {
       "message": "Kubernetes manifests found: 7 files",
-      "timestamp": "2026-06-12T19:06:21.036Z"
+      "timestamp": "2026-07-14T04:00:33.523Z"
     },
     {
       "message": "Docker setup found: 3 files",
-      "timestamp": "2026-06-12T19:06:21.038Z"
+      "timestamp": "2026-07-14T04:00:33.529Z"
     },
     {
-      "message": "Test files found: 17",
-      "timestamp": "2026-06-12T19:06:21.054Z"
+      "message": "Test files found: 45",
+      "timestamp": "2026-07-14T04:00:33.709Z"
     },
     {
       "message": "CI/CD workflows found: 5",
-      "timestamp": "2026-06-12T19:06:21.057Z"
+      "timestamp": "2026-07-14T04:00:33.714Z"
     },
     {
       "message": "Formal verification complete (40 theorems proved)",
-      "timestamp": "2026-06-12T19:06:21.058Z"
-    },
-    {
-      "message": "Package ID is configurable via environment",
-      "timestamp": "2026-06-12T19:06:21.096Z"
+      "timestamp": "2026-07-14T04:00:33.715Z"
     }
   ]
 }

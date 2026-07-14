@@ -46,6 +46,9 @@ export class SuiIntegrationService {
   }
   
   private getRpcUrl(): string {
+    if (process.env.NEXT_PUBLIC_SUI_RPC) {
+      return process.env.NEXT_PUBLIC_SUI_RPC;
+    }
     const networks = {
       testnet: getFullnodeUrl('testnet'),
       mainnet: getFullnodeUrl('mainnet')

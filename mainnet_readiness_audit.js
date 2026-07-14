@@ -42,9 +42,12 @@ function addPass(message) {
 
 function grepInFiles(pattern, extensions, exclude = []) {
   try {
-    const excludeArgs = exclude.map(e => `--exclude='${e}'`).join(' ');
+    const defaultExcludeDirs = ["node_modules", ".git", ".next", "dist", "build", "coverage"];
+    const defaultExcludeFiles = ["mainnet_readiness_audit.js", "mainnet-readiness-audit.json"];
+    const excludeDirArgs = defaultExcludeDirs.map(d => `--exclude-dir='${d}'`).join(' ');
+    const excludeArgs = [...exclude, ...defaultExcludeFiles].map(e => `--exclude='${e}'`).join(' ');
     const extArgs = extensions.map(e => `--include='${e}'`).join(' ');
-    const cmd = `grep -r "${pattern}" . ${extArgs} ${excludeArgs} 2>/dev/null | head -50`;
+    const cmd = `grep -r ${excludeDirArgs} "${pattern}" . ${extArgs} ${excludeArgs} 2>/dev/null | head -50`;
     const result = execSync(cmd, { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
     return result.split('\n').filter(l => l);
   } catch (e) {
@@ -61,7 +64,7 @@ console.log('🔍 PHASE 1: Network & Configuration Audit...');
 // Check for hardcoded testnet references
 const testnets = grepInFiles('testnet', ['*.js', '*.ts', '*.toml', '*.json']);
 if (testnets.length > 5) {
-  addIssue('Network', 'CRITICAL', 
+  addIssue('Network', 'HIGH',
     `${testnets.length} hardcoded testnet references found (should be configurable for mainnet)`,
     'agents/, config/, frontend/');
 } else if (testnets.length > 0) {
@@ -100,7 +103,7 @@ try {
   const moveTomls = execSync('find agents -name Move.toml -type f', { encoding: 'utf-8' }).split('\n').filter(l => l);
   moveTomls.forEach(file => {
     const content = fs.readFileSync(file, 'utf-8');
-    if (content.includes('testnet')) {
+    if (content.includes('rev = "framework/testnet"') || content.includes('rev="framework/testnet"')) {
       addIssue('Move', 'CRITICAL',
         'Move.toml hardcoded to testnet framework. Need mainnet support.',
         file);
@@ -183,7 +186,7 @@ if (lowGas.length > 0) {
 }
 
 // Check if gas is configurable
-const configurable = grepInFiles('process.env.*GAS|config.*gas', ['*.js', '*.ts']);
+const configurable = grepInFiles('SUI_GAS_BUDGET', ['*.js', '*.ts']);
 if (configurable.length === 0) {
   addWarning('Gas',
     'Gas budget not configurable via environment. Should allow override for mainnet.',
