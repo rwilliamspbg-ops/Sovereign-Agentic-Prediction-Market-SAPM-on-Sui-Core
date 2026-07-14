@@ -270,6 +270,7 @@ export default function MarketExperienceBoard() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search events, assets, topics, or resolution sources..."
+                aria-label="Search markets, assets, topics, or resolution sources"
                 className="liquid-input"
                 suppressHydrationWarning
               />

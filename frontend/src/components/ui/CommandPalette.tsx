@@ -392,6 +392,9 @@ export function CommandPalette({ actions, compact = false }: CommandPaletteProps
           fontWeight: 700,
         }}
         title="Open command palette"
+        aria-label="Open command palette"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
       >
         {compact ? (
           <span style={{ fontSize: '0.74rem', color: '#7dd3fc', fontWeight: 800, letterSpacing: '0.04em' }}>
@@ -440,6 +443,7 @@ export function CommandPalette({ actions, compact = false }: CommandPaletteProps
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search commands, routes, docs..."
+                aria-label="Search commands, routes, docs..."
                 style={{
                   width: '100%',
                   minHeight: '44px',
