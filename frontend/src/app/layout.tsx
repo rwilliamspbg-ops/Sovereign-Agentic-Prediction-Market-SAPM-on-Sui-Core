@@ -717,7 +717,7 @@ export default function RootLayout({
                 }}>
                   {!isNarrowScreen && <CommandPalette />}
 
-                  {!isNarrowScreen && <AgentInsightButton onClick={() => setShowCopilotPanel(true)} />}
+                  {!isNarrowScreen && <AgentInsightButton onClick={() => setShowCopilotPanel(true)} isOpen={showCopilotPanel} />}
 
                   {isNarrowScreen && <CommandPalette compact />}
 
@@ -725,7 +725,11 @@ export default function RootLayout({
                   <div style={{ position: 'relative' }}>
                     <button
                       suppressHydrationWarning
+                      type="button"
                       onClick={() => setShowNetworkMenu(!showNetworkMenu)}
+                      aria-label="Select network"
+                      aria-haspopup="listbox"
+                      aria-expanded={showNetworkMenu}
                       style={{
                         padding: isNarrowScreen ? '0.45rem 0.68rem' : '0.4rem 0.75rem',
                         backgroundColor: currentNetworkConfig.bg,
@@ -796,6 +800,8 @@ export default function RootLayout({
                   {!isNarrowScreen && (
                     <button
                       suppressHydrationWarning
+                      type="button"
+                      aria-label="Notifications, 2 unread"
                       style={{
                       position: 'relative',
                       background: 'none',
@@ -893,7 +899,11 @@ export default function RootLayout({
 
                       <button
                         suppressHydrationWarning
+                        type="button"
                         onClick={() => setShowWalletMenu(!showWalletMenu)}
+                        aria-label="Wallet menu"
+                        aria-haspopup="menu"
+                        aria-expanded={showWalletMenu}
                         style={{
                           padding: isNarrowScreen ? '0.56rem 0.82rem' : '0.6rem 1.5rem',
                           background: 'linear-gradient(135deg, #34d399, #10b981)',
@@ -1114,7 +1124,7 @@ export default function RootLayout({
 }
 
 // AgentInsightButton Component - A2UI Integration
-function AgentInsightButton({ onClick }: { onClick: () => void }) {
+function AgentInsightButton({ onClick, isOpen }: { onClick: () => void; isOpen: boolean }) {
   return (
     <button
       suppressHydrationWarning
@@ -1133,6 +1143,9 @@ function AgentInsightButton({ onClick }: { onClick: () => void }) {
         letterSpacing: '0.02em',
       }}
       title="Open Copilot operations panel"
+      aria-label="Open Copilot operations panel"
+      aria-haspopup="dialog"
+      aria-expanded={isOpen}
     >
       Copilot Ops
     </button>
