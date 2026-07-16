@@ -1293,6 +1293,8 @@ export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
       {toasts.map(toast => (
         <div
           key={toast.id}
+          role={toast.type === 'error' ? 'alert' : 'status'}
+          aria-live="polite"
           style={{
             padding: '1rem',
             borderRadius: '0.5rem',
@@ -1312,6 +1314,8 @@ export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
           </span>
           <button
             onClick={() => onRemove(toast.id)}
+            aria-label="Dismiss notification"
+            className="hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-current rounded-md p-0.5 transition-opacity"
             style={{
               background: 'none',
               border: 'none',
@@ -1319,6 +1323,11 @@ export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
               cursor: 'pointer',
               fontSize: '1.25rem',
               marginLeft: '1rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '24px',
+              minHeight: '24px',
             }}
           >
             ✕
