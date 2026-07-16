@@ -265,9 +265,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Sui CLI
         run: |
-          cargo install --locked --git https://github.com/MystenLabs/sui.git --branch mainnet sui
-        env:
-          CARGO_TERM_COLOR: always
+          curl -L -o /tmp/sui.tgz https://github.com/MystenLabs/sui/releases/download/mainnet-v1.75.2/sui-mainnet-v1.75.2-ubuntu-x86_64.tgz
+          tar -C /tmp -zxf /tmp/sui.tgz ./sui
+          sudo mv /tmp/sui /usr/local/bin/sui
+          sui --version
       - name: Build Move contracts
         run: |
           cd agents/onchain-registry
