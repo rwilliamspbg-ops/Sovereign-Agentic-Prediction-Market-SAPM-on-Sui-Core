@@ -379,12 +379,13 @@ export const WalletConnector: React.FC<{ onConnect?: () => void }> = ({ onConnec
     <div className="fixed bottom-6 right-6 z-40">
       {/* Error Banner */}
       {error && (
-        <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg shadow-lg animate-fade-in">
+        <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg shadow-lg animate-fade-in" role="alert" aria-live="polite">
           <div className="flex items-center justify-between">
             <span className="text-sm text-red-800">{error}</span>
             <button
               onClick={() => setError(null)}
-              className="text-red-600 hover:text-red-700"
+              className="text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 rounded-md transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              aria-label="Dismiss error notification"
             >
               ✕
             </button>

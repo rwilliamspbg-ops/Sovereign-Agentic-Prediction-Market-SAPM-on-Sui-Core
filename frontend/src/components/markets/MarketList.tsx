@@ -94,6 +94,7 @@ export const MarketList: React.FC<MarketListProps> = ({
             <input
               type="text"
               placeholder="Search markets..."
+              aria-label="Search prediction markets"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -131,6 +132,7 @@ export const MarketList: React.FC<MarketListProps> = ({
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+            aria-label="Sort markets by"
             className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500"
           >
             <option value="newest">Newest First</option>
