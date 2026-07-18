@@ -9,6 +9,7 @@ import { CopilotKit } from '@copilotkit/react-core';
 import "./globals.css";
 import { CommandPalette } from '@/components/ui/CommandPalette';
 import { CopilotOpsPanel } from '@/components/a2ui/CopilotOpsPanel';
+import { CopilotChatHealthIndicator } from '@/components/copilot/chat-integration';
 import { SUI_PACKAGE_ID, SUISCAN_PACKAGE_URL } from '@/lib/sui-config';
 const LAST_WALLET_ID_KEY = 'walletId';
 const LAST_WALLET_ADDRESS_KEY = 'walletAddress';
@@ -1038,6 +1039,7 @@ export default function RootLayout({
             </main>
 
             <CopilotOpsPanel open={showCopilotPanel} onClose={() => setShowCopilotPanel(false)} />
+            <CopilotChatHealthIndicator />
 
             {/* Footer */}
             <footer style={{
