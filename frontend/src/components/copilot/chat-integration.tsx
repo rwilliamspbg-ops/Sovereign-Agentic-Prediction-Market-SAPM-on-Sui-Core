@@ -3,7 +3,7 @@ import { useAgentHealth } from '@/providers/agent-health-provider';
 import { HealthBadge } from '@/components/ui/health-badge';
 
 export const CopilotChatHealthIndicator: React.FC = () => {
-  const { healthData, loading } = useAgentHealth();
+  const { healthData, loading, error } = useAgentHealth();
 
   if (loading || !healthData) return null;
 
@@ -15,10 +15,11 @@ export const CopilotChatHealthIndicator: React.FC = () => {
     <div className="fixed bottom-4 right-4 z-40">
       {/* Health Indicator Button */}
       <button 
-        className="group relative flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-teal-600 to-emerald-600 shadow-lg hover:shadow-xl transition-all"
+        className="group relative flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-teal-600 to-emerald-600 shadow-lg hover:shadow-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-teal-500 focus-visible:ring-offset-slate-900"
         onClick={() => console.log('Show agent health panel')}
+        aria-label="View agent health details"
       >
-        <span className="text-white text-xl">🤖</span>
+        <span className="text-white text-xl" aria-hidden="true">🤖</span>
         
         {/* Pulse animation for active agents */}
         {topAgents.length > 0 && (
