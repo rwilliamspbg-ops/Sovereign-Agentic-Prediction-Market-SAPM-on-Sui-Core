@@ -45,7 +45,7 @@ importers:
         specifier: 16.2.9
         version: 16.2.9(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@18.3.0(react@18.3.0))(react@18.3.0)
       openai:
-        specifier: ^6.48.0
+        specifier: ^6.42.0
         version: 6.48.0(ws@8.21.1)(zod@4.4.3)
       react:
         specifier: 18.3.0
