@@ -65,6 +65,10 @@ export function NetworkSwitcher({ onNetworkChange, compact = false }: NetworkSwi
       <div style={{ position: 'relative' }}>
         <button
           onClick={() => setIsOpen(!isOpen)}
+          aria-label="Select Sui network"
+          aria-haspopup="listbox"
+          aria-expanded={isOpen}
+          className="focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:outline-none"
           style={{
             padding: '0.4rem 0.75rem',
             backgroundColor: config.bgColor,
@@ -86,6 +90,8 @@ export function NetworkSwitcher({ onNetworkChange, compact = false }: NetworkSwi
 
         {isOpen && (
           <div
+            role="listbox"
+            aria-label="Sui networks"
             style={{
               position: 'absolute',
               top: '100%',
@@ -102,7 +108,10 @@ export function NetworkSwitcher({ onNetworkChange, compact = false }: NetworkSwi
             {Object.entries(NETWORK_CONFIGS).map(([key, net]) => (
               <button
                 key={key}
+                role="option"
+                aria-selected={currentNetwork === net.name}
                 onClick={() => handleNetworkChange(net.name)}
+                className="focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:outline-none"
                 style={{
                   width: '100%',
                   padding: '0.75rem 1rem',
@@ -138,6 +147,8 @@ export function NetworkSwitcher({ onNetworkChange, compact = false }: NetworkSwi
   // Full version for settings page
   return (
     <div
+      role="region"
+      aria-labelledby="network-config-title"
       style={{
         padding: '1.5rem',
         backgroundColor: '#1e293b',
@@ -147,7 +158,7 @@ export function NetworkSwitcher({ onNetworkChange, compact = false }: NetworkSwi
       }}
     >
       <div style={{ marginBottom: '1rem' }}>
-        <h3 style={{ color: config.color, fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>
+        <h3 id="network-config-title" style={{ color: config.color, fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>
           🌐 Network Configuration
         </h3>
         <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0.5rem 0 0 0' }}>
@@ -155,11 +166,14 @@ export function NetworkSwitcher({ onNetworkChange, compact = false }: NetworkSwi
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <div role="listbox" aria-label="Sui networks" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
         {Object.entries(NETWORK_CONFIGS).map(([key, net]) => (
           <button
             key={key}
+            role="option"
+            aria-selected={currentNetwork === net.name}
             onClick={() => handleNetworkChange(net.name)}
+            className="focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:outline-none"
             style={{
               padding: '1rem',
               backgroundColor: currentNetwork === net.name ? net.bgColor : '#0f172a',
