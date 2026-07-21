@@ -175,13 +175,13 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
             <div className="grid grid-cols-2 gap-4 text-center">
               <button
                 onClick={() => setPosition({ outcome: 'yes', size: 100, entryPrice: yesPrice, openedAt: new Date() })}
-                className="px-4 py-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
+                className="px-4 py-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none focus-visible:ring-green-500 text-green-700 font-medium"
               >
                 Open YES Position
               </button>
               <button
                 onClick={() => setPosition({ outcome: 'no', size: 100, entryPrice: noPrice, openedAt: new Date() })}
-                className="px-4 py-3 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                className="px-4 py-3 bg-red-50 hover:bg-red-100 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none focus-visible:ring-red-500 text-red-700 font-medium"
               >
                 Open NO Position
               </button>
@@ -250,7 +250,7 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
 
             <button
               onClick={() => setShowCloseConfirm(true)}
-              className="w-full rounded-lg bg-gray-900 px-4 py-2 font-semibold text-white transition-colors hover:bg-black"
+              className="w-full rounded-lg bg-gray-900 px-4 py-2 font-semibold text-white transition-colors hover:bg-black focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none focus-visible:ring-gray-950"
             >
               Close Position
             </button>
@@ -260,21 +260,24 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
 
       {/* Deposit Flow */}
       <div className="border-t border-gray-200 pt-4">
-        <h4 className="font-semibold text-gray-900 mb-3">Deposit Stake</h4>
+        <label htmlFor="deposit-amount-input" className="block font-semibold text-gray-900 mb-3">
+          Deposit Stake
+        </label>
         <div className="flex gap-3">
           <input
+            id="deposit-amount-input"
             type="number"
             value={depositAmount}
             onChange={(e) => setDepositAmount(e.target.value)}
             placeholder="Amount (SUI)"
             min="0.1"
             step="0.1"
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none"
           />
           <button
             onClick={handleDeposit}
             disabled={!depositAmount || parseFloat(depositAmount) <= 0}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors"
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none focus-visible:ring-blue-500"
           >
             Deposit
           </button>
@@ -284,25 +287,31 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
       {/* Redeem Flow */}
       {position && (
         <div className="border-t border-gray-200 pt-4">
-          <h4 className="font-semibold text-gray-900 mb-3">Redeem Position</h4>
+          <label htmlFor="redeem-amount-input" className="block font-semibold text-gray-900 mb-3">
+            Redeem Position
+          </label>
           <div className="mb-3 rounded-lg bg-gray-50 p-3">
             <div className="mb-1 flex justify-between text-sm text-gray-600">
-              <span>Slippage Tolerance</span>
+              <label htmlFor="slippage-tolerance-input" className="font-medium text-gray-600">
+                Slippage Tolerance
+              </label>
               <span className="font-medium text-gray-800">{slippageTolerance.toFixed(1)}%</span>
             </div>
             <input
+              id="slippage-tolerance-input"
               type="range"
               min="0.1"
               max="5"
               step="0.1"
               value={slippageTolerance}
               onChange={(event) => setSlippageTolerance(parseFloat(event.target.value))}
-              className="w-full"
+              className="w-full focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
             />
           </div>
 
           <div className="flex gap-3">
             <input
+              id="redeem-amount-input"
               type="number"
               value={redeemAmount}
               onChange={(e) => setRedeemAmount(e.target.value)}
@@ -310,12 +319,13 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
               min="0.1"
               step="0.1"
               max={position.size}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none"
+              aria-label="Redeem amount in SUI"
             />
             <button
               onClick={handleRedeem}
               disabled={!redeemAmount || parseFloat(redeemAmount) <= 0}
-              className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors"
+              className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none focus-visible:ring-red-500"
             >
               Redeem
             </button>
@@ -325,13 +335,13 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
           <div className="mt-3 flex gap-2">
             <button
               onClick={() => setRedeemAmount(position.size.toString())}
-              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm"
+              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none focus-visible:ring-gray-500 font-medium"
             >
               Redeem All
             </button>
             <button
               onClick={() => setRedeemAmount((position.size * 0.5).toString())}
-              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm"
+              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none focus-visible:ring-gray-500 font-medium"
             >
               Redeem 50%
             </button>
