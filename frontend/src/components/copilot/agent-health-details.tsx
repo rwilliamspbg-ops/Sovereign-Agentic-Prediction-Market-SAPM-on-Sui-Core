@@ -18,7 +18,8 @@ export const AgentHealthDetails: React.FC<AgentHealthDetailsProps> = ({
         {/* Close Button */}
         <button 
           onClick={onClose}
-          className="absolute right-4 top-4 text-gray-400 hover:text-gray-200"
+          className="absolute right-2 top-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-400 hover:text-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 rounded-md transition-all"
+          aria-label="Close agent details"
         >
           ✕
         </button>
@@ -134,7 +135,7 @@ export const AgentHealthDetails: React.FC<AgentHealthDetailsProps> = ({
           </div>
           <button 
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium"
+            className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-teal-500 focus-visible:ring-offset-slate-950 transition-all"
           >
             Close
           </button>
