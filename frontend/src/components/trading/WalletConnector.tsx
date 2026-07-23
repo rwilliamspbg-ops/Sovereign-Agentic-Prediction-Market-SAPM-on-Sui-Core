@@ -399,7 +399,7 @@ export const WalletConnector: React.FC<{ onConnect?: () => void }> = ({ onConnec
           <select
             value={selectedWalletId || ''}
             onChange={(event) => setSelectedWalletId(event.target.value)}
-            className="mb-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow"
+            className="mb-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow focus:ring-2 focus:ring-sky-500 focus:outline-none"
             aria-label="Select wallet"
           >
             {availableWallets.map((wallet) => {
@@ -418,7 +418,7 @@ export const WalletConnector: React.FC<{ onConnect?: () => void }> = ({ onConnec
           onClick={walletState.connected ? handleDisconnect : handleConnect}
           disabled={connecting}
           className={`
-            flex min-h-[44px] items-center gap-3 px-4 py-3 rounded-full shadow-lg transition-all transform hover:scale-105
+            flex min-h-[44px] items-center gap-3 px-4 py-3 rounded-full shadow-lg transition-all transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus-visible:outline-none
             ${walletState.connected 
               ? 'bg-gray-800 text-white hover:bg-gray-900' 
               : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'

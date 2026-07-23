@@ -373,6 +373,7 @@ export function CommandPalette({ actions, compact = false }: CommandPaletteProps
       <button
         suppressHydrationWarning
         type="button"
+        className="focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:outline-none"
         onClick={() => setIsOpen(true)}
         style={{
           minHeight: compact ? '40px' : '44px',
