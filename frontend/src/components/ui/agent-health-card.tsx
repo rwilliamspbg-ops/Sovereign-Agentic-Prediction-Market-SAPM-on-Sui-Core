@@ -15,8 +15,20 @@ export const AgentHealthCard: React.FC<AgentHealthCardProps> = ({
 }) => {
   return (
     <div 
-      className="group relative overflow-hidden rounded-xl border border-gray-800 bg-gray-950/50 p-4 transition-all hover:border-teal-500/50 hover:bg-gray-900/50"
+      className={cn(
+        "group relative overflow-hidden rounded-xl border border-gray-800 bg-gray-950/50 p-4 transition-all hover:border-teal-500/50 hover:bg-gray-900/50",
+        onClick && "cursor-pointer focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 focus-visible:outline-none"
+      )}
       onClick={onClick}
+      onKeyDown={onClick ? (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick?.();
+        }
+      } : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      role={onClick ? "button" : undefined}
+      aria-label={onClick ? `View health and performance details for agent @${agent.agentId}` : undefined}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
