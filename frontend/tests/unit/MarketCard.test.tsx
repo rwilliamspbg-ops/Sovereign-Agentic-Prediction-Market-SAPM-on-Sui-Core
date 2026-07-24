@@ -206,3 +206,61 @@ describe('MarketList human interactions', () => {
     expect(marketHeadings[0].textContent).toContain('Will Sui reach 1M daily active users in 2026?');
   });
 });
+
+describe('MarketCard keyboard interactions and accessibility attributes', () => {
+  const baseMarket = {
+    id: 'TEST_MARKET_001',
+    question: 'Will Bitcoin reach $100K in 2026?',
+    yesPrice: 0.72,
+    noPrice: 0.28,
+    yesVolume: 150000,
+    noVolume: 80000,
+    lastUpdate: new Date(Date.now() - 2 * 60 * 60 * 1000),
+    category: 'crypto',
+  };
+
+  it('renders with appropriate aria attributes and roles', () => {
+    render(<MarketCard market={baseMarket} onTrade={() => undefined} />);
+
+    // Get the card by its role and name
+    const card = screen.getByRole('button', {
+      name: /Market: Will Bitcoin reach \$100K in 2026\?/,
+    });
+    expect(card).toBeTruthy();
+    expect(card.getAttribute('tabIndex')).toBe('0');
+
+    // Get the YES block by its role and name
+    const yesButton = screen.getByRole('button', {
+      name: /Trade YES for market: Will Bitcoin reach \$100K in 2026\?/,
+    });
+    expect(yesButton).toBeTruthy();
+    expect(yesButton.getAttribute('tabIndex')).toBe('0');
+
+    // Get the NO block by its role and name
+    const noButton = screen.getByRole('button', {
+      name: /Trade NO for market: Will Bitcoin reach \$100K in 2026\?/,
+    });
+    expect(noButton).toBeTruthy();
+    expect(noButton.getAttribute('tabIndex')).toBe('0');
+  });
+
+  it('handles Enter and Space keyboard events correctly on YES/NO blocks', () => {
+    const onTrade = jest.fn();
+    render(<MarketCard market={baseMarket} onTrade={onTrade} />);
+
+    const yesButton = screen.getByRole('button', {
+      name: /Trade YES for market: Will Bitcoin reach \$100K in 2026\?/,
+    });
+    const noButton = screen.getByRole('button', {
+      name: /Trade NO for market: Will Bitcoin reach \$100K in 2026\?/,
+    });
+
+    // Enter key on YES
+    fireEvent.keyDown(yesButton, { key: 'Enter', code: 'Enter' });
+    expect(onTrade).toHaveBeenCalledWith('TEST_MARKET_001', 'yes');
+
+    // Space key on NO
+    fireEvent.keyDown(noButton, { key: ' ', code: 'Space' });
+    expect(onTrade).toHaveBeenCalledWith('TEST_MARKET_001', 'no');
+  });
+});

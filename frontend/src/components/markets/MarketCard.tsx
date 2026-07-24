@@ -82,8 +82,17 @@ export const MarketCard: React.FC<MarketCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 hover:shadow-xl transition-shadow cursor-pointer"
+      className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 hover:shadow-xl transition-shadow cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none"
       onClick={() => onTrade(market.id, 'yes')}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onTrade(market.id, 'yes');
+        }
+      }}
+      tabIndex={0}
+      role="button"
+      aria-label={`Market: ${market.question}. Current YES price is ${formatPrice(market.yesPrice)} SUI, NO price is ${formatPrice(market.noPrice)} SUI. View details or trade.`}
     >
       {/* Market Header */}
       <div className="flex justify-between items-start mb-3">
@@ -122,11 +131,21 @@ export const MarketCard: React.FC<MarketCardProps> = ({
       <div className="grid grid-cols-[1fr,auto,1fr] gap-2 items-center mb-4">
         {/* YES Outcome */}
         <div 
-          className="bg-green-50 border border-green-200 rounded-lg p-3 cursor-pointer hover:bg-green-100 transition-colors group"
+          className="bg-green-50 border border-green-200 rounded-lg p-3 cursor-pointer hover:bg-green-100 transition-colors group focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:outline-none"
           onClick={(e) => {
             e.stopPropagation();
             onTrade(market.id, 'yes');
           }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              onTrade(market.id, 'yes');
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label={`Trade YES for market: ${market.question} at price ${formatPrice(market.yesPrice)} SUI`}
         >
           <div className="flex items-center justify-between mb-1">
             <span className="font-bold text-green-700 text-lg">YES</span>
@@ -150,11 +169,21 @@ export const MarketCard: React.FC<MarketCardProps> = ({
 
         {/* NO Outcome */}
         <div 
-          className="bg-red-50 border border-red-200 rounded-lg p-3 cursor-pointer hover:bg-red-100 transition-colors group"
+          className="bg-red-50 border border-red-200 rounded-lg p-3 cursor-pointer hover:bg-red-100 transition-colors group focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:outline-none"
           onClick={(e) => {
             e.stopPropagation();
             onTrade(market.id, 'no');
           }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              onTrade(market.id, 'no');
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label={`Trade NO for market: ${market.question} at price ${formatPrice(market.noPrice)} SUI`}
         >
           <div className="flex items-center justify-between mb-1">
             <span className="font-bold text-red-700 text-lg">NO</span>
