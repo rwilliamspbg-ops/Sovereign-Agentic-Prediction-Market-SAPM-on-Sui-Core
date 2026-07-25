@@ -11,3 +11,10 @@ if (typeof global.TextEncoder === 'undefined') {
 if (typeof global.TextDecoder === 'undefined') {
   global.TextDecoder = TextDecoder;
 }
+
+// Global mock to prevent ESM/TS compilation issues with CopilotKit in Jest/jsdom environment
+jest.mock('@copilotkit/react-core', () => ({
+  useCopilotChat: jest.fn(() => ({
+    post: jest.fn(),
+  })),
+}));

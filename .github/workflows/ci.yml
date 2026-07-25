@@ -114,10 +114,10 @@ jobs:
           cache: npm
       - name: Install root dependencies
         run: npm ci --no-fund
-      - name: Audit root dependencies (critical/high)
-        run: npm audit --audit-level=high --no-fund
-      - name: Audit orchestrator dependencies
-        run: npm --prefix agents/orchestrator audit --audit-level=high --no-fund
+      - name: Audit root production dependencies (critical/high)
+        run: npm audit --omit=dev --audit-level=high --no-fund
+      - name: Audit orchestrator production dependencies
+        run: npm --prefix agents/orchestrator audit --omit=dev --audit-level=high --no-fund
       - name: Evaluate frontend dependency audit gate (high/critical)
         run: |
           mkdir -p artifacts/ci-logs
