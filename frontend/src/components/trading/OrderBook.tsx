@@ -188,7 +188,8 @@ export const OrderBook: React.FC<OrderBookProps> = ({ marketId, onPlaceOrder }) 
               onClick={async () => {
                 await handlePlaceOrder(level.price, 'sell');
               }}
-              className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-700 rounded text-sm font-medium transition-colors"
+              className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-700 rounded text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 focus-visible:outline-none"
+              aria-label={`Sell at ${formatPrice(level.price)} SUI`}
             >
               Sell
             </button>
@@ -239,7 +240,8 @@ export const OrderBook: React.FC<OrderBookProps> = ({ marketId, onPlaceOrder }) 
               onClick={async () => {
                 await handlePlaceOrder(level.price, 'buy');
               }}
-              className="px-3 py-1 bg-green-50 hover:bg-green-100 text-green-700 rounded text-sm font-medium transition-colors"
+              className="px-3 py-1 bg-green-50 hover:bg-green-100 text-green-700 rounded text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-1 focus-visible:outline-none"
+              aria-label={`Buy at ${formatPrice(level.price)} SUI`}
             >
               Buy
             </button>
