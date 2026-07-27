@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 type Network = 'testnet' | 'mainnet';
 
@@ -40,6 +40,7 @@ interface NetworkSwitcherProps {
 export function NetworkSwitcher({ onNetworkChange, compact = false }: NetworkSwitcherProps) {
   const [currentNetwork, setCurrentNetwork] = useState<Network>('testnet');
   const [isOpen, setIsOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Load network preference from localStorage
   useEffect(() => {
@@ -48,6 +49,29 @@ export function NetworkSwitcher({ onNetworkChange, compact = false }: NetworkSwi
       setCurrentNetwork(saved);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
 
   const handleNetworkChange = (network: Network) => {
     setCurrentNetwork(network);
@@ -62,7 +86,7 @@ export function NetworkSwitcher({ onNetworkChange, compact = false }: NetworkSwi
   if (compact) {
     // Compact version for header
     return (
-      <div style={{ position: 'relative' }}>
+      <div ref={wrapperRef} style={{ position: 'relative' }}>
         <button
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Select Sui network"
