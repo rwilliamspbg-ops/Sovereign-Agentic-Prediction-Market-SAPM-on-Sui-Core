@@ -29,3 +29,7 @@ This journal tracks critical UX and accessibility (a11y) learnings specific to t
 ## 2026-07-27 - Focus Management & Graceful Dismissal of Dropdowns
 **Learning:** Custom interactive dropdown triggers and menu selectors (like the compact Network Switcher) must handle click-outside events and global keyboard triggers (specifically Escape keydown listeners) to gracefully collapse open dropdown menus, preventing interface congestion and satisfying standard accessibility benchmarks.
 **Action:** Ensure custom popovers and select-menus listen to click-outside/Escape gestures, and clean up active global keyboard event listeners in useEffect hook destructors to prevent memory leaks.
+
+## 2026-07-28 - Custom Switch Toggle Accessibility & Touch Targets in Settings Pages
+**Learning:** Custom binary controls (e.g. settings toggle buttons) designed from standard HTML `button` tags must declare `role="switch"` and `aria-checked` to be recognized correctly by assistive technologies. Additionally, layout close buttons (like "✕") inside modal interfaces require explicit high-contrast focus rings (`focus-visible:ring-2`) and a minimum 44x44px touch target dimension to meet standard visual tracking and physical motor accessibility guidelines.
+**Action:** Always decorate custom toggles with semantic ARIA roles, pass descriptive `aria-label` properties, and specify minimum 44x44px touch targets on critical dismiss buttons.

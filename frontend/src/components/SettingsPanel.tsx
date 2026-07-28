@@ -106,12 +106,18 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
   const Toggle = ({
     checked,
     onChange,
+    ariaLabel,
   }: {
     checked: boolean;
     onChange: (checked: boolean) => void;
+    ariaLabel?: string;
   }) => (
     <button
+      role="switch"
+      aria-checked={checked}
+      aria-label={ariaLabel}
       onClick={() => onChange(!checked)}
+      className="focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded-full"
       style={{
         width: '50px',
         height: '28px',
@@ -156,12 +162,19 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
         {onClose && (
           <button
             onClick={onClose}
+            aria-label="Close settings"
+            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-md"
             style={{
               background: 'none',
               border: 'none',
               color: '#cbd5e1',
               fontSize: '1.5rem',
               cursor: 'pointer',
+              width: '44px',
+              height: '44px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             ✕
@@ -221,6 +234,7 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
           <Toggle
             checked={settings.notifications}
             onChange={(val) => updateSetting('notifications', val)}
+            ariaLabel="Enable Notifications"
           />
         </SettingRow>
 
@@ -259,6 +273,7 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
             <Toggle
               checked={settings.notificationSound}
               onChange={(val) => updateSetting('notificationSound', val)}
+              ariaLabel="Sound Effects"
             />
           </SettingRow>
         )}
@@ -269,18 +284,21 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
               <Toggle
                 checked={notificationPrefs.marketResolutionAlerts}
                 onChange={(val) => updateNotificationPreference('marketResolutionAlerts', val)}
+                ariaLabel="Market Resolution Alerts"
               />
             </SettingRow>
             <SettingRow label="Price Change Alerts" description="Notify on >5% market move">
               <Toggle
                 checked={notificationPrefs.priceChangeAlerts}
                 onChange={(val) => updateNotificationPreference('priceChangeAlerts', val)}
+                ariaLabel="Price Change Alerts"
               />
             </SettingRow>
             <SettingRow label="Agent Forecast Alerts" description="Notify for high-confidence forecasts">
               <Toggle
                 checked={notificationPrefs.agentForecastAlerts}
                 onChange={(val) => updateNotificationPreference('agentForecastAlerts', val)}
+                ariaLabel="Agent Forecast Alerts"
               />
             </SettingRow>
 
@@ -309,6 +327,7 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
           <Toggle
             checked={settings.autoRefresh}
             onChange={(val) => updateSetting('autoRefresh', val)}
+            ariaLabel="Auto-Refresh"
           />
         </SettingRow>
       </div>
@@ -330,6 +349,7 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
           <Toggle
             checked={settings.advancedMode}
             onChange={(val) => updateSetting('advancedMode', val)}
+            ariaLabel="Advanced Mode"
           />
         </SettingRow>
 
