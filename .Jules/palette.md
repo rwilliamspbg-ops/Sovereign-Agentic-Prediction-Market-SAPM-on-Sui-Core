@@ -33,3 +33,7 @@ This journal tracks critical UX and accessibility (a11y) learnings specific to t
 ## 2026-07-28 - Custom Switch Toggle Accessibility & Touch Targets in Settings Pages
 **Learning:** Custom binary controls (e.g. settings toggle buttons) designed from standard HTML `button` tags must declare `role="switch"` and `aria-checked` to be recognized correctly by assistive technologies. Additionally, layout close buttons (like "✕") inside modal interfaces require explicit high-contrast focus rings (`focus-visible:ring-2`) and a minimum 44x44px touch target dimension to meet standard visual tracking and physical motor accessibility guidelines.
 **Action:** Always decorate custom toggles with semantic ARIA roles, pass descriptive `aria-label` properties, and specify minimum 44x44px touch targets on critical dismiss buttons.
+
+## 2026-07-30 - Form Label Associations & Quick-Preset Buttons for Inputs
+**Learning:** Form input elements (like the amount input inside `TradeForm`) must be explicitly linked to their labels using matching `id` and `htmlFor` attributes to support screen reader accessibility. Furthermore, adding styled quick-preset buttons (such as `10 SUI`, `50 SUI`, `100 SUI` presets) directly beneath numeric inputs greatly reduces typing friction, and should utilize high-contrast visible focus indicators (`focus-visible:ring-2`) to keep keyboard navigation seamless.
+**Action:** Always associate labels with inputs using `id` and `htmlFor`, and accompany input fields with accessible quick-preset buttons when possible.
