@@ -82,7 +82,7 @@ export const MarketCard: React.FC<MarketCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 hover:shadow-xl transition-shadow cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none"
+      className="relative group bg-white rounded-xl shadow-lg border border-gray-200 p-4 hover:shadow-xl transition-shadow cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none"
       onClick={() => onTrade(market.id, 'yes')}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -214,7 +214,7 @@ export const MarketCard: React.FC<MarketCardProps> = ({
       </div>
 
       {/* Hover tooltip for market details */}
-      <div className="hidden group-hover:block absolute top-full left-0 right-0 bg-gray-800 text-white text-xs p-2 rounded mt-1 z-10">
+      <div className="hidden group-hover:block group-focus-within:block absolute top-full left-0 right-0 bg-gray-800 text-white text-xs p-2 rounded mt-1 z-10 shadow-lg border border-gray-700/50 pointer-events-none">
         <div className="font-semibold mb-1">Market Details</div>
         <div>ID: {market.id}</div>
         <div>Liquidity: {(market.yesVolume + market.noVolume).toLocaleString()} SUI</div>
