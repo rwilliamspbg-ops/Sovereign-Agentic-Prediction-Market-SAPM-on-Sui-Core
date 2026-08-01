@@ -38,6 +38,10 @@ This journal tracks critical UX and accessibility (a11y) learnings specific to t
 **Learning:** Form input elements (like the amount input inside `TradeForm`) must be explicitly linked to their labels using matching `id` and `htmlFor` attributes to support screen reader accessibility. Furthermore, adding styled quick-preset buttons (such as `10 SUI`, `50 SUI`, `100 SUI` presets) directly beneath numeric inputs greatly reduces typing friction, and should utilize high-contrast visible focus indicators (`focus-visible:ring-2`) to keep keyboard navigation seamless.
 **Action:** Always associate labels with inputs using `id` and `htmlFor`, and accompany input fields with accessible quick-preset buttons when possible.
 
+## 2026-08-01 - DOM Label Attribute Compilations & JSDOM Testing Assertions
+**Learning:** In React/JSX environments, form labels are linked to target inputs/dropdowns using the `htmlFor` JSX prop. However, this prop compiles directly to the standard DOM attribute named `for`. Consequently, Jest/JSDOM assertions attempting to verify correct labeling associations must query `label.getAttribute('for')` instead of `htmlFor` to accurately reflect and test the compiled DOM output.
+**Action:** Always assert against the compiled standard attribute `for` instead of JSX prop `htmlFor` when verifying label associations inside unit tests.
+
 ## 2026-07-31 - Accessible Tooltips & Keyboard-Bound Overlays on Grid Cards
 **Learning:** Absolutely positioned hover tooltips nested within list or grid cards require both a positioned parent container (utilizing the `relative` class) and the parent `group` class to activate the child tooltip via `group-hover:block`. Additionally, to prevent accessibility barriers for keyboard-only and screen-reader users, tooltip visibility must also be bound to focus states via `group-focus-within:block` so that metadata remains readable upon tab navigation.
 **Action:** Always apply `relative group` to interactive parent cards, and use `group-hover:block group-focus-within:block pointer-events-none` on nested absolute tooltips to guarantee visual and keyboard accessibility.
