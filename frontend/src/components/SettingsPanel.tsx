@@ -77,10 +77,14 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
     label,
     description,
     children,
+    htmlFor,
+    labelId,
   }: {
     label: string;
     description?: string;
     children: React.ReactNode;
+    htmlFor?: string;
+    labelId?: string;
   }) => (
     <div
       style={{
@@ -92,9 +96,19 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
       }}
     >
       <div>
-        <div style={{ color: '#e2e8f0', fontWeight: '600', marginBottom: '0.25rem' }}>
-          {label}
-        </div>
+        {htmlFor ? (
+          <label
+            htmlFor={htmlFor}
+            id={labelId}
+            style={{ color: '#e2e8f0', fontWeight: '600', marginBottom: '0.25rem', display: 'block', cursor: 'pointer' }}
+          >
+            {label}
+          </label>
+        ) : (
+          <div id={labelId} style={{ color: '#e2e8f0', fontWeight: '600', marginBottom: '0.25rem' }}>
+            {label}
+          </div>
+        )}
         {description && (
           <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>{description}</div>
         )}
@@ -107,15 +121,18 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
     checked,
     onChange,
     ariaLabel,
+    ariaLabelledBy,
   }: {
     checked: boolean;
     onChange: (checked: boolean) => void;
     ariaLabel?: string;
+    ariaLabelledBy?: string;
   }) => (
     <button
       role="switch"
       aria-checked={checked}
       aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
       onClick={() => onChange(!checked)}
       className="focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded-full"
       style={{
@@ -198,10 +215,12 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
           🎨 Preferences
         </h2>
 
-        <SettingRow label="Theme" description="Choose your interface theme">
+        <SettingRow label="Theme" description="Choose your interface theme" htmlFor="theme-select" labelId="theme-label">
           <select
+            id="theme-select"
             value={settings.theme}
             onChange={(e) => updateSetting('theme', e.target.value)}
+            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-md"
             style={{
               padding: '0.5rem 1rem',
               backgroundColor: '#0f172a',
@@ -230,11 +249,11 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
           🔔 Notifications
         </h2>
 
-        <SettingRow label="Enable Notifications" description="Get alerts for market updates">
+        <SettingRow label="Enable Notifications" description="Get alerts for market updates" labelId="enable-notifications-label">
           <Toggle
             checked={settings.notifications}
             onChange={(val) => updateSetting('notifications', val)}
-            ariaLabel="Enable Notifications"
+            ariaLabelledBy="enable-notifications-label"
           />
         </SettingRow>
 
@@ -250,6 +269,7 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
             {notificationPermission !== 'granted' && notificationPermission !== 'unsupported' && (
               <button
                 onClick={handleEnableNotifications}
+                className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-md"
                 style={{
                   minWidth: '44px',
                   minHeight: '44px',
@@ -269,42 +289,43 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
         </SettingRow>
 
         {settings.notifications && (
-          <SettingRow label="Sound Effects" description="Play sound for notifications">
+          <SettingRow label="Sound Effects" description="Play sound for notifications" labelId="sound-effects-label">
             <Toggle
               checked={settings.notificationSound}
               onChange={(val) => updateSetting('notificationSound', val)}
-              ariaLabel="Sound Effects"
+              ariaLabelledBy="sound-effects-label"
             />
           </SettingRow>
         )}
 
         {settings.notifications && (
           <>
-            <SettingRow label="Market Resolution Alerts" description="Notify when markets resolve">
+            <SettingRow label="Market Resolution Alerts" description="Notify when markets resolve" labelId="resolution-alerts-label">
               <Toggle
                 checked={notificationPrefs.marketResolutionAlerts}
                 onChange={(val) => updateNotificationPreference('marketResolutionAlerts', val)}
-                ariaLabel="Market Resolution Alerts"
+                ariaLabelledBy="resolution-alerts-label"
               />
             </SettingRow>
-            <SettingRow label="Price Change Alerts" description="Notify on >5% market move">
+            <SettingRow label="Price Change Alerts" description="Notify on >5% market move" labelId="price-alerts-label">
               <Toggle
                 checked={notificationPrefs.priceChangeAlerts}
                 onChange={(val) => updateNotificationPreference('priceChangeAlerts', val)}
-                ariaLabel="Price Change Alerts"
+                ariaLabelledBy="price-alerts-label"
               />
             </SettingRow>
-            <SettingRow label="Agent Forecast Alerts" description="Notify for high-confidence forecasts">
+            <SettingRow label="Agent Forecast Alerts" description="Notify for high-confidence forecasts" labelId="forecast-alerts-label">
               <Toggle
                 checked={notificationPrefs.agentForecastAlerts}
                 onChange={(val) => updateNotificationPreference('agentForecastAlerts', val)}
-                ariaLabel="Agent Forecast Alerts"
+                ariaLabelledBy="forecast-alerts-label"
               />
             </SettingRow>
 
             <div style={{ marginTop: '1rem' }}>
               <button
                 onClick={() => notifyLocalPreview('SAPM Alert Preview', 'Notifications are configured for this browser.')}
+                className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-md"
                 style={{
                   minWidth: '44px',
                   minHeight: '44px',
@@ -323,11 +344,11 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
           </>
         )}
 
-        <SettingRow label="Auto-Refresh" description="Automatically refresh market data">
+        <SettingRow label="Auto-Refresh" description="Automatically refresh market data" labelId="auto-refresh-label">
           <Toggle
             checked={settings.autoRefresh}
             onChange={(val) => updateSetting('autoRefresh', val)}
-            ariaLabel="Auto-Refresh"
+            ariaLabelledBy="auto-refresh-label"
           />
         </SettingRow>
       </div>
@@ -345,11 +366,11 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
           ⚡ Advanced
         </h2>
 
-        <SettingRow label="Advanced Mode" description="Show advanced trading options">
+        <SettingRow label="Advanced Mode" description="Show advanced trading options" labelId="advanced-mode-label">
           <Toggle
             checked={settings.advancedMode}
             onChange={(val) => updateSetting('advancedMode', val)}
-            ariaLabel="Advanced Mode"
+            ariaLabelledBy="advanced-mode-label"
           />
         </SettingRow>
 

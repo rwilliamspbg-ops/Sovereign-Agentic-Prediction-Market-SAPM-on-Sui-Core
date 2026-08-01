@@ -44,22 +44,38 @@ describe('SettingsPanel Component Accessibility and Functionality', () => {
     expect(enableNotificationsToggle).toBeTruthy();
     // Default value is true for notifications in DEFAULT_SETTINGS
     expect(enableNotificationsToggle.getAttribute('aria-checked')).toBe('true');
+    expect(enableNotificationsToggle.getAttribute('aria-labelledby')).toBe('enable-notifications-label');
 
     // Find the toggle button for "Auto-Refresh"
     const autoRefreshToggle = screen.getByRole('switch', { name: 'Auto-Refresh' });
     expect(autoRefreshToggle).toBeTruthy();
     expect(autoRefreshToggle.getAttribute('aria-checked')).toBe('true');
+    expect(autoRefreshToggle.getAttribute('aria-labelledby')).toBe('auto-refresh-label');
 
     // Find the toggle button for "Advanced Mode"
     const advancedModeToggle = screen.getByRole('switch', { name: 'Advanced Mode' });
     expect(advancedModeToggle).toBeTruthy();
     expect(advancedModeToggle.getAttribute('aria-checked')).toBe('false');
+    expect(advancedModeToggle.getAttribute('aria-labelledby')).toBe('advanced-mode-label');
 
     // Click on Advanced Mode toggle
     fireEvent.click(advancedModeToggle);
 
     const updatedToggle = screen.getByRole('switch', { name: 'Advanced Mode' });
     expect(updatedToggle.getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('correctly associates Theme dropdown and label with htmlFor and id', () => {
+    render(<SettingsPanel />);
+
+    const label = screen.getByText('Theme');
+    expect(label.tagName).toBe('LABEL');
+    expect(label.getAttribute('for')).toBe('theme-select');
+    expect(label.getAttribute('id')).toBe('theme-label');
+
+    const select = screen.getByLabelText('Theme');
+    expect(select.tagName).toBe('SELECT');
+    expect(select.getAttribute('id')).toBe('theme-select');
   });
 
   it('renders dependent notification toggles only when notification is enabled', () => {
