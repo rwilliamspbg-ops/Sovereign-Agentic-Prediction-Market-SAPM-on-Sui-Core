@@ -45,3 +45,7 @@ This journal tracks critical UX and accessibility (a11y) learnings specific to t
 ## 2026-07-31 - Accessible Tooltips & Keyboard-Bound Overlays on Grid Cards
 **Learning:** Absolutely positioned hover tooltips nested within list or grid cards require both a positioned parent container (utilizing the `relative` class) and the parent `group` class to activate the child tooltip via `group-hover:block`. Additionally, to prevent accessibility barriers for keyboard-only and screen-reader users, tooltip visibility must also be bound to focus states via `group-focus-within:block` so that metadata remains readable upon tab navigation.
 **Action:** Always apply `relative group` to interactive parent cards, and use `group-hover:block group-focus-within:block pointer-events-none` on nested absolute tooltips to guarantee visual and keyboard accessibility.
+
+## 2026-08-02 - Path Alias Module Mocking & Form-Label Associations in Testing
+**Learning:** Under complex compiler/transpiler environments (such as Next.js with Jest/ts-jest), path aliases like `@/` can map to absolute paths in a way that scoped module mocks (e.g. `jest.mock('@/hooks/useAgentState')` inside a test file) fail to intercept component-level imports. To bypass path alias and ESM compilation issues during testing, registering mocks globally in `jest.setup.js` is an exceptionally robust pattern.
+**Action:** Register mock setups globally in `jest.setup.js` for custom state hooks or subcomponents with path aliases to ensure complete mock intercept capability.

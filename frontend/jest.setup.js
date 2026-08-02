@@ -18,3 +18,31 @@ jest.mock('@copilotkit/react-core', () => ({
     post: jest.fn(),
   })),
 }));
+
+jest.mock('@copilotkit/react-ui', () => ({
+  CopilotChat: () => null,
+}));
+
+// Mock useAgentState globally to prevent next-jest ESM / path alias resolution discrepancies
+jest.mock('@/hooks/useAgentState', () => {
+  const mockRunScenarioSimulation = jest.fn();
+  return {
+    useAgentState: jest.fn(() => ({
+      systemHealth: {
+        deepbookConnected: true,
+        walrusConnected: true,
+        walrusMessage: 'Feed Ok',
+      },
+      simulationResult: null,
+      densityMode: 'standard',
+      advancedMetrics: {
+        toolCallTrace: [],
+      },
+    })),
+    useMarketActions: jest.fn(() => ({
+      runScenarioSimulation: mockRunScenarioSimulation,
+    })),
+    // Export mock function on the module so individual tests can access/spy on it
+    _mockRunScenarioSimulation: mockRunScenarioSimulation,
+  };
+});

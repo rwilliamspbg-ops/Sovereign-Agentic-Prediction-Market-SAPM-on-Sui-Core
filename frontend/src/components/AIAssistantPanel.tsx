@@ -36,13 +36,22 @@ export default function AIAssistantPanel() {
 
       <h3>Simulate Outcomes</h3>
       <div className="simulation-widget">
+        <label htmlFor="simulation-scenario-input" className="sr-only">
+          What-if Scenario Description
+        </label>
         <textarea
+          id="simulation-scenario-input"
           value={scenarioText}
           onChange={(event) => setScenarioText(event.target.value)}
           rows={3}
           placeholder="Describe a what-if scenario"
+          className="focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-md"
         />
-        <button type="button" className="action-button" onClick={() => runScenarioSimulation(scenarioText)}>
+        <button
+          type="button"
+          className="action-button focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+          onClick={() => runScenarioSimulation(scenarioText)}
+        >
           Run Simulation
         </button>
         {simulationResult && (
