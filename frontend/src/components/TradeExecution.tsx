@@ -1359,8 +1359,8 @@ export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              minWidth: '24px',
-              minHeight: '24px',
+              minWidth: '44px',
+              minHeight: '44px',
             }}
           >
             ✕
