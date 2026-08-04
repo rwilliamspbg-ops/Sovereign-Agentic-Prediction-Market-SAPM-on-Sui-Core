@@ -282,6 +282,24 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
             Deposit
           </button>
         </div>
+        {/* Quick deposit preset buttons */}
+        <div className="mt-2 flex gap-2">
+          {[10, 50, 100, 500].map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              onClick={() => setDepositAmount(preset.toString())}
+              className={`px-3 py-1 text-sm font-medium rounded-md border transition-all focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
+                depositAmount === preset.toString()
+                  ? 'bg-blue-50 border-blue-600 text-blue-700'
+                  : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
+              }`}
+              aria-label={`Set deposit amount to ${preset} SUI`}
+            >
+              {preset} SUI
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Redeem Flow */}
