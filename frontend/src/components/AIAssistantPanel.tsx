@@ -44,9 +44,18 @@ export default function AIAssistantPanel() {
           value={scenarioText}
           onChange={(event) => setScenarioText(event.target.value)}
           rows={3}
+          maxLength={300}
+          aria-describedby="scenario-char-count"
           placeholder="Describe a what-if scenario"
           className="focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-md"
         />
+        <div
+          id="scenario-char-count"
+          aria-live="polite"
+          className="text-xs text-right text-slate-400 mt-1 mb-2"
+        >
+          {scenarioText.length}/300 characters
+        </div>
         <button
           type="button"
           className="action-button focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
