@@ -43,4 +43,22 @@ describe('AIAssistantPanel Component accessibility & interaction tests', () => {
     expect(_mockRunScenarioSimulation).toHaveBeenCalledTimes(1);
     expect(_mockRunScenarioSimulation).toHaveBeenCalledWith('What if market volume spikes by 50%?');
   });
+
+  it('contains character counter and maxLength constraints on the scenario textarea', () => {
+    render(<AIAssistantPanel />);
+
+    const textarea = screen.getByLabelText('What-if Scenario Description');
+    expect(textarea.getAttribute('maxLength')).toBe('300');
+    expect(textarea.getAttribute('aria-describedby')).toBe('scenario-char-count');
+
+    // Default scenarioText has some length, verify the counter displays it out of 300
+    const counter = screen.getByText(/300 characters/);
+    expect(counter).toBeTruthy();
+    expect(counter.getAttribute('id')).toBe('scenario-char-count');
+    expect(counter.getAttribute('aria-live')).toBe('polite');
+
+    // Change input value and assert that character counter updates
+    fireEvent.change(textarea, { target: { value: 'Hello World' } });
+    expect(screen.getByText('11/300 characters')).toBeTruthy();
+  });
 });
