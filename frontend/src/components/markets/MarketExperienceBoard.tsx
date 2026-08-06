@@ -448,9 +448,12 @@ export default function MarketExperienceBoard() {
               </button>
             </div>
 
-            <label style={{ display: 'grid', gap: '0.4rem', marginTop: '0.8rem', color: '#a9ddd4', fontSize: '0.82rem' }}>
-              Order size (USD)
+            <div style={{ display: 'grid', gap: '0.4rem', marginTop: '0.8rem', color: '#a9ddd4', fontSize: '0.82rem' }}>
+              <label htmlFor="ticket-order-range" style={{ color: '#a9ddd4', fontSize: '0.82rem', fontWeight: '500' }}>
+                Order size (USD)
+              </label>
               <input
+                id="ticket-order-range"
                 type="range"
                 min={25}
                 max={2500}
@@ -460,7 +463,11 @@ export default function MarketExperienceBoard() {
                 className="liquid-range"
                 suppressHydrationWarning
               />
+              <label htmlFor="ticket-order-number" className="sr-only" style={{ position: 'absolute', width: '1px', height: '1px', padding: '0', margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: '0' }}>
+                Order size USD (numeric)
+              </label>
               <input
+                id="ticket-order-number"
                 type="number"
                 min={1}
                 value={tradeAmount}
@@ -468,7 +475,7 @@ export default function MarketExperienceBoard() {
                 className="liquid-input"
                 suppressHydrationWarning
               />
-            </label>
+            </div>
 
             <div className="liquid-ticket-block" style={{ marginTop: '0.8rem' }}>
               <div className="liquid-ticket-row"><span>Entry price</span><strong>{(currentPrice * 100).toFixed(1)}c</strong></div>

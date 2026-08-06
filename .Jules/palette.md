@@ -53,3 +53,7 @@ This journal tracks critical UX and accessibility (a11y) learnings specific to t
 ## 2026-08-05 - Accessible Character Counts & Constraints for Custom Inputs
 **Learning:** For user input components with strict backend or on-chain payload length limitations (such as scenario description textareas in `AIAssistantPanel`), users lack visual clarity and feedback on the remaining space unless a `maxLength` and live counter are active. Furthermore, assistive technology users face context gaps unless the count element is associated via `aria-describedby` and declares `aria-live="polite"` to dynamically announce updates.
 **Action:** Declare a `maxLength` limit, link description elements with `aria-describedby`, include `aria-live="polite"` on dynamic count elements, and style using standard Tailwind text utility classes (`text-xs text-right text-slate-400 mt-1 mb-2`) rather than inline styling.
+
+## 2026-08-06 - Hiding Screen Reader Labels & Overriding `sr-only` CSS Styles
+**Learning:** When rendering labels visually hidden for screen readers (using standard classes like `sr-only`), never apply styling like `display: none` or `visibility: hidden` to the label container because these declarations prevent screen readers and assistive technologies from announcing or parsing the linked text content.
+**Action:** If a label is designed to be visually hidden but screen-reader accessible, use semantic absolute positioning styles (`position: absolute`, `width: 1px`, `height: 1px`, `overflow: hidden`, etc.) instead of complete visibility suppression.
