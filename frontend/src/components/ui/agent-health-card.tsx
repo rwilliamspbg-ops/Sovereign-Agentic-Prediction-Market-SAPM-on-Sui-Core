@@ -95,8 +95,8 @@ export const AgentHealthCard: React.FC<AgentHealthCardProps> = ({
       </div>
 
       {/* Hover Actions */}
-      <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
-        <Button size="sm" variant="outline">
+      <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+        <Button size="sm" variant="outline" tabIndex={-1}>
           View Details
         </Button>
       </div>
