@@ -57,3 +57,7 @@ This journal tracks critical UX and accessibility (a11y) learnings specific to t
 ## 2026-08-06 - Hiding Screen Reader Labels & Overriding `sr-only` CSS Styles
 **Learning:** When rendering labels visually hidden for screen readers (using standard classes like `sr-only`), never apply styling like `display: none` or `visibility: hidden` to the label container because these declarations prevent screen readers and assistive technologies from announcing or parsing the linked text content.
 **Action:** If a label is designed to be visually hidden but screen-reader accessible, use semantic absolute positioning styles (`position: absolute`, `width: 1px`, `height: 1px`, `overflow: hidden`, etc.) instead of complete visibility suppression.
+
+## 2026-08-07 - Keyboard Focus Overlays & Suppressing Nested Interactive Tab Stops
+**Learning:** Action overlays inside interactive grid/list cards that only display on hover prevent keyboard-only users from seeing these actions. Adding `group-focus-within` allows keyboard users to see the overlay when they focus the card. Additionally, setting `tabIndex={-1}` on nested decorative buttons inside the card prevents confusing, redundant double tab-stops since the entire card is already focusable and actionable.
+**Action:** Always combine `group-focus-within` on card overlays and set `tabIndex={-1}` on redundant, nested buttons within interactive parents to optimize tabbing and visual accessibility.

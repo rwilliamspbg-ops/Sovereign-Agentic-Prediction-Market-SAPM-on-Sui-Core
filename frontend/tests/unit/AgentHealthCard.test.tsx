@@ -44,4 +44,18 @@ describe('AgentHealthCard Component', () => {
     fireEvent.keyDown(card, { key: 'Escape', code: 'Escape' });
     expect(handleClick).toHaveBeenCalledTimes(2);
   });
+
+  it('sets tabIndex={-1} on the inner View Details button to prevent redundant tab stops and has correct focus-within classes', () => {
+    render(<AgentHealthCard agent={mockAgent} onClick={jest.fn()} />);
+
+    // Get the visual View Details button
+    const viewDetailsButton = screen.getByRole('button', { name: 'View Details' });
+    expect(viewDetailsButton).toBeTruthy();
+    expect(viewDetailsButton.getAttribute('tabindex')).toBe('-1');
+
+    // Check that the container overlay has the class for focus-within accessibility
+    const overlay = viewDetailsButton.parentElement;
+    expect(overlay).toBeTruthy();
+    expect(overlay?.className).toContain('group-focus-within:opacity-100');
+  });
 });
