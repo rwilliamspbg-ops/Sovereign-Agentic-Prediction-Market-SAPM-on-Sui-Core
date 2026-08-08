@@ -61,3 +61,7 @@ This journal tracks critical UX and accessibility (a11y) learnings specific to t
 ## 2026-08-07 - Keyboard Focus Overlays & Suppressing Nested Interactive Tab Stops
 **Learning:** Action overlays inside interactive grid/list cards that only display on hover prevent keyboard-only users from seeing these actions. Adding `group-focus-within` allows keyboard users to see the overlay when they focus the card. Additionally, setting `tabIndex={-1}` on nested decorative buttons inside the card prevents confusing, redundant double tab-stops since the entire card is already focusable and actionable.
 **Action:** Always combine `group-focus-within` on card overlays and set `tabIndex={-1}` on redundant, nested buttons within interactive parents to optimize tabbing and visual accessibility.
+
+## 2026-08-08 - Accessible Dialog Overlays & Escape Gesture Navigation in Trading Flows
+**Learning:** Modals or dialog confirmation boxes inside dense trading sections of prediction markets (such as close position confirmation popovers) must explicitly support ARIA definitions (`role="dialog"`, `aria-modal="true"`, and `aria-labelledby`) to prevent context gaps for screen-reader users. Additionally, attaching global event listeners in `useEffect` hook triggers for the 'Escape' key alongside overlay backdrop clicks with proper `stopPropagation` guarantees standard-compliant modal dismiss capability.
+**Action:** Always wrap dialog structures with standard backdrop-clicks, key listeners, semantic accessibility roles, and explicit target focus styles (`focus-visible`).
