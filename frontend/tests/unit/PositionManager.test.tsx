@@ -74,4 +74,45 @@ describe('PositionManager Component Micro-UX and Accessibility', () => {
     expect(preset50Button.className).toContain('bg-blue-50');
     expect(preset10Button.className).not.toContain('bg-blue-50');
   });
+
+  it('renders the Close Position Confirmation Modal with correct ARIA properties and closes on Escape/backdrop click', () => {
+    render(<PositionManager {...defaultProps} />);
+
+    // Open active YES position first
+    const openYesButton = screen.getByRole('button', { name: 'Open YES Position' });
+    fireEvent.click(openYesButton);
+
+    // Click Close Position button
+    const closePositionButton = screen.getByRole('button', { name: 'Close Position' });
+    fireEvent.click(closePositionButton);
+
+    // Verify confirmation modal is open with proper ARIA attributes
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toBeTruthy();
+    expect(dialog.getAttribute('aria-modal')).toBe('true');
+    expect(dialog.getAttribute('aria-labelledby')).toBe('modal-title');
+
+    // Verify modal title
+    const modalTitle = screen.getByText('Close Position?');
+    expect(modalTitle.getAttribute('id')).toBe('modal-title');
+
+    // Verify buttons have correct focus-visible styles
+    const cancelButton = screen.getByRole('button', { name: 'Cancel' });
+    const confirmButton = screen.getByRole('button', { name: 'Confirm Close' });
+    expect(cancelButton.className).toContain('focus-visible:ring-gray-500');
+    expect(confirmButton.className).toContain('focus-visible:ring-red-500');
+
+    // Verify global escape key dismisses the modal
+    fireEvent.keyDown(window, { key: 'Escape', code: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    // Re-open modal
+    fireEvent.click(closePositionButton);
+    expect(screen.getByRole('dialog')).toBeTruthy();
+
+    // Verify overlay backdrop click dismisses the modal
+    const overlayBackdrop = screen.getByText('Close Position?').closest('.fixed') as HTMLElement;
+    fireEvent.click(overlayBackdrop);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
 });

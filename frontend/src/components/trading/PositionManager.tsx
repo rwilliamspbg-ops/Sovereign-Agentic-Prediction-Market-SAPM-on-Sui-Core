@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface PositionManagerProps {
   marketId: string;
@@ -373,30 +373,32 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
       </div>
 
       {/* Close Position Confirmation Modal */}
-      {showCloseConfirm && position && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
-            <h4 className="mb-2 text-lg font-semibold text-gray-900">Close Position?</h4>
-            <p className="mb-4 text-sm text-gray-600">
-              This will redeem your full {position.outcome.toUpperCase()} position and realize P&L at current price.
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowCloseConfirm(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleClosePosition}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-              >
-                Confirm Close
-              </button>
-            </div>
-          </div>
+      {showCloseConfirm && position && <PositionModal onClose={() => setShowCloseConfirm(false)} onConfirm={handleClosePosition} positionOutcome={position.outcome} />}
+    </div>
+  );
+};
+
+const PositionModal: React.FC<{ onClose: () => void; onConfirm: () => void; positionOutcome: 'yes' | 'no' }> = ({
+  onClose,
+  onConfirm,
+  positionOutcome,
+}) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="modal-title" onClick={(e) => e.stopPropagation()}>
+        <h4 id="modal-title" className="mb-2 text-lg font-semibold text-gray-900">Close Position?</h4>
+        <p className="mb-4 text-sm text-gray-600">This will redeem your full {positionOutcome.toUpperCase()} position and realize P&L at current price.</p>
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2">Cancel</button>
+          <button onClick={onConfirm} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2">Confirm Close</button>
         </div>
-      )}
+      </div>
     </div>
   );
 };
