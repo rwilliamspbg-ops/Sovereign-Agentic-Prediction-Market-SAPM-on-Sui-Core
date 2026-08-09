@@ -439,7 +439,24 @@ export function CommandPalette({ actions, compact = false }: CommandPaletteProps
             onClick={(event) => event.stopPropagation()}
           >
             <div style={{ padding: '0.9rem', borderBottom: '1px solid #1f2937' }}>
+              <label
+                htmlFor="command-palette-search"
+                style={{
+                  position: 'absolute',
+                  width: '1px',
+                  height: '1px',
+                  padding: 0,
+                  margin: '-1px',
+                  overflow: 'hidden',
+                  clip: 'rect(0, 0, 0, 0)',
+                  whiteSpace: 'nowrap',
+                  border: 0,
+                }}
+              >
+                Search commands, routes, docs
+              </label>
               <input
+                id="command-palette-search"
                 autoFocus
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}

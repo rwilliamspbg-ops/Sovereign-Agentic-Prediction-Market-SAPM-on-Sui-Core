@@ -4,6 +4,13 @@ const { TextDecoder, TextEncoder } = require('util');
 
 require('@testing-library/jest-dom');
 
+jest.mock('next/navigation', () => ({
+  usePathname: jest.fn(() => '/'),
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+  })),
+}));
+
 if (typeof global.TextEncoder === 'undefined') {
   global.TextEncoder = TextEncoder;
 }
