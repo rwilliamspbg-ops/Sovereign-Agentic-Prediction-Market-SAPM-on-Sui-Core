@@ -266,12 +266,30 @@ export const OrderBook: React.FC<OrderBookProps> = ({ marketId, onPlaceOrder }) 
       </div>
 
       {/* Fee and slippage information */}
-      <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
-        <div className="rounded-lg bg-gray-50 px-3 py-2 text-gray-700">
+      <div className="relative group mt-3 grid grid-cols-2 gap-3 text-xs">
+        <div
+          tabIndex={0}
+          className="rounded-lg bg-gray-50 px-3 py-2 text-gray-700 cursor-help transition-all hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+          aria-label={`Maker Fee: ${(MAKER_FEE_BPS / 100).toFixed(2)} percent. Tooltip available on hover or focus.`}
+        >
           Maker Fee: <span className="font-semibold">{(MAKER_FEE_BPS / 100).toFixed(2)}%</span>
         </div>
-        <div className="rounded-lg bg-gray-50 px-3 py-2 text-gray-700">
+        <div
+          tabIndex={0}
+          className="rounded-lg bg-gray-50 px-3 py-2 text-gray-700 cursor-help transition-all hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+          aria-label={`Taker Fee: ${(TAKER_FEE_BPS / 100).toFixed(2)} percent. Tooltip available on hover or focus.`}
+        >
           Taker Fee: <span className="font-semibold">{(TAKER_FEE_BPS / 100).toFixed(2)}%</span>
+        </div>
+
+        {/* Accessible Keyboard-Bound Tooltip overlay */}
+        <div
+          className="hidden group-hover:block group-focus-within:block absolute bottom-full left-0 right-0 bg-slate-900 text-slate-100 text-[11px] p-2.5 rounded-lg mb-2 shadow-xl border border-slate-700/60 pointer-events-none"
+          role="tooltip"
+        >
+          <div className="font-bold text-sky-400 mb-0.5">Fee Structure Details</div>
+          <div>• <span className="font-medium text-slate-200">Maker:</span> Placed limit orders that add liquidity. ({MAKER_FEE_BPS} bps)</div>
+          <div>• <span className="font-medium text-slate-200">Taker:</span> Market orders that match existing orders immediately. ({TAKER_FEE_BPS} bps)</div>
         </div>
       </div>
 
