@@ -49,4 +49,29 @@ describe('OrderBook Component Accessibility and Interaction', () => {
 
     expect(handlePlaceOrder).toHaveBeenCalledTimes(1);
   });
+
+  it('renders the accessible fee structure details tooltip with proper roles and tabIndex', () => {
+    const handlePlaceOrder = jest.fn();
+    render(<OrderBook marketId="TEST_MKT_001" onPlaceOrder={handlePlaceOrder} />);
+
+    // Get the Maker and Taker fee trigger blocks by their explicit aria-labels
+    const makerFeeBlock = screen.getByLabelText(/Maker Fee:.*percent/);
+    const takerFeeBlock = screen.getByLabelText(/Taker Fee:.*percent/);
+
+    expect(makerFeeBlock).toBeTruthy();
+    expect(takerFeeBlock).toBeTruthy();
+
+    expect(makerFeeBlock.getAttribute('tabIndex')).toBe('0');
+    expect(takerFeeBlock.getAttribute('tabIndex')).toBe('0');
+
+    expect(makerFeeBlock.className).toContain('focus-visible:ring-2');
+    expect(makerFeeBlock.className).toContain('focus-visible:ring-sky-500');
+
+    // Get tooltip by its role
+    const tooltip = screen.getByRole('tooltip');
+    expect(tooltip).toBeTruthy();
+    expect(tooltip.textContent).toContain('Fee Structure Details');
+    expect(tooltip.textContent).toContain('Maker:');
+    expect(tooltip.textContent).toContain('Taker:');
+  });
 });
