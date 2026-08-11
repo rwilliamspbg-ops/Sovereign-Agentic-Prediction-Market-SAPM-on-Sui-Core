@@ -475,6 +475,33 @@ export default function MarketExperienceBoard() {
                 className="liquid-input"
                 suppressHydrationWarning
               />
+              {/* Quick preset buttons directly beneath the numeric input */}
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                {[50, 250, 500, 1000].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setTradeAmount(preset)}
+                    aria-label={`Set order size to ${preset} USD`}
+                    className="focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-md"
+                    style={{
+                      flex: 1,
+                      padding: '0.35rem 0.5rem',
+                      backgroundColor: '#0c221e',
+                      color: tradeAmount === preset ? '#22d3ee' : '#a6e6d9',
+                      border: `1px solid ${tradeAmount === preset ? '#22d3ee' : '#334155'}`,
+                      borderRadius: '0.25rem',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease-in-out',
+                    }}
+                    suppressHydrationWarning
+                  >
+                    {preset} USD
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="liquid-ticket-block" style={{ marginTop: '0.8rem' }}>
