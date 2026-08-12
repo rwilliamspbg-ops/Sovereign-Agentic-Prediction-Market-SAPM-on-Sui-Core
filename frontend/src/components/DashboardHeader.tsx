@@ -122,6 +122,7 @@ export default function DashboardHeader() {
           <button
             type="button"
             className={`density-toggle ${densityMode === 'standard' ? 'active' : ''}`}
+            aria-pressed={densityMode === 'standard'}
             onClick={() => setDensityMode('standard')}
           >
             Standard Mode
@@ -129,6 +130,7 @@ export default function DashboardHeader() {
           <button
             type="button"
             className={`density-toggle ${densityMode === 'advanced' ? 'active' : ''}`}
+            aria-pressed={densityMode === 'advanced'}
             onClick={() => setDensityMode('advanced')}
           >
             Advanced Deep Dive
