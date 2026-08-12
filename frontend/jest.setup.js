@@ -33,8 +33,14 @@ jest.mock('@copilotkit/react-ui', () => ({
 // Mock useAgentState globally to prevent next-jest ESM / path alias resolution discrepancies
 jest.mock('@/hooks/useAgentState', () => {
   const mockRunScenarioSimulation = jest.fn();
+  const mockSetDensityMode = jest.fn();
   return {
     useAgentState: jest.fn(() => ({
+      marketData: {
+        compositeConfidence: 0.75,
+      },
+      walletConnected: false,
+      walletAddress: null,
       systemHealth: {
         deepbookConnected: true,
         walrusConnected: true,
@@ -48,8 +54,10 @@ jest.mock('@/hooks/useAgentState', () => {
     })),
     useMarketActions: jest.fn(() => ({
       runScenarioSimulation: mockRunScenarioSimulation,
+      setDensityMode: mockSetDensityMode,
     })),
     // Export mock function on the module so individual tests can access/spy on it
     _mockRunScenarioSimulation: mockRunScenarioSimulation,
+    _mockSetDensityMode: mockSetDensityMode,
   };
 });
