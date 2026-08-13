@@ -51,6 +51,20 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
     }
   }, []);
 
+  // Handle global Escape key to close the settings panel
+  useEffect(() => {
+    if (!onClose) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
   useEffect(() => {
     setNotificationPermission(getNotificationPermissionState());
   }, []);
