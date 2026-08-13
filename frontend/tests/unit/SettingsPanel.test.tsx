@@ -36,6 +36,17 @@ describe('SettingsPanel Component Accessibility and Functionality', () => {
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
+  it('triggers onClose when Escape key is pressed', () => {
+    const handleClose = jest.fn();
+    render(<SettingsPanel onClose={handleClose} />);
+
+    // Press the Escape key
+    fireEvent.keyDown(window, { key: 'Escape', code: 'Escape' });
+
+    // Expect the onClose callback to have been called
+    expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+
   it('declares semantic ARIA role="switch" and aria-checked on the Toggle buttons', () => {
     render(<SettingsPanel />);
 
