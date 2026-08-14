@@ -165,19 +165,57 @@ describe('MarketList human interactions', () => {
     expect(screen.getByText('0 markets')).toBeTruthy();
   });
 
-  it('filters by category and clears back to all markets', () => {
+  it('shows, operates, and clears search with search clear button', () => {
     render(<MarketList markets={markets} onTrade={jest.fn()} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Technology' }));
+    // Initially, clear search button should not exist
+    expect(screen.queryByRole('button', { name: 'Clear search query' })).toBeNull();
+
+    // Type something to make it appear
+    const searchInput = screen.getByPlaceholderText('Search markets...') as HTMLInputElement;
+    fireEvent.change(searchInput, { target: { value: 'Sui' } });
+
+    // Now, clear search button should exist
+    const clearButton = screen.getByRole('button', { name: 'Clear search query' });
+    expect(clearButton).toBeTruthy();
+
+    // Click clear search button
+    fireEvent.click(clearButton);
+
+    // Search input should be empty and clear button should be gone
+    expect(searchInput.value).toBe('');
+    expect(screen.queryByRole('button', { name: 'Clear search query' })).toBeNull();
+  });
+
+  it('filters by category and clears back to all markets with correct aria-pressed states', () => {
+    render(<MarketList markets={markets} onTrade={jest.fn()} />);
+
+    const allBtn = screen.getByRole('button', { name: 'All' });
+    const techBtn = screen.getByRole('button', { name: 'Technology' });
+
+    // Initial aria-pressed states
+    expect(allBtn.getAttribute('aria-pressed')).toBe('true');
+    expect(techBtn.getAttribute('aria-pressed')).toBe('false');
+
+    // Click category
+    fireEvent.click(techBtn);
 
     expect(screen.getByText('Will Sui reach 1M daily active users in 2026?')).toBeTruthy();
     expect(screen.queryByText('Will Bitcoin reach $100K in 2026?')).not.toBeTruthy();
     expect(screen.getByText('1 markets')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'All' }));
+    // Checked aria-pressed states after click
+    expect(allBtn.getAttribute('aria-pressed')).toBe('false');
+    expect(techBtn.getAttribute('aria-pressed')).toBe('true');
+
+    // Click All back
+    fireEvent.click(allBtn);
 
     expect(screen.getByText('Will Bitcoin reach $100K in 2026?')).toBeTruthy();
     expect(screen.getByText('3 markets')).toBeTruthy();
+
+    expect(allBtn.getAttribute('aria-pressed')).toBe('true');
+    expect(techBtn.getAttribute('aria-pressed')).toBe('false');
   });
 
   it('routes YES and NO selections from listed cards to the trade callback', () => {
