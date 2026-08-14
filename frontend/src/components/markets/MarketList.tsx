@@ -97,15 +97,26 @@ export const MarketList: React.FC<MarketListProps> = ({
               aria-label="Search prediction markets"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-blue-500 rounded-full focus:outline-none flex items-center justify-center h-6 w-6"
+                aria-label="Clear search query"
+              >
+                <span className="text-sm font-semibold">✕</span>
+              </button>
+            )}
           </div>
 
           {/* Category Filters */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Filter markets by category">
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+              aria-pressed={selectedCategory === null}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
                 selectedCategory === null
                   ? 'bg-blue-100 text-blue-700'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -117,7 +128,8 @@ export const MarketList: React.FC<MarketListProps> = ({
               <button
                 key={category}
                 onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                aria-pressed={selectedCategory === category}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
                   selectedCategory === category
                     ? 'bg-blue-100 text-blue-700'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
