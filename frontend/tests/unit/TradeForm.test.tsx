@@ -89,4 +89,22 @@ describe('TradeForm Component Micro-UX and Accessibility', () => {
     expect(updatedStyle10.color).toBe('rgb(148, 163, 184)');
     expect(updatedStyle10.borderColor).toBe('#334155');
   });
+
+  it('declares and updates aria-pressed states on position toggle buttons', () => {
+    render(<TradeForm {...defaultProps} initialSide="yes" />);
+
+    const yesButton = screen.getByRole('button', { name: /Buy YES/i });
+    const noButton = screen.getByRole('button', { name: /Buy NO/i });
+
+    // Initially 'yes' is selected
+    expect(yesButton.getAttribute('aria-pressed')).toBe('true');
+    expect(noButton.getAttribute('aria-pressed')).toBe('false');
+
+    // Click 'Buy NO'
+    fireEvent.click(noButton);
+
+    // Now 'no' is selected
+    expect(yesButton.getAttribute('aria-pressed')).toBe('false');
+    expect(noButton.getAttribute('aria-pressed')).toBe('true');
+  });
 });
