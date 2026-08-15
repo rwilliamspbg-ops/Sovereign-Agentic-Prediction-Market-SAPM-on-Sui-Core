@@ -1155,6 +1155,8 @@ export function TradeForm({
             type="button"
             onClick={() => setSide('yes')}
             disabled={isExecuting}
+            aria-pressed={side === 'yes'}
+            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-md"
             style={{
               padding: '0.75rem',
               border: `2px solid ${side === 'yes' ? '#34d399' : '#334155'}`,
@@ -1173,6 +1175,8 @@ export function TradeForm({
             type="button"
             onClick={() => setSide('no')}
             disabled={isExecuting}
+            aria-pressed={side === 'no'}
+            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-md"
             style={{
               padding: '0.75rem',
               border: `2px solid ${side === 'no' ? '#f87171' : '#334155'}`,
