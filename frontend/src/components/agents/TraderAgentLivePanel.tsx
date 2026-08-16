@@ -129,7 +129,9 @@ export function TraderAgentLivePanel() {
         <button
           type="button"
           onClick={() => setIsRunning((prev) => !prev)}
-          className="liquid-status-pill"
+          className="liquid-status-pill focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1"
+          aria-pressed={isRunning}
+          aria-label={isRunning ? 'Stop trader agent live feed' : 'Start trader agent live feed'}
           style={{ backgroundColor: isRunning ? 'rgba(127,29,29,0.35)' : 'rgba(6,95,70,0.45)' }}
         >
           {isRunning ? 'Stop Agents' : 'Start Agents'}
@@ -137,7 +139,8 @@ export function TraderAgentLivePanel() {
         <select
           value={tickMs}
           onChange={(event) => setTickMs(Number(event.target.value))}
-          className="liquid-select"
+          className="liquid-select focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          aria-label="Select trader agent update cadence"
           style={{ minWidth: '140px' }}
         >
           <option value={2000}>2.0s cadence</option>
@@ -146,7 +149,11 @@ export function TraderAgentLivePanel() {
         </select>
       </div>
 
-      <div style={{ marginTop: '0.55rem', color: '#9bd9cd', fontSize: '0.76rem', display: 'grid', gap: '0.2rem' }}>
+      <div
+        role="status"
+        aria-live="polite"
+        style={{ marginTop: '0.55rem', color: '#9bd9cd', fontSize: '0.76rem', display: 'grid', gap: '0.2rem' }}
+      >
         {streamMessage && <span>{streamMessage}</span>}
         <span>Decisions: {stats.total}</span>
         <span>YES: {stats.buyYes} | NO: {stats.buyNo} | HOLD: {stats.hold}</span>
