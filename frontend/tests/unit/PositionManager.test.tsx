@@ -115,4 +115,43 @@ describe('PositionManager Component Micro-UX and Accessibility', () => {
     fireEvent.click(overlayBackdrop);
     expect(screen.queryByRole('dialog')).toBeNull();
   });
+
+  it('renders quick redeem percentage presets with accessible ARIA labels and updates input value when clicked', () => {
+    render(<PositionManager {...defaultProps} />);
+
+    // Open an active position (100 SUI)
+    const openYesButton = screen.getByRole('button', { name: 'Open YES Position' });
+    fireEvent.click(openYesButton);
+
+    const redeemInput = screen.getByLabelText(/Redeem amount in SUI/) as HTMLInputElement;
+    expect(redeemInput.value).toBe('');
+
+    // Check presence of redeem presets group
+    const presetGroup = screen.getByRole('group', { name: 'Quick redeem percentage presets' });
+    expect(presetGroup).toBeTruthy();
+
+    // Check 25% preset button (25.00 SUI)
+    const preset25 = screen.getByRole('button', { name: 'Redeem 25% (25.00 SUI)' });
+    expect(preset25).toBeTruthy();
+    expect(preset25.getAttribute('aria-pressed')).toBe('false');
+
+    // Click 25% preset
+    fireEvent.click(preset25);
+    expect(redeemInput.value).toBe('25');
+    expect(preset25.getAttribute('aria-pressed')).toBe('true');
+    expect(preset25.className).toContain('bg-red-50');
+
+    // Check 50% preset button (50.00 SUI)
+    const preset50 = screen.getByRole('button', { name: 'Redeem 50% (50.00 SUI)' });
+    fireEvent.click(preset50);
+    expect(redeemInput.value).toBe('50');
+    expect(preset50.getAttribute('aria-pressed')).toBe('true');
+    expect(preset25.getAttribute('aria-pressed')).toBe('false');
+
+    // Check 100% preset button (100.00 SUI)
+    const preset100 = screen.getByRole('button', { name: 'Redeem 100% (100.00 SUI)' });
+    fireEvent.click(preset100);
+    expect(redeemInput.value).toBe('100');
+    expect(preset100.getAttribute('aria-pressed')).toBe('true');
+  });
 });

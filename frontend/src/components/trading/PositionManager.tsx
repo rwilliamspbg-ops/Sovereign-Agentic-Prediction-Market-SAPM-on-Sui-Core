@@ -349,20 +349,28 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
             </button>
           </div>
 
-          {/* Quick redeem buttons */}
-          <div className="mt-3 flex gap-2">
-            <button
-              onClick={() => setRedeemAmount(position.size.toString())}
-              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none focus-visible:ring-gray-500 font-medium"
-            >
-              Redeem All
-            </button>
-            <button
-              onClick={() => setRedeemAmount((position.size * 0.5).toString())}
-              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none focus-visible:ring-gray-500 font-medium"
-            >
-              Redeem 50%
-            </button>
+          {/* Quick redeem percentage presets */}
+          <div className="mt-3 flex gap-2" role="group" aria-label="Quick redeem percentage presets">
+            {[25, 50, 75, 100].map((pct) => {
+              const targetAmount = (position.size * (pct / 100)).toString();
+              const isSelected = redeemAmount === targetAmount;
+              return (
+                <button
+                  key={pct}
+                  type="button"
+                  onClick={() => setRedeemAmount(targetAmount)}
+                  aria-label={`Redeem ${pct}% (${formatCurrency(position.size * (pct / 100))} SUI)`}
+                  aria-pressed={isSelected}
+                  className={`flex-1 px-2 py-1.5 rounded-md border text-xs font-semibold transition-all focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:outline-none ${
+                    isSelected
+                      ? 'bg-red-50 border-red-500 text-red-700'
+                      : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  {pct === 100 ? '100% (All)' : `${pct}%`}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
