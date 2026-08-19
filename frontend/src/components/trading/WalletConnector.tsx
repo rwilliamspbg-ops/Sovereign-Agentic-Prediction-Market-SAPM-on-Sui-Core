@@ -461,7 +461,10 @@ export const WalletConnector: React.FC<{ onConnect?: () => void }> = ({ onConnec
 
         {/* Tooltip */}
         {!walletState.connected && (
-          <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <div
+            role="tooltip"
+            className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none"
+          >
             {availableWallets.length > 0 ? 'Connect to trade markets' : 'Install a Sui wallet extension'}
           </div>
         )}
