@@ -36,35 +36,43 @@ describe('TradeForm Component Micro-UX and Accessibility', () => {
     expect(amountInput.getAttribute('aria-required')).toBe('true');
   });
 
-  it('renders quick amount preset buttons and updates input value when clicked', () => {
+  it('renders quick amount preset group and updates input value and aria-pressed when clicked', () => {
     render(<TradeForm {...defaultProps} />);
+
+    // Check for semantic group container
+    const presetGroup = screen.getByRole('group', { name: 'Quick amount presets' });
+    expect(presetGroup).toBeTruthy();
 
     // Find the input field
     const amountInput = screen.getByLabelText(/Amount \(SUI\)/) as HTMLInputElement;
     expect(amountInput.value).toBe('10'); // Default value is '10' from state initializing as '10'
 
-    // Click on '50 SUI' preset button
-    const preset50Button = screen.getByRole('button', { name: 'Set amount to 50 SUI' });
+    // Click on '50 SUI' preset button (yesPrice is 0.65, so 50 * 0.65 = 32.50)
+    const preset50Button = screen.getByRole('button', { name: /Set amount to 50 SUI \(Cost: 32.50 SUI\)/ });
     expect(preset50Button).toBeTruthy();
+    expect(preset50Button.getAttribute('aria-pressed')).toBe('false');
 
     fireEvent.click(preset50Button);
 
-    // Verify input value is updated to '50'
+    // Verify input value and aria-pressed updated
     expect(amountInput.value).toBe('50');
+    expect(preset50Button.getAttribute('aria-pressed')).toBe('true');
 
     // Click on '500 SUI' preset button
-    const preset500Button = screen.getByRole('button', { name: 'Set amount to 500 SUI' });
+    const preset500Button = screen.getByRole('button', { name: /Set amount to 500 SUI \(Cost: 325.00 SUI\)/ });
     fireEvent.click(preset500Button);
 
-    // Verify input value is updated to '500'
+    // Verify input value and aria-pressed updated
     expect(amountInput.value).toBe('500');
+    expect(preset500Button.getAttribute('aria-pressed')).toBe('true');
+    expect(preset50Button.getAttribute('aria-pressed')).toBe('false');
   });
 
   it('visually highlights the selected active preset button', () => {
     render(<TradeForm {...defaultProps} />);
 
-    const preset10Button = screen.getByRole('button', { name: 'Set amount to 10 SUI' });
-    const preset50Button = screen.getByRole('button', { name: 'Set amount to 50 SUI' });
+    const preset10Button = screen.getByRole('button', { name: /Set amount to 10 SUI/ });
+    const preset50Button = screen.getByRole('button', { name: /Set amount to 50 SUI/ });
 
     // By default, amount starts at '10', so 10 SUI preset should be active
     const style10 = window.getComputedStyle(preset10Button);
