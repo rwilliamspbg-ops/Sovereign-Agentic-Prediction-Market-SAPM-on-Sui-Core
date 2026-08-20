@@ -1117,31 +1117,36 @@ export function TradeForm({
           }}
         />
         {/* Quick Amount Preset Buttons */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-          {[10, 50, 100, 500].map((preset) => (
-            <button
-              key={preset}
-              type="button"
-              disabled={isExecuting}
-              onClick={() => setAmount(preset.toString())}
-              aria-label={`Set amount to ${preset} SUI`}
-              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-md"
-              style={{
-                flex: 1,
-                padding: '0.35rem 0.5rem',
-                backgroundColor: '#1e293b',
-                color: amount === preset.toString() ? '#0ea5e9' : '#94a3b8',
-                border: `1px solid ${amount === preset.toString() ? '#0ea5e9' : '#334155'}`,
-                borderRadius: '0.25rem',
-                fontSize: '0.75rem',
-                fontWeight: '600',
-                cursor: isExecuting ? 'not-allowed' : 'pointer',
-                transition: 'all 0.15s ease-in-out',
-              }}
-            >
-              {preset} SUI
-            </button>
-          ))}
+        <div role="group" aria-label="Quick amount presets" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+          {[10, 50, 100, 500].map((preset) => {
+            const presetCost = (preset * price).toFixed(2);
+            const isSelected = amount === preset.toString();
+            return (
+              <button
+                key={preset}
+                type="button"
+                disabled={isExecuting}
+                onClick={() => setAmount(preset.toString())}
+                aria-label={`Set amount to ${preset} SUI (Cost: ${presetCost} SUI)`}
+                aria-pressed={isSelected}
+                className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-md"
+                style={{
+                  flex: 1,
+                  padding: '0.35rem 0.5rem',
+                  backgroundColor: '#1e293b',
+                  color: isSelected ? '#0ea5e9' : '#94a3b8',
+                  border: `1px solid ${isSelected ? '#0ea5e9' : '#334155'}`,
+                  borderRadius: '0.25rem',
+                  fontSize: '0.75rem',
+                  fontWeight: '600',
+                  cursor: isExecuting ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s ease-in-out',
+                }}
+              >
+                {preset} SUI
+              </button>
+            );
+          })}
         </div>
       </div>
 
