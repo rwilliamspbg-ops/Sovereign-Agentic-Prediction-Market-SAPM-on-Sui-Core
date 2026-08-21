@@ -248,6 +248,24 @@ export default function MarketCurveView() {
             onChange={(event) => setStakeAmount(Number(event.target.value))}
           />
 
+          <div role="group" aria-label="Quick stake amount presets" style={{ display: 'flex', gap: '0.4rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
+            {[10, 50, 100, 500].map((preset) => {
+              const isSelected = stakeAmount === preset;
+              return (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setStakeAmount(preset)}
+                  aria-label={`Set stake amount to ${preset} SUI`}
+                  aria-pressed={isSelected}
+                  className={`density-toggle ${isSelected ? 'active' : ''} focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400`}
+                >
+                  {preset} SUI
+                </button>
+              );
+            })}
+          </div>
+
           <div className="stake-actions">
             <button
               type="button"
