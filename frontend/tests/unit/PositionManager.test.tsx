@@ -27,27 +27,35 @@ describe('PositionManager Component Micro-UX and Accessibility', () => {
     expect(label.getAttribute('for')).toBe('deposit-amount-input');
   });
 
-  it('renders quick deposit amount preset buttons and updates input value when clicked', () => {
+  it('renders quick deposit amount preset buttons with role="group" and updates input value when clicked', () => {
     render(<PositionManager {...defaultProps} />);
 
     const depositInput = screen.getByLabelText(/Deposit Stake/) as HTMLInputElement;
     expect(depositInput.value).toBe(''); // Initially empty
 
+    // Check presence of deposit presets group
+    const presetGroup = screen.getByRole('group', { name: 'Quick deposit amount presets' });
+    expect(presetGroup).toBeTruthy();
+
     // Click on '50 SUI' deposit preset button
     const preset50Button = screen.getByRole('button', { name: 'Set deposit amount to 50 SUI' });
     expect(preset50Button).toBeTruthy();
+    expect(preset50Button.getAttribute('aria-pressed')).toBe('false');
 
     fireEvent.click(preset50Button);
 
-    // Verify deposit input value is updated to '50'
+    // Verify deposit input value is updated to '50' and aria-pressed is true
     expect(depositInput.value).toBe('50');
+    expect(preset50Button.getAttribute('aria-pressed')).toBe('true');
 
     // Click on '500 SUI' deposit preset button
     const preset500Button = screen.getByRole('button', { name: 'Set deposit amount to 500 SUI' });
     fireEvent.click(preset500Button);
 
-    // Verify deposit input value is updated to '500'
+    // Verify deposit input value is updated to '500' and aria-pressed is updated
     expect(depositInput.value).toBe('500');
+    expect(preset500Button.getAttribute('aria-pressed')).toBe('true');
+    expect(preset50Button.getAttribute('aria-pressed')).toBe('false');
   });
 
   it('visually highlights the selected active deposit preset button', () => {
@@ -59,6 +67,7 @@ describe('PositionManager Component Micro-UX and Accessibility', () => {
     // Initially none are active as input is empty
     expect(preset10Button.className).toContain('bg-gray-50');
     expect(preset50Button.className).toContain('bg-gray-50');
+    expect(preset10Button.getAttribute('aria-pressed')).toBe('false');
 
     // Click 10 SUI preset
     fireEvent.click(preset10Button);
@@ -66,6 +75,7 @@ describe('PositionManager Component Micro-UX and Accessibility', () => {
     // Now 10 SUI should be active
     expect(preset10Button.className).toContain('bg-blue-50');
     expect(preset50Button.className).not.toContain('bg-blue-50');
+    expect(preset10Button.getAttribute('aria-pressed')).toBe('true');
 
     // Click 50 SUI preset
     fireEvent.click(preset50Button);
@@ -73,6 +83,8 @@ describe('PositionManager Component Micro-UX and Accessibility', () => {
     // Now 50 SUI should be active, 10 SUI should be inactive
     expect(preset50Button.className).toContain('bg-blue-50');
     expect(preset10Button.className).not.toContain('bg-blue-50');
+    expect(preset50Button.getAttribute('aria-pressed')).toBe('true');
+    expect(preset10Button.getAttribute('aria-pressed')).toBe('false');
   });
 
   it('renders the Close Position Confirmation Modal with correct ARIA properties and closes on Escape/backdrop click', () => {
