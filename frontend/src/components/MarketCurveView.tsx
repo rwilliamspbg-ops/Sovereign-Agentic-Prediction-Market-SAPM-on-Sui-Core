@@ -26,7 +26,15 @@ function CardOutcome({
   onLeave: () => void;
 }) {
   return (
-    <article className="odds-card micro-feedback-card" onMouseEnter={onHover} onMouseLeave={onLeave}>
+    <article
+      tabIndex={0}
+      className="odds-card micro-feedback-card focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-lg"
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+      onFocus={onHover}
+      onBlur={onLeave}
+      aria-label={`${name} outcome card. Odds: ${odds.toFixed(2)}x, Stake Weight: ${Math.round(stakeWeight)}%. Projected Odds: ${projectedOdds.toFixed(2)}x.`}
+    >
       <h4>{name}</h4>
       <p className="odds-value">{odds.toFixed(2)}x</p>
       <p className="stake-weight">Stake Weight: {Math.round(stakeWeight)}%</p>
