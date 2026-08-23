@@ -64,4 +64,55 @@ describe('MarketCurveView Component Quick Stake Amount Presets', () => {
     expect(preset500Button.getAttribute('aria-pressed')).toBe('true');
     expect(preset100Button.getAttribute('aria-pressed')).toBe('false');
   });
+
+  it('renders outcome cards with keyboard focus accessibility and projected odds on focus', () => {
+    (useAgentState as unknown as jest.Mock).mockReturnValue({
+      marketData: {
+        id: 'market_1',
+        eventName: 'Will SUI exceed $5 in 2026?',
+        compositeConfidence: 0.82,
+        liquidityScore: 0.9,
+        signalConfidence: 0.85,
+        stakesCount: 42,
+        oddsRange: { min: 1.05, max: 10 },
+        outcomes: [
+          { name: 'Outcome A', odds: 1.85, stakeWeight: 60 },
+          { name: 'Outcome B', odds: 2.15, stakeWeight: 40 },
+        ],
+      },
+      isLoading: false,
+      toasts: [],
+      dismissToast: jest.fn(),
+      walletBalance: 1250,
+      divergenceAlert: { active: false, deviationPct: 0 },
+      densityMode: 'standard',
+      agentTrail: [],
+      advancedMetrics: {
+        hvi: 12.4,
+        addressClusters: [],
+      },
+    });
+
+    render(<MarketCurveView />);
+
+    // Query outcome card by aria-label
+    const cardA = screen.getByLabelText(/Outcome A outcome card/);
+    expect(cardA).toBeTruthy();
+    expect(cardA.getAttribute('tabindex')).toBe('0');
+
+    // Mini projection chart initially not visible
+    expect(screen.queryByText('Projected')).toBeNull();
+
+    // Trigger focus event on Outcome A card
+    fireEvent.focus(cardA);
+
+    // Mini projection chart should now be visible
+    expect(screen.getByText('Projected')).toBeTruthy();
+
+    // Trigger blur event on Outcome A card
+    fireEvent.blur(cardA);
+
+    // Mini projection chart hidden again
+    expect(screen.queryByText('Projected')).toBeNull();
+  });
 });
