@@ -115,4 +115,43 @@ describe('MarketCurveView Component Quick Stake Amount Presets', () => {
     // Mini projection chart hidden again
     expect(screen.queryByText('Projected')).toBeNull();
   });
+
+  it('renders outcome selector and stake amount input with high-contrast focus rings', () => {
+    (useAgentState as unknown as jest.Mock).mockReturnValue({
+      marketData: {
+        id: 'market_1',
+        eventName: 'Will SUI exceed $5 in 2026?',
+        compositeConfidence: 0.82,
+        liquidityScore: 0.9,
+        signalConfidence: 0.85,
+        stakesCount: 42,
+        oddsRange: { min: 1.05, max: 10 },
+        outcomes: [
+          { name: 'Outcome A', odds: 1.85, stakeWeight: 60 },
+          { name: 'Outcome B', odds: 2.15, stakeWeight: 40 },
+        ],
+      },
+      isLoading: false,
+      toasts: [],
+      dismissToast: jest.fn(),
+      walletBalance: 1250,
+      divergenceAlert: { active: false, deviationPct: 0 },
+      densityMode: 'standard',
+      agentTrail: [],
+      advancedMetrics: {
+        hvi: 12.4,
+        addressClusters: [],
+      },
+    });
+
+    render(<MarketCurveView />);
+
+    const outcomeSelect = screen.getByLabelText('Outcome');
+    expect(outcomeSelect.className).toContain('focus-visible:ring-2');
+    expect(outcomeSelect.className).toContain('focus-visible:ring-cyan-400');
+
+    const stakeInput = screen.getByLabelText(/Stake Amount \(SUI\)/);
+    expect(stakeInput.className).toContain('focus-visible:ring-2');
+    expect(stakeInput.className).toContain('focus-visible:ring-cyan-400');
+  });
 });
