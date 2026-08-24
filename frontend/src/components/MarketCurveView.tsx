@@ -239,7 +239,12 @@ export default function MarketCurveView() {
         <h3>Stake Interface</h3>
         <div className="stake-controls">
           <label htmlFor="stake-outcome">Outcome</label>
-          <select id="stake-outcome" value={selectedOutcome} onChange={(event) => setSelectedOutcome(event.target.value)}>
+          <select
+            id="stake-outcome"
+            value={selectedOutcome}
+            onChange={(event) => setSelectedOutcome(event.target.value)}
+            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-md"
+          >
             {marketData.outcomes.map((outcome) => (
               <option key={outcome.name} value={outcome.name}>
                 {outcome.name}
@@ -254,6 +259,7 @@ export default function MarketCurveView() {
             min={0}
             value={stakeAmount}
             onChange={(event) => setStakeAmount(Number(event.target.value))}
+            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-md"
           />
 
           <div role="group" aria-label="Quick stake amount presets" style={{ display: 'flex', gap: '0.4rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
