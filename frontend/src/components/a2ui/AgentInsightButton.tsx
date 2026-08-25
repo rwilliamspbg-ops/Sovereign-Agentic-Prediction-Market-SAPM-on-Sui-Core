@@ -27,7 +27,8 @@ export function SimpleAgentInsight() {
   return (
     <button 
       onClick={() => sendIntent({ type: 'insight-request' })}
-      className="fixed bottom-4 right-4 bg-cyan-600 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-cyan-500 transition-colors z-40"
+      aria-label="Get AI agent insight on market predictions"
+      className="fixed bottom-4 right-4 bg-cyan-600 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-cyan-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 transition-colors z-40"
       title="Get AI agent insight on market predictions"
     >
       🤖 Get Agent Insight
