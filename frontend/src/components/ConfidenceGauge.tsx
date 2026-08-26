@@ -22,9 +22,20 @@ export default function ConfidenceGauge({ value, label }: { value: number; label
   const angle = 180 * clamped;
   const needle = polarToCartesian(80, 80, 50, 180 - angle);
 
+  const percentValue = Math.round(clamped * 100);
+
   return (
-    <div className="confidence-gauge-shell" aria-label="Composite confidence gauge">
-      <svg viewBox="0 0 160 100" className="confidence-gauge-svg" role="img" aria-label={`${label} ${Math.round(clamped * 100)} percent`}>
+    <div
+      tabIndex={0}
+      role="meter"
+      aria-valuenow={percentValue}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuetext={`${label}: ${percentValue}%`}
+      aria-label={`${label} confidence gauge`}
+      className="confidence-gauge-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg p-1 transition-all"
+    >
+      <svg viewBox="0 0 160 100" className="confidence-gauge-svg" role="img" aria-hidden="true">
         <path d={describeArc(80, 80, 56, 180, 360)} className="gauge-track" />
         <path d={describeArc(80, 80, 56, 180, 220)} className="gauge-zone-low" />
         <path d={describeArc(80, 80, 56, 220, 300)} className="gauge-zone-medium" />
@@ -34,7 +45,7 @@ export default function ConfidenceGauge({ value, label }: { value: number; label
       </svg>
       <div className="confidence-gauge-meta">
         <span>{label}</span>
-        <strong>{Math.round(clamped * 100)}%</strong>
+        <strong>{percentValue}%</strong>
       </div>
     </div>
   );
