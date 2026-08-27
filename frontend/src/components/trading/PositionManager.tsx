@@ -272,7 +272,7 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
             placeholder="Amount (SUI)"
             min="0.1"
             step="0.1"
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus:border-transparent focus:outline-none"
           />
           <button
             onClick={handleDeposit}
@@ -327,7 +327,7 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
               step="0.1"
               value={slippageTolerance}
               onChange={(event) => setSlippageTolerance(parseFloat(event.target.value))}
-              className="w-full focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+              className="w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
             />
           </div>
 
@@ -341,7 +341,7 @@ export const PositionManager: React.FC<PositionManagerProps> = ({
               min="0.1"
               step="0.1"
               max={position.size}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus:border-transparent focus:outline-none"
               aria-label="Redeem amount in SUI"
             />
             <button

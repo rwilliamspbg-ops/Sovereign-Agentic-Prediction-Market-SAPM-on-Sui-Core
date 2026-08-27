@@ -25,6 +25,10 @@ describe('PositionManager Component Micro-UX and Accessibility', () => {
     // Query standard compiled 'for' attribute on label
     const label = screen.getByText('Deposit Stake');
     expect(label.getAttribute('for')).toBe('deposit-amount-input');
+
+    // Verify focus-visible ring styles for keyboard accessibility
+    expect(depositInput.className).toContain('focus-visible:ring-2');
+    expect(depositInput.className).toContain('focus-visible:ring-blue-500');
   });
 
   it('renders quick deposit amount preset buttons with role="group" and updates input value when clicked', () => {
@@ -165,5 +169,12 @@ describe('PositionManager Component Micro-UX and Accessibility', () => {
     fireEvent.click(preset100);
     expect(redeemInput.value).toBe('100');
     expect(preset100.getAttribute('aria-pressed')).toBe('true');
+
+    // Verify redeem input and slippage tolerance input focus-visible styles
+    const slippageInput = screen.getByLabelText(/Slippage Tolerance/);
+    expect(redeemInput.className).toContain('focus-visible:ring-2');
+    expect(redeemInput.className).toContain('focus-visible:ring-blue-500');
+    expect(slippageInput.className).toContain('focus-visible:ring-2');
+    expect(slippageInput.className).toContain('focus-visible:ring-blue-500');
   });
 });
