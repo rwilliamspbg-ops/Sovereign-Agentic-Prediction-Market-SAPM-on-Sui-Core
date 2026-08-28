@@ -7,7 +7,13 @@ import { useAgentState, useMarketActions } from '@/hooks/useAgentState';
 export default function AIAssistantPanel() {
   const { systemHealth, simulationResult, densityMode, advancedMetrics } = useAgentState('all');
   const { runScenarioSimulation } = useMarketActions();
-  const [scenarioText, setScenarioText] = React.useState('If Team A gets 20% more funding and Team B loses its main sponsor, what happens?');
+  const SCENARIO_PRESETS = [
+    { label: 'Funding Shift', text: 'If Team A gets 20% more funding and Team B loses its main sponsor, what happens?' },
+    { label: 'Volume Spike', text: 'If market trading volume spikes by 50% in the next hour, how will odds react?' },
+    { label: 'Liquidity Shock', text: 'If 30% of market liquidity is withdrawn unexpectedly, what is the risk impact?' },
+  ];
+
+  const [scenarioText, setScenarioText] = React.useState(SCENARIO_PRESETS[0].text);
   const CopilotChat = CopilotUI.CopilotChat;
   const hasCopilotChat = typeof CopilotChat === 'function';
 
@@ -55,6 +61,27 @@ export default function AIAssistantPanel() {
           className="text-xs text-right text-slate-400 mt-1 mb-2"
         >
           {scenarioText.length}/300 characters
+        </div>
+        <div role="group" aria-label="Scenario presets" className="flex flex-wrap gap-2 mb-3">
+          {SCENARIO_PRESETS.map((preset) => {
+            const isSelected = scenarioText === preset.text;
+            return (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => setScenarioText(preset.text)}
+                aria-pressed={isSelected}
+                className={`text-xs px-2.5 py-1 rounded-md border font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
+                  isSelected
+                    ? 'bg-cyan-950 border-cyan-500 text-cyan-300'
+                    : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                }`}
+                aria-label={`Select ${preset.label} scenario preset`}
+              >
+                {preset.label}
+              </button>
+            );
+          })}
         </div>
         <button
           type="button"
