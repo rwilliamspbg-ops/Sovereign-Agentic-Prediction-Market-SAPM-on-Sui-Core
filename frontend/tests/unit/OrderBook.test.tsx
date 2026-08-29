@@ -1,5 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 import { OrderBook } from '@/components/trading/OrderBook';
 
 jest.mock('framer-motion', () => ({
@@ -10,7 +11,7 @@ jest.mock('framer-motion', () => ({
 
 describe('OrderBook Component Accessibility and Interaction', () => {
   it('renders order book header, price, spread and lists bid/ask levels', () => {
-    const handlePlaceOrder = jest.fn();
+    const handlePlaceOrder = jest.fn<any>().mockImplementation(() => Promise.resolve());
     render(<OrderBook marketId="TEST_MKT_001" onPlaceOrder={handlePlaceOrder} />);
 
     expect(screen.getByText('Order Book')).toBeTruthy();
@@ -19,7 +20,7 @@ describe('OrderBook Component Accessibility and Interaction', () => {
   });
 
   it('renders action buttons with correct accessibility attributes and focus styles', () => {
-    const handlePlaceOrder = jest.fn();
+    const handlePlaceOrder = jest.fn<any>().mockImplementation(() => Promise.resolve());
     render(<OrderBook marketId="TEST_MKT_001" onPlaceOrder={handlePlaceOrder} />);
 
     // Query for action buttons
@@ -41,7 +42,7 @@ describe('OrderBook Component Accessibility and Interaction', () => {
   });
 
   it('triggers onPlaceOrder on button clicks', () => {
-    const handlePlaceOrder = jest.fn();
+    const handlePlaceOrder = jest.fn<any>().mockImplementation(() => Promise.resolve());
     render(<OrderBook marketId="TEST_MKT_001" onPlaceOrder={handlePlaceOrder} />);
 
     const buyButtons = screen.getAllByRole('button', { name: /Buy at/ });
@@ -51,7 +52,7 @@ describe('OrderBook Component Accessibility and Interaction', () => {
   });
 
   it('renders the accessible fee structure details tooltip with proper roles and tabIndex', () => {
-    const handlePlaceOrder = jest.fn();
+    const handlePlaceOrder = jest.fn<any>().mockImplementation(() => Promise.resolve());
     render(<OrderBook marketId="TEST_MKT_001" onPlaceOrder={handlePlaceOrder} />);
 
     // Get the Maker and Taker fee trigger blocks by their explicit aria-labels
@@ -73,5 +74,46 @@ describe('OrderBook Component Accessibility and Interaction', () => {
     expect(tooltip.textContent).toContain('Fee Structure Details');
     expect(tooltip.textContent).toContain('Maker:');
     expect(tooltip.textContent).toContain('Taker:');
+  });
+
+  it('renders order size presets in a semantic group with aria-label and aria-pressed states', () => {
+    const handlePlaceOrder = jest.fn<any>().mockImplementation(() => Promise.resolve());
+    render(<OrderBook marketId="TEST_MKT_001" onPlaceOrder={handlePlaceOrder} />);
+
+    const presetGroup = screen.getByRole('group', { name: 'Order size presets' });
+    expect(presetGroup).toBeTruthy();
+
+    const preset100 = screen.getByRole('button', { name: 'Set order size to 100 SUI' });
+    const preset500 = screen.getByRole('button', { name: 'Set order size to 500 SUI' });
+    const preset1000 = screen.getByRole('button', { name: 'Set order size to 1000 SUI' });
+    const preset5000 = screen.getByRole('button', { name: 'Set order size to 5000 SUI' });
+
+    expect(preset100.getAttribute('aria-pressed')).toBe('true');
+    expect(preset500.getAttribute('aria-pressed')).toBe('false');
+    expect(preset1000.getAttribute('aria-pressed')).toBe('false');
+    expect(preset5000.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('updates selected order size when preset is clicked and passes selected size to onPlaceOrder', async () => {
+    const handlePlaceOrder = jest.fn<any>().mockImplementation(() => Promise.resolve());
+    render(<OrderBook marketId="TEST_MKT_001" onPlaceOrder={handlePlaceOrder} />);
+
+    const preset500 = screen.getByRole('button', { name: 'Set order size to 500 SUI' });
+    const preset100 = screen.getByRole('button', { name: 'Set order size to 100 SUI' });
+
+    // Select 500 SUI preset
+    fireEvent.click(preset500);
+
+    expect(preset500.getAttribute('aria-pressed')).toBe('true');
+    expect(preset100.getAttribute('aria-pressed')).toBe('false');
+
+    // Click first Buy button
+    const buyButtons = screen.getAllByRole('button', { name: /Buy at/i });
+    expect(buyButtons.length).toBeGreaterThan(0);
+
+    fireEvent.click(buyButtons[0]);
+
+    expect(handlePlaceOrder).toHaveBeenCalledTimes(1);
+    expect(handlePlaceOrder).toHaveBeenCalledWith(expect.any(Number), 500, 'buy');
   });
 });

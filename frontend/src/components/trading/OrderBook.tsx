@@ -28,6 +28,8 @@ export const OrderBook: React.FC<OrderBookProps> = ({ marketId, onPlaceOrder }) 
   const MAKER_FEE_BPS = 10;
   const TAKER_FEE_BPS = 30;
 
+  const [selectedSize, setSelectedSize] = useState<number>(100);
+
   // Generate simulated order book depth
   const [orderBook, setOrderBook] = useState<OrderBookData>({
     bidLevels: [],
@@ -120,7 +122,7 @@ export const OrderBook: React.FC<OrderBookProps> = ({ marketId, onPlaceOrder }) 
       setWarningMessage(null);
     }
 
-    await onPlaceOrder(price, 100, side);
+    await onPlaceOrder(price, selectedSize, side);
   };
 
   return (
@@ -129,6 +131,32 @@ export const OrderBook: React.FC<OrderBookProps> = ({ marketId, onPlaceOrder }) 
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-bold text-gray-900">Order Book</h3>
         <span className="text-sm text-gray-500">Real-time updates</span>
+      </div>
+
+      {/* Quick Order Size Presets */}
+      <div className="mb-4 flex items-center justify-between gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
+        <span className="text-xs font-semibold text-gray-600">Order Size:</span>
+        <div role="group" aria-label="Order size presets" className="flex gap-1.5 flex-1 justify-end">
+          {[100, 500, 1000, 5000].map((preset) => {
+            const isSelected = selectedSize === preset;
+            return (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => setSelectedSize(preset)}
+                aria-label={`Set order size to ${preset} SUI`}
+                aria-pressed={isSelected}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none ${
+                  isSelected
+                    ? 'bg-sky-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                {preset} SUI
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Current Price Display */}
