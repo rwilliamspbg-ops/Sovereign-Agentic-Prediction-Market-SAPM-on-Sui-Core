@@ -174,15 +174,28 @@ export const MarketList: React.FC<MarketListProps> = ({
       </div>
 
       {/* Empty State */}
-      {filteredAndSortedMarkets.length === 0 && (
-        <div className="text-center py-12">
+      {filteredAndSortedMarkets.length === 0 && markets.length > 0 && (
+        <div className="text-center py-12 bg-white rounded-lg border border-gray-200 shadow-sm px-4">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.53 16.122a8 8 0 00-1.53-.279m4.53 0V10m-1.53 0a8 8 0 10-1.47 9.44" />
           </svg>
           <h3 className="mt-4 text-lg font-medium text-gray-900">No markets found</h3>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-gray-500 mb-4">
             Try adjusting your search or filter criteria
           </p>
+          {(searchTerm || selectedCategory) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedCategory(null);
+              }}
+              aria-label="Reset active search and category filters"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            >
+              Clear filters & search
+            </button>
+          )}
         </div>
       )}
 
