@@ -60,11 +60,15 @@ describe('MarketExperienceBoard Accessibility and Label Associations', () => {
     expect(numberInput.value).toBe('1000');
   });
 
-  it('visually highlights the selected active preset button', () => {
+  it('visually highlights the selected active preset button and updates aria-pressed', () => {
     render(<MarketExperienceBoard />);
 
     const preset250Button = screen.getByRole('button', { name: 'Set order size to 250 USD' });
     const preset500Button = screen.getByRole('button', { name: 'Set order size to 500 USD' });
+
+    // Initial aria-pressed states
+    expect(preset250Button.getAttribute('aria-pressed')).toBe('true');
+    expect(preset500Button.getAttribute('aria-pressed')).toBe('false');
 
     // Since initial amount is 250, 250 USD preset should be active
     const style250 = window.getComputedStyle(preset250Button);
@@ -77,12 +81,37 @@ describe('MarketExperienceBoard Accessibility and Label Associations', () => {
     // Click 500 USD preset
     fireEvent.click(preset500Button);
 
-    // Now 500 USD should be active
+    // Now 500 USD should be active with aria-pressed="true"
+    expect(preset250Button.getAttribute('aria-pressed')).toBe('false');
+    expect(preset500Button.getAttribute('aria-pressed')).toBe('true');
+
     const updatedStyle500 = window.getComputedStyle(preset500Button);
     expect(updatedStyle500.color).toBe('rgb(34, 211, 238)');
 
     // And 250 USD should be inactive
     const updatedStyle250 = window.getComputedStyle(preset250Button);
     expect(updatedStyle250.color).toBe('rgb(166, 230, 217)');
+  });
+
+  it('renders semantic group containers with aria-labels and dynamic aria-pressed attributes', () => {
+    render(<MarketExperienceBoard />);
+
+    // Group containers
+    expect(screen.getByRole('group', { name: 'Filter markets by category' })).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Filter markets by status' })).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Select outcome side' })).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Quick order size presets' })).toBeTruthy();
+
+    // Side selection buttons
+    const buyYesButton = screen.getByRole('button', { name: 'Buy YES' });
+    const buyNoButton = screen.getByRole('button', { name: 'Buy NO' });
+
+    expect(buyYesButton.getAttribute('aria-pressed')).toBe('true');
+    expect(buyNoButton.getAttribute('aria-pressed')).toBe('false');
+
+    fireEvent.click(buyNoButton);
+
+    expect(buyYesButton.getAttribute('aria-pressed')).toBe('false');
+    expect(buyNoButton.getAttribute('aria-pressed')).toBe('true');
   });
 });
