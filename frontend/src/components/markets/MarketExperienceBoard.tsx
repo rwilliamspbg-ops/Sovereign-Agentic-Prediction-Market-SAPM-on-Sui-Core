@@ -275,12 +275,13 @@ export default function MarketExperienceBoard() {
                 suppressHydrationWarning
               />
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div role="group" aria-label="Filter markets by category" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                 {categories.map((item) => (
                   <button
                     key={item}
                     type="button"
                     onClick={() => setCategory(item as 'All' | MarketCategory)}
+                    aria-pressed={category === item}
                     className={`liquid-chip ${category === item ? 'active' : ''}`}
                     suppressHydrationWarning
                   >
@@ -289,7 +290,7 @@ export default function MarketExperienceBoard() {
                 ))}
               </div>
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.55rem' }}>
+              <div role="group" aria-label="Filter markets by status" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.55rem' }}>
                 {[
                   { label: 'All', value: 'all' },
                   { label: 'Live', value: 'live' },
@@ -300,6 +301,7 @@ export default function MarketExperienceBoard() {
                     key={item.value}
                     type="button"
                     onClick={() => setStatus(item.value as 'all' | MarketStatus)}
+                    aria-pressed={status === item.value}
                     className={`liquid-status-pill ${status === item.value ? 'active' : ''}`}
                     suppressHydrationWarning
                   >
@@ -429,11 +431,12 @@ export default function MarketExperienceBoard() {
               <p style={{ margin: '0.35rem 0 0', color: '#d9fff8', fontWeight: 700 }}>{selectedMarket?.title || 'No market selected'}</p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.7rem' }}>
+            <div role="group" aria-label="Select outcome side" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.7rem' }}>
               <button
                 type="button"
                 className={`liquid-side-btn ${selectedSide === 'yes' ? 'active-yes' : ''}`}
                 onClick={() => setSelectedSide('yes')}
+                aria-pressed={selectedSide === 'yes'}
                 suppressHydrationWarning
               >
                 Buy YES
@@ -442,6 +445,7 @@ export default function MarketExperienceBoard() {
                 type="button"
                 className={`liquid-side-btn ${selectedSide === 'no' ? 'active-no' : ''}`}
                 onClick={() => setSelectedSide('no')}
+                aria-pressed={selectedSide === 'no'}
                 suppressHydrationWarning
               >
                 Buy NO
@@ -476,13 +480,14 @@ export default function MarketExperienceBoard() {
                 suppressHydrationWarning
               />
               {/* Quick preset buttons directly beneath the numeric input */}
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <div role="group" aria-label="Quick order size presets" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                 {[50, 250, 500, 1000].map((preset) => (
                   <button
                     key={preset}
                     type="button"
                     onClick={() => setTradeAmount(preset)}
                     aria-label={`Set order size to ${preset} USD`}
+                    aria-pressed={tradeAmount === preset}
                     className="focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-md"
                     style={{
                       flex: 1,
