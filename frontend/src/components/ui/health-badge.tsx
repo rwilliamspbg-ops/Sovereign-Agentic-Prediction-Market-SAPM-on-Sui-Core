@@ -40,35 +40,54 @@ export const HealthBadge: React.FC<HealthBadgeProps> = ({
     lg: 'px-4 py-2 text-base',
   };
 
+  const trustLevel = getTrustLevel(score);
+  const formattedTrustLevel = trustLevel.charAt(0).toUpperCase() + trustLevel.slice(1);
+  const ariaLabelText = `Health score ${score} of 100, trust level ${trustLevel}${showTrend ? `, trend ${trend}` : ''}`;
+
   return (
     <div 
+      role="status"
+      tabIndex={0}
+      aria-label={ariaLabelText}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border font-medium transition-all',
+        'relative group inline-flex items-center gap-1.5 rounded-full border font-medium transition-all focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-help',
         getScoreBg(score),
         sizeClasses[size]
       )}
     >
-      <span className={getScoreColor(score)}>
+      <span className={getScoreColor(score)} aria-hidden="true">
         {score >= 80 ? '🎯' : score >= 60 ? '✅' : '⚠️'}
       </span>
       <span>{score}</span>
       
       {showTrend && (
-        <span className={cn(
-          'text-xs',
-          trend === 'up' && 'text-emerald-400',
-          trend === 'down' && 'text-red-400',
-          trend === 'stable' && 'text-gray-400'
-        )}>
+        <span
+          className={cn(
+            'text-xs',
+            trend === 'up' && 'text-emerald-400',
+            trend === 'down' && 'text-red-400',
+            trend === 'stable' && 'text-gray-400'
+          )}
+          aria-hidden="true"
+        >
           {trend === 'up' && '↑'}
           {trend === 'down' && '↓'}
           {trend === 'stable' && '•'}
         </span>
       )}
 
-      <span className="text-xs text-gray-400 hidden sm:inline">
-        ({getTrustLevel(score).toUpperCase()})
+      <span className="text-xs text-gray-400 hidden sm:inline" aria-hidden="true">
+        ({trustLevel.toUpperCase()})
       </span>
+
+      {/* Accessible Tooltip on hover or keyboard focus */}
+      <div
+        role="tooltip"
+        className="hidden group-hover:block group-focus-within:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 text-xs text-slate-100 bg-slate-900 border border-slate-700 rounded-md shadow-lg whitespace-nowrap pointer-events-none z-10"
+      >
+        <span className="font-semibold">{formattedTrustLevel} Trust</span> ({score}/100)
+        {showTrend && <span className="ml-1 text-slate-400">• Trend: {trend}</span>}
+      </div>
     </div>
   );
 };
