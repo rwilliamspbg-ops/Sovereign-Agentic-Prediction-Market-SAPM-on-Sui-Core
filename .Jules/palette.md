@@ -2,6 +2,10 @@
 
 This journal tracks critical UX and accessibility (a11y) learnings specific to the Sovereignty Agentic Prediction Market (SAPM) app.
 
+## 2026-09-03 - Accessible Sidebar Landmarks & Filtered Context Tooltips
+**Learning:** Sidebar panels displaying system context (such as `CopilotSidebarPanel`) often lack semantic landmark regions or accessible controls for assistive technologies. Wrapping the panel in `role="region"` with `aria-label="Market Context Overview"`, providing filter buttons enclosed in `role="group"` with reactive `aria-pressed` states, and declaring `tabIndex={0}` alongside `group-focus-within:block` on item tooltips ensures keyboard navigators and screen readers can easily parse and inspect context details.
+**Action:** Declare semantic landmark roles on sidebar panels, group category/filter controls with `aria-pressed`, and bind contextual tooltips to keyboard focus states (`group-focus-within`).
+
 ## 2026-08-13 - Escape Key Dismissal in Configuration Panels
 **Learning:** Sliding or full-page configuration panels (like SettingsPanel) must support predictable keyboard navigation, specifically Escape key listeners. This allows assistive technologies and keyboard-only navigators to seamlessly dismiss overlays without being trapped inside form elements or select options.
 **Action:** Always register a global keyboard event listener for the Escape key in full-screen settings/control overlays and properly remove the listener on component unmount.
