@@ -558,27 +558,33 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
 
         <div style={{ border: '1px solid #23344b', borderRadius: '0.75rem', backgroundColor: '#0b1325', padding: '0.75rem' }}>
           <div style={{ color: '#cbd5e1', fontSize: '0.82rem', marginBottom: '0.55rem' }}>Quick Prompts</div>
-          <div style={{ display: 'grid', gap: '0.45rem' }}>
-            {quickPrompts.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => handleGenerate(item)}
-                disabled={isGenerating || !initialized}
-                style={{
-                  textAlign: 'left',
-                  border: '1px solid #334155',
-                  backgroundColor: '#0f172a',
-                  color: '#e2e8f0',
-                  borderRadius: '0.55rem',
-                  padding: '0.52rem 0.65rem',
-                  cursor: isGenerating ? 'not-allowed' : 'pointer',
-                  opacity: isGenerating ? 0.7 : 1,
-                }}
-              >
-                {item}
-              </button>
-            ))}
+          <div role="group" aria-label="Quick prompt presets" style={{ display: 'grid', gap: '0.45rem' }}>
+            {quickPrompts.map((item) => {
+              const isSelected = prompt === item;
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => handleGenerate(item)}
+                  disabled={isGenerating || !initialized}
+                  aria-label={`Select quick prompt: ${item}`}
+                  aria-pressed={isSelected}
+                  className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md"
+                  style={{
+                    textAlign: 'left',
+                    border: `1px solid ${isSelected ? '#06b6d4' : '#334155'}`,
+                    backgroundColor: isSelected ? '#083344' : '#0f172a',
+                    color: isSelected ? '#67e8f9' : '#e2e8f0',
+                    borderRadius: '0.55rem',
+                    padding: '0.52rem 0.65rem',
+                    cursor: isGenerating ? 'not-allowed' : 'pointer',
+                    opacity: isGenerating ? 0.7 : 1,
+                  }}
+                >
+                  {item}
+                </button>
+              );
+            })}
           </div>
 
           <textarea
@@ -590,8 +596,11 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
                 void handleGenerate(prompt);
               }
             }}
+            maxLength={500}
+            aria-describedby="copilot-ops-prompt-count"
             aria-label="Describe what Copilot should execute"
             placeholder="Describe what Copilot should execute..."
+            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md"
             style={{
               width: '100%',
               marginTop: '0.65rem',
@@ -604,6 +613,13 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
               resize: 'vertical',
             }}
           />
+          <div
+            id="copilot-ops-prompt-count"
+            aria-live="polite"
+            style={{ fontSize: '0.75rem', textAlign: 'right', color: '#94a3b8', marginTop: '0.25rem' }}
+          >
+            {prompt.length}/500 characters
+          </div>
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
             <button
               type="button"
