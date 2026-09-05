@@ -428,6 +428,9 @@ export function CommandPalette({ actions, compact = false }: CommandPaletteProps
         >
           <div
             className="command-palette-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Command palette"
             style={{
               width: 'min(900px, 100%)',
               borderRadius: '0.85rem',
@@ -455,24 +458,50 @@ export function CommandPalette({ actions, compact = false }: CommandPaletteProps
               >
                 Search commands, routes, docs
               </label>
-              <input
-                id="command-palette-search"
-                autoFocus
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search commands, routes, docs..."
-                aria-label="Search commands, routes, docs..."
-                style={{
-                  width: '100%',
-                  minHeight: '44px',
-                  padding: '0.75rem 0.9rem',
-                  borderRadius: '0.55rem',
-                  border: '1px solid #334155',
-                  backgroundColor: '#0f172a',
-                  color: '#e2e8f0',
-                  fontSize: '0.95rem',
-                }}
-              />
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input
+                  id="command-palette-search"
+                  autoFocus
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search commands, routes, docs..."
+                  aria-label="Search commands, routes, docs..."
+                  style={{
+                    width: '100%',
+                    minHeight: '44px',
+                    padding: query ? '0.75rem 2.5rem 0.75rem 0.9rem' : '0.75rem 0.9rem',
+                    borderRadius: '0.55rem',
+                    border: '1px solid #334155',
+                    backgroundColor: '#0f172a',
+                    color: '#e2e8f0',
+                    fontSize: '0.95rem',
+                  }}
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    aria-label="Clear search query"
+                    className="focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none rounded-full"
+                    style={{
+                      position: 'absolute',
+                      right: '0.75rem',
+                      background: 'none',
+                      border: 'none',
+                      color: '#94a3b8',
+                      fontSize: '1rem',
+                      cursor: 'pointer',
+                      width: '28px',
+                      height: '28px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
               <div style={{ marginTop: '0.45rem', color: '#64748b', fontSize: '0.76rem' }}>
                 <span>Use ↑ ↓ to navigate, Enter to execute, Esc to close. Recent commands are pinned first.</span>
               </div>
