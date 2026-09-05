@@ -23,13 +23,18 @@ describe('CommandPalette Component Accessibility and Functionality', () => {
     expect(screen.queryByLabelText('Search commands, routes, docs')).toBeNull();
   });
 
-  it('opens command palette on trigger click and renders associated label/input with visually hidden styling', () => {
+  it('opens command palette on trigger click and renders associated label/input with visually hidden styling and dialog attributes', () => {
     render(<CommandPalette />);
 
     const trigger = screen.getByRole('button', { name: 'Open command palette' });
     fireEvent.click(trigger);
 
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
+
+    // Check dialog container accessibility properties
+    const dialog = screen.getByRole('dialog', { name: 'Command palette' });
+    expect(dialog).toBeTruthy();
+    expect(dialog.getAttribute('aria-modal')).toBe('true');
 
     // Check visually hidden label association with htmlFor
     const label = screen.getByText('Search commands, routes, docs');
@@ -45,6 +50,26 @@ describe('CommandPalette Component Accessibility and Functionality', () => {
     const input = screen.getByLabelText('Search commands, routes, docs');
     expect(input.tagName).toBe('INPUT');
     expect(input.getAttribute('id')).toBe('command-palette-search');
+  });
+
+  it('renders clear search button when text is typed and clears query on click', () => {
+    render(<CommandPalette />);
+
+    const trigger = screen.getByRole('button', { name: 'Open command palette' });
+    fireEvent.click(trigger);
+
+    const input = screen.getByLabelText('Search commands, routes, docs') as HTMLInputElement;
+    expect(screen.queryByRole('button', { name: 'Clear search query' })).toBeNull();
+
+    fireEvent.change(input, { target: { value: 'Markets' } });
+
+    const clearBtn = screen.getByRole('button', { name: 'Clear search query' });
+    expect(clearBtn).toBeTruthy();
+
+    fireEvent.click(clearBtn);
+
+    expect(input.value).toBe('');
+    expect(screen.queryByRole('button', { name: 'Clear search query' })).toBeNull();
   });
 
   it('filters actions correctly based on fuzzy search query', () => {
