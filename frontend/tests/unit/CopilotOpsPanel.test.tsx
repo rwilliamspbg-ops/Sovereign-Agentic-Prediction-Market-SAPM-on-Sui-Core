@@ -42,4 +42,22 @@ describe('CopilotOpsPanel Component Micro-UX & Accessibility', () => {
     const updatedCounter = screen.getByText('41/500 characters');
     expect(updatedCounter).toBeTruthy();
   });
+
+  it('renders action control button groups with role group, aria-label, and focus-visible styling', () => {
+    render(<CopilotOpsPanel open={true} onClose={jest.fn()} />);
+
+    const runStateGroup = screen.getByRole('group', { name: 'Run state controls' });
+    expect(runStateGroup).toBeTruthy();
+
+    const copilotActionGroup = screen.getByRole('group', { name: 'Copilot action controls' });
+    expect(copilotActionGroup).toBeTruthy();
+
+    const generateBtn = screen.getByRole('button', { name: 'Generate Plan' });
+    expect(generateBtn.className).toContain('focus-visible:ring-2');
+    expect(generateBtn.className).toContain('focus-visible:ring-cyan-500');
+
+    const closeBtn = screen.getByRole('button', { name: 'Close Copilot Ops panel' });
+    expect(closeBtn.className).toContain('focus-visible:ring-2');
+    expect(closeBtn.className).toContain('focus-visible:ring-cyan-500');
+  });
 });

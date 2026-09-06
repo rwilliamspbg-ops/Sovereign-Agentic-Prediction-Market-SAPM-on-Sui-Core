@@ -447,6 +447,7 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
             type="button"
             onClick={onClose}
             aria-label="Close Copilot Ops panel"
+            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md"
             style={{
               border: '1px solid #334155',
               backgroundColor: '#0f172a',
@@ -506,11 +507,12 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
               : 'Idle'}
             {runState.currentActionTitle ? ` • ${runState.currentActionTitle}` : ''}
           </div>
-          <div style={{ display: 'flex', gap: '0.45rem' }}>
+          <div role="group" aria-label="Run state controls" style={{ display: 'flex', gap: '0.45rem' }}>
             <button
               type="button"
               onClick={pauseRunAll}
               disabled={!runState.isRunning || runState.isPaused}
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md"
               style={{
                 border: '1px solid #334155',
                 borderRadius: '0.45rem',
@@ -526,6 +528,7 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
               type="button"
               onClick={resumeRunAll}
               disabled={!runState.isRunning || !runState.isPaused}
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md"
               style={{
                 border: '1px solid #334155',
                 borderRadius: '0.45rem',
@@ -541,6 +544,7 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
               type="button"
               onClick={cancelRunAll}
               disabled={!runState.isRunning}
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md"
               style={{
                 border: 'none',
                 borderRadius: '0.45rem',
@@ -620,11 +624,12 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
           >
             {prompt.length}/500 characters
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+          <div role="group" aria-label="Copilot action controls" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
             <button
               type="button"
               onClick={() => handleGenerate(prompt)}
               disabled={isGenerating || !prompt.trim() || !initialized}
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md"
               style={{
                 border: 'none',
                 borderRadius: '0.55rem',
@@ -641,6 +646,7 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
             <button
               type="button"
               onClick={() => copilotBridge.clearQueue()}
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md"
               style={{
                 border: '1px solid #334155',
                 borderRadius: '0.55rem',
@@ -656,6 +662,7 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
               type="button"
               onClick={runAllQueued}
               disabled={isExecutingAll || queue.length === 0 || !initialized}
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md"
               style={{
                 border: 'none',
                 borderRadius: '0.55rem',
@@ -676,6 +683,7 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
               type="button"
               onClick={downloadTranscript}
               disabled={!lastTranscript}
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md"
               style={{
                 border: '1px solid #334155',
                 borderRadius: '0.55rem',
