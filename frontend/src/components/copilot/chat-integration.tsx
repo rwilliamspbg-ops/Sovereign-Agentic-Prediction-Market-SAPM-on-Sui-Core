@@ -27,7 +27,10 @@ export const CopilotChatHealthIndicator: React.FC = () => {
         )}
 
         {/* Tooltip */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 rounded-lg bg-gray-900 text-xs text-gray-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+        <div
+          role="tooltip"
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 rounded-lg bg-gray-900 text-xs text-gray-200 whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none shadow-lg"
+        >
           Agent Health
           <div className="absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-gray-900"></div>
         </div>
@@ -40,11 +43,21 @@ export const CopilotChatHealthIndicator: React.FC = () => {
       </div>
 
       {/* Top Agents Mini List */}
-      <div className="flex items-center gap-2 ml-14 mb-4">
+      <div className="flex items-center gap-2 ml-14 mb-4" role="group" aria-label="Top active agents">
         {topAgents.map((agent, idx) => (
           <div 
             key={agent.agentId}
-            className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-900/80 border border-gray-800 cursor-pointer hover:border-teal-500/50 transition-colors"
+            role="button"
+            tabIndex={0}
+            aria-label={`View details for agent @${agent.agentId.slice(0, 6)} with score ${agent.reputationScore ?? 50}`}
+            onClick={() => console.log(`Inspect agent ${agent.agentId}`)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                console.log(`Inspect agent ${agent.agentId}`);
+              }
+            }}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-900/80 border border-gray-800 cursor-pointer hover:border-teal-500/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
           >
             <span className="text-xs text-gray-400">{idx + 1}.</span>
             <HealthBadge score={agent.reputationScore ?? 50} size="sm" />

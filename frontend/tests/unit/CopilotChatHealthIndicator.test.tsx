@@ -52,5 +52,21 @@ describe('CopilotChatHealthIndicator Component accessibility and UX via global f
     // Assert that the emoji is hidden from screen readers
     const emojiSpan = screen.getByText('🤖');
     expect(emojiSpan.getAttribute('aria-hidden')).toBe('true');
+
+    // Assert that Agent Health tooltip includes group-focus-within and role="tooltip"
+    const tooltip = screen.getByText('Agent Health');
+    expect(tooltip).toBeTruthy();
+    expect(tooltip.getAttribute('role')).toBe('tooltip');
+    expect(tooltip.className).toContain('group-focus-within:opacity-100');
+
+    // Assert top active agents group container and agent card accessibility
+    const agentsGroup = screen.getByRole('group', { name: 'Top active agents' });
+    expect(agentsGroup).toBeTruthy();
+
+    const agentButton = screen.getByRole('button', { name: 'View details for agent @agent- with score 95' });
+    expect(agentButton).toBeTruthy();
+    expect(agentButton.getAttribute('tabindex')).toBe('0');
+    expect(agentButton.className).toContain('focus-visible:ring-2');
+    expect(agentButton.className).toContain('focus-visible:ring-teal-500');
   });
 });
