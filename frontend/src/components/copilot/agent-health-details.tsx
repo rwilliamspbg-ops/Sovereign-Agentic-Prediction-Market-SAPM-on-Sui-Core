@@ -12,9 +12,28 @@ export const AgentHealthDetails: React.FC<AgentHealthDetailsProps> = ({
   agent,
   onClose
 }) => {
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="relative max-w-2xl w-full mx-4 rounded-2xl border border-gray-800 bg-gray-950 p-6 shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="agent-details-title"
+        className="relative max-w-2xl w-full mx-4 rounded-2xl border border-gray-800 bg-gray-950 p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Close Button */}
         <button 
           onClick={onClose}
@@ -28,7 +47,7 @@ export const AgentHealthDetails: React.FC<AgentHealthDetailsProps> = ({
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <span className="text-2xl">@</span>
-            <h2 className="text-xl font-bold text-gray-100">{agent.agentId}</h2>
+            <h2 id="agent-details-title" className="text-xl font-bold text-gray-100">{agent.agentId}</h2>
           </div>
           
           <div className="flex items-center gap-4">
