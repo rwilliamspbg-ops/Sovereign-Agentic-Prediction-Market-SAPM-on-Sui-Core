@@ -37,4 +37,18 @@ describe('AgentHealthDetails Component', () => {
     expect(bottomCloseButton.className).toContain('focus-visible:ring-2');
     expect(bottomCloseButton.className).toContain('focus-visible:ring-teal-500');
   });
+
+  it('renders dialog role, aria attributes, backdrop click, and Escape key listener', () => {
+    const handleClose = jest.fn();
+    render(<AgentHealthDetails agent={mockAgent} onClose={handleClose} />);
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toBeTruthy();
+    expect(dialog.getAttribute('aria-modal')).toBe('true');
+    expect(dialog.getAttribute('aria-labelledby')).toBe('agent-details-title');
+
+    // Test Escape key press
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(handleClose).toHaveBeenCalledTimes(1);
+  });
 });
