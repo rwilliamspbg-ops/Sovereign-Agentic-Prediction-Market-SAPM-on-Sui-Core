@@ -756,6 +756,8 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
             <button
               type="button"
               onClick={() => void copilotBridge.clearQueue()}
+              aria-label="Clear all completed or failed actions from queue"
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md"
               style={{
                 border: '1px solid #334155',
                 borderRadius: '0.45rem',
@@ -807,6 +809,8 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
                     type="button"
                     onClick={() => runAction(action)}
                     disabled={isExecutingAll || action.status === 'running' || executingActionId === action.id}
+                    aria-label={`${action.status === 'completed' ? 'Re-run' : 'Execute'} action: ${action.title}`}
+                    className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md"
                     style={{
                       border: 'none',
                       borderRadius: '0.5rem',

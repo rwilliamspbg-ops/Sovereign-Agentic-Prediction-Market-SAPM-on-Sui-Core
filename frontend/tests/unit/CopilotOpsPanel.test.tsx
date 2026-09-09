@@ -60,4 +60,24 @@ describe('CopilotOpsPanel Component Micro-UX & Accessibility', () => {
     expect(closeBtn.className).toContain('focus-visible:ring-2');
     expect(closeBtn.className).toContain('focus-visible:ring-cyan-500');
   });
+
+  it('renders action queue buttons with explicit aria-labels and focus-visible ring styles', async () => {
+    render(<CopilotOpsPanel open={true} onClose={jest.fn()} />);
+
+    const quickPromptBtn = screen.getByRole('button', { name: 'Select quick prompt: Load on-chain markets and focus current market' });
+    await screen.findByRole('button', { name: 'Close Copilot Ops panel' });
+
+    // Wait for async component boot initialization to enable quick prompt button
+    const { waitFor } = await import('@testing-library/react');
+    await waitFor(() => expect(quickPromptBtn.hasAttribute('disabled')).toBe(false));
+
+    fireEvent.click(quickPromptBtn);
+
+    const actionExecuteBtns = await screen.findAllByRole('button', { name: /^Execute action:/ });
+    expect(actionExecuteBtns.length).toBeGreaterThan(0);
+    actionExecuteBtns.forEach((btn) => {
+      expect(btn.className).toContain('focus-visible:ring-2');
+      expect(btn.className).toContain('focus-visible:ring-cyan-500');
+    });
+  });
 });
