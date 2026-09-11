@@ -24,8 +24,8 @@ export const CopilotHealthPanel: React.FC = () => {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-red-400">
-        ⚠️ Failed to load agent health data: {error}
+      <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-red-400" role="alert">
+        <span aria-hidden="true">⚠️</span> Failed to load agent health data: {error}
       </div>
     );
   }
@@ -38,7 +38,10 @@ export const CopilotHealthPanel: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* System Health Header */}
-      <div className="rounded-xl border border-gray-800 bg-gradient-to-r from-teal-950/50 to-emerald-950/50 p-4">
+      <section
+        aria-label="System Health Overview"
+        className="rounded-xl border border-gray-800 bg-gradient-to-r from-teal-950/50 to-emerald-950/50 p-4"
+      >
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-gray-200">
             System Health Overview
@@ -79,6 +82,8 @@ export const CopilotHealthPanel: React.FC = () => {
             {systemHealth.activeIssues.map((issue) => (
               <div 
                 key={issue.id}
+                role="status"
+                aria-label={`Active issue (${issue.severity}): ${issue.message}`}
                 className={cn(
                   'flex items-center gap-2 rounded px-2 py-1 text-xs',
                   issue.severity === 'critical' && 'bg-red-500/10 text-red-400',
@@ -86,16 +91,20 @@ export const CopilotHealthPanel: React.FC = () => {
                   issue.severity === 'info' && 'bg-blue-500/10 text-blue-400'
                 )}
               >
-                <span className="text-lg">⚠️</span>
+                <span className="text-lg" aria-hidden="true">⚠️</span>
                 {issue.message}
               </div>
             ))}
           </div>
         )}
-      </div>
+      </section>
 
       {/* Agent Health Grid */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        role="group"
+        aria-label="Agent health status cards"
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
+      >
         {agents.map((agent) => (
           <AgentHealthCard
             key={agent.agentId}
@@ -106,17 +115,21 @@ export const CopilotHealthPanel: React.FC = () => {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-3 text-xs">
+      <div
+        role="region"
+        aria-label="Health score indicator legend"
+        className="flex flex-wrap gap-3 text-xs"
+      >
         <div className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+          <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span>
           <span className="text-gray-400">Healthy (90+)</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-yellow-500"></span>
+          <span className="h-2 w-2 rounded-full bg-yellow-500" aria-hidden="true"></span>
           <span className="text-gray-400">Degraded (70-89)</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-red-500"></span>
+          <span className="h-2 w-2 rounded-full bg-red-500" aria-hidden="true"></span>
           <span className="text-gray-400">Unhealthy (&lt;70)</span>
         </div>
       </div>
