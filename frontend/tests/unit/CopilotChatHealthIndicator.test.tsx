@@ -1,17 +1,11 @@
-import { describe, expect, it, jest, beforeEach, afterEach } from '@jest/globals';
+import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import { render, screen, act } from '@testing-library/react';
 import { CopilotChatHealthIndicator } from '@/components/copilot/chat-integration';
+import { _mockUseAgentHealth } from '@/providers/agent-health-provider';
 
-describe('CopilotChatHealthIndicator Component accessibility and UX via global fetch mocking', () => {
-  let originalFetch: typeof global.fetch;
-
+describe('CopilotChatHealthIndicator Component accessibility and UX', () => {
   beforeEach(() => {
-    originalFetch = global.fetch;
-  });
-
-  afterEach(() => {
-    global.fetch = originalFetch;
-    jest.restoreAllMocks();
+    (_mockUseAgentHealth as jest.Mock).mockReset();
   });
 
   it('renders correctly with loading state and then loaded state', async () => {
@@ -30,13 +24,11 @@ describe('CopilotChatHealthIndicator Component accessibility and UX via global f
       },
     };
 
-    // Mock global fetch to return the mock response
-    global.fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockHealthResponse),
-      } as Response)
-    ) as unknown as typeof global.fetch;
+    (_mockUseAgentHealth as jest.Mock).mockReturnValue({
+      loading: false,
+      error: null,
+      healthData: mockHealthResponse,
+    });
 
     await act(async () => {
       render(<CopilotChatHealthIndicator />);

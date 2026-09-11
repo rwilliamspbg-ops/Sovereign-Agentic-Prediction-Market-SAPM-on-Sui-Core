@@ -61,3 +61,15 @@ jest.mock('@/hooks/useAgentState', () => {
     _mockSetDensityMode: mockSetDensityMode,
   };
 });
+
+// Mock agent health provider globally for path alias resolution
+const mockUseAgentHealth = jest.fn(() => ({
+  loading: false,
+  error: null,
+  healthData: null,
+}));
+
+jest.mock('@/providers/agent-health-provider', () => ({
+  useAgentHealth: (agentId) => mockUseAgentHealth(agentId),
+  _mockUseAgentHealth: mockUseAgentHealth,
+}));
