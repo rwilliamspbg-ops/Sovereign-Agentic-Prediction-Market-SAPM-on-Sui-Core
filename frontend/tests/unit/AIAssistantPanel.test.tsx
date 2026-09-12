@@ -24,6 +24,27 @@ describe('AIAssistantPanel Component accessibility & interaction tests', () => {
     expect(textarea.className).toContain('focus:ring-cyan-500');
   });
 
+  it('disables Run Simulation button when scenario text is empty and enables when populated', () => {
+    render(<AIAssistantPanel />);
+
+    const textarea = screen.getByLabelText('What-if Scenario Description');
+    const runButton = screen.getByRole('button', { name: 'Run Simulation' }) as HTMLButtonElement;
+
+    expect(runButton).toBeTruthy();
+    expect(runButton.disabled).toBe(false);
+
+    // Clear scenario text
+    fireEvent.change(textarea, { target: { value: '   ' } });
+
+    expect(runButton.disabled).toBe(true);
+    expect(runButton.className).toContain('disabled:opacity-50');
+
+    // Populate scenario text again
+    fireEvent.change(textarea, { target: { value: 'What if liquidity drops?' } });
+
+    expect(runButton.disabled).toBe(false);
+  });
+
   it('triggers runScenarioSimulation with custom scenario text on clicking Run Simulation', () => {
     render(<AIAssistantPanel />);
 
