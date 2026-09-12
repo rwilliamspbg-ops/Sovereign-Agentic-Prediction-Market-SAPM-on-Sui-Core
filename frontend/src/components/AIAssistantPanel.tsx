@@ -85,13 +85,14 @@ export default function AIAssistantPanel() {
         </div>
         <button
           type="button"
-          className="action-button focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+          disabled={!scenarioText.trim()}
+          className="action-button focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => runScenarioSimulation(scenarioText)}
         >
           Run Simulation
         </button>
         {simulationResult && (
-          <div className="simulation-result">
+          <div className="simulation-result" role="status" aria-live="polite" aria-label="Simulation result overview">
             <p>
               <strong>Projected Shift:</strong> {simulationResult.projectedShiftPct > 0 ? '+' : ''}{simulationResult.projectedShiftPct.toFixed(1)}%
             </p>
