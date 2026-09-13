@@ -76,17 +76,27 @@ describe('SettingsPanel Component Accessibility and Functionality', () => {
     expect(updatedToggle.getAttribute('aria-checked')).toBe('true');
   });
 
-  it('correctly associates Theme dropdown and label with htmlFor and id', () => {
+  it('renders theme preset selection group with accessible ARIA properties', async () => {
     render(<SettingsPanel />);
 
-    const label = screen.getByText('Theme');
-    expect(label.tagName).toBe('LABEL');
-    expect(label.getAttribute('for')).toBe('theme-select');
-    expect(label.getAttribute('id')).toBe('theme-label');
+    const group = screen.getByRole('group', { name: 'Theme selection presets' });
+    expect(group).toBeTruthy();
 
-    const select = screen.getByLabelText('Theme');
-    expect(select.tagName).toBe('SELECT');
-    expect(select.getAttribute('id')).toBe('theme-select');
+    const darkButton = screen.getByRole('button', { name: '🌙 Dark' });
+    const lightButton = screen.getByRole('button', { name: '☀️ Light' });
+
+    expect(darkButton.getAttribute('aria-pressed')).toBe('true');
+    expect(lightButton.getAttribute('aria-pressed')).toBe('false');
+
+    await act(async () => {
+      fireEvent.click(lightButton);
+    });
+
+    const updatedDarkButton = screen.getByRole('button', { name: '🌙 Dark' });
+    const updatedLightButton = screen.getByRole('button', { name: '☀️ Light' });
+
+    expect(updatedDarkButton.getAttribute('aria-pressed')).toBe('false');
+    expect(updatedLightButton.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('renders dependent notification toggles only when notification is enabled', () => {

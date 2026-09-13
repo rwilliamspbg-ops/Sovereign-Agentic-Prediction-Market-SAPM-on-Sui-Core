@@ -229,24 +229,37 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
           🎨 Preferences
         </h2>
 
-        <SettingRow label="Theme" description="Choose your interface theme" htmlFor="theme-select" labelId="theme-label">
-          <select
-            id="theme-select"
-            value={settings.theme}
-            onChange={(e) => updateSetting('theme', e.target.value)}
-            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-md"
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#0f172a',
-              color: '#0ea5e9',
-              border: '1px solid #334155',
-              borderRadius: '0.375rem',
-              cursor: 'pointer',
-            }}
-          >
-            <option value="dark">🌙 Dark</option>
-            <option value="light">☀️ Light</option>
-          </select>
+        <SettingRow label="Theme" description="Choose your interface theme" labelId="theme-label">
+          <div role="group" aria-label="Theme selection presets" style={{ display: 'flex', gap: '0.5rem' }}>
+            {[
+              { id: 'dark', label: '🌙 Dark' },
+              { id: 'light', label: '☀️ Light' },
+            ].map((option) => {
+              const isActive = settings.theme === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => updateSetting('theme', option.id as 'dark' | 'light')}
+                  className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-md"
+                  style={{
+                    minHeight: '44px',
+                    padding: '0.5rem 0.85rem',
+                    borderRadius: '0.375rem',
+                    border: `1px solid ${isActive ? '#0ea5e9' : '#334155'}`,
+                    backgroundColor: isActive ? '#0369a1' : '#0f172a',
+                    color: isActive ? '#ffffff' : '#94a3b8',
+                    fontWeight: isActive ? 600 : 400,
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
         </SettingRow>
       </div>
 
