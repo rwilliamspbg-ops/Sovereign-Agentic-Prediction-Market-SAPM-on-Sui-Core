@@ -331,8 +331,17 @@ export default function MarketExperienceBoard() {
                 return (
                   <article
                     key={market.id}
-                    className={`liquid-market-card ${selected ? 'selected' : ''}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Select market: ${market.title}`}
+                    className={`liquid-market-card ${selected ? 'selected' : ''} focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400`}
                     onClick={() => setSelectedMarketId(market.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setSelectedMarketId(market.id);
+                      }
+                    }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.65rem', alignItems: 'flex-start' }}>
                       <div>
