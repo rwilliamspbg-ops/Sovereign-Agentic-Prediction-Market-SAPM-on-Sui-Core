@@ -1294,6 +1294,19 @@ export function TradeForm({
       <button
         type="submit"
         disabled={isExecuting || !isWalletConnected || !amount || preflightIssues.length > 0}
+        aria-busy={isExecuting}
+        aria-label={
+          !isWalletConnected
+            ? 'Wallet not connected. Connect wallet to execute trade.'
+            : preflightIssues.length > 0
+            ? `Trade preflight incomplete: ${preflightIssues[0]}`
+            : !amount
+            ? 'Enter an amount to execute trade'
+            : isExecuting
+            ? 'Executing trade...'
+            : `Execute trade: ${side.toUpperCase()} ${amount} SUI at ${price.toFixed(4)}`
+        }
+        className="focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
         style={{
           width: '100%',
           padding: '0.875rem',

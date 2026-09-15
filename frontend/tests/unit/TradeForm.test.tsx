@@ -115,4 +115,20 @@ describe('TradeForm Component Micro-UX and Accessibility', () => {
     expect(yesButton.getAttribute('aria-pressed')).toBe('false');
     expect(noButton.getAttribute('aria-pressed')).toBe('true');
   });
+
+  it('declares aria-busy and explicit contextual aria-label on submit button reflecting wallet and trade state', () => {
+    const { rerender } = render(<TradeForm {...defaultProps} isWalletConnected={false} />);
+
+    // When wallet is disconnected
+    const disconnectedSubmitButton = screen.getByRole('button', { name: /Wallet not connected/i });
+    expect(disconnectedSubmitButton).toBeTruthy();
+    expect(disconnectedSubmitButton.getAttribute('aria-busy')).toBe('false');
+    expect(disconnectedSubmitButton.hasAttribute('disabled')).toBe(true);
+
+    // When wallet is connected
+    rerender(<TradeForm {...defaultProps} isWalletConnected={true} />);
+    const connectedSubmitButton = screen.getByRole('button', { name: /Execute trade|Trade preflight incomplete/i });
+    expect(connectedSubmitButton).toBeTruthy();
+    expect(connectedSubmitButton.getAttribute('aria-busy')).toBe('false');
+  });
 });
