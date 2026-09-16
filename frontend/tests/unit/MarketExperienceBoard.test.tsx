@@ -115,18 +115,24 @@ describe('MarketExperienceBoard Accessibility and Label Associations', () => {
     expect(buyNoButton.getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('renders market card articles with role button, tabIndex, aria-label, and supports keyboard navigation', () => {
+  it('renders market cards with role="button", tabIndex=0, aria-label, and keyboard Enter/Space selection', () => {
     render(<MarketExperienceBoard />);
 
-    const cardButtons = screen.getAllByRole('button', { name: /Market: Will SUI close above \$4.50/i });
-    expect(cardButtons.length).toBeGreaterThan(0);
+    const marketCard = screen.getByRole('button', { name: 'Select market: Will SUI close above $4.50 by Dec 31, 2026?' });
+    expect(marketCard).toBeTruthy();
+    expect(marketCard.getAttribute('tabIndex')).toBe('0');
+    expect(marketCard.className).toContain('focus-visible:ring-2');
+    expect(marketCard.className).toContain('focus-visible:ring-cyan-400');
 
-    const firstCard = cardButtons[0];
-    expect(firstCard.getAttribute('tabIndex')).toBe('0');
-    expect(firstCard.getAttribute('aria-label')).toContain('Market: Will SUI close above $4.50 by Dec 31, 2026?');
+    const secondMarketCard = screen.getByRole('button', { name: 'Select market: Will a US spot ETH ETF exceed $20B AUM by Q4 2026?' });
+    expect(secondMarketCard).toBeTruthy();
 
-    // Test keydown handling
-    fireEvent.keyDown(firstCard, { key: 'Enter', code: 'Enter' });
-    fireEvent.keyDown(firstCard, { key: ' ', code: 'Space' });
+    // Verify keyboard interaction (Enter key)
+    fireEvent.keyDown(secondMarketCard, { key: 'Enter', code: 'Enter' });
+    expect(screen.getAllByText('Will a US spot ETH ETF exceed $20B AUM by Q4 2026?').length).toBeGreaterThan(1);
+
+    // Verify keyboard interaction (Space key)
+    fireEvent.keyDown(marketCard, { key: ' ', code: 'Space' });
+    expect(screen.getAllByText('Will SUI close above $4.50 by Dec 31, 2026?').length).toBeGreaterThan(1);
   });
 });
