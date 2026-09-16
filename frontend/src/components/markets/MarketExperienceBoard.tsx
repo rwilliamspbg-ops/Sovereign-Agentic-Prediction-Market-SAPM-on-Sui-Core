@@ -331,8 +331,17 @@ export default function MarketExperienceBoard() {
                 return (
                   <article
                     key={market.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Market: ${market.title}. Category: ${market.category}. YES price: ${yesPercent}c, NO price: ${noPercent}c. Select market ticket.`}
                     className={`liquid-market-card ${selected ? 'selected' : ''}`}
                     onClick={() => setSelectedMarketId(market.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setSelectedMarketId(market.id);
+                      }
+                    }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.65rem', alignItems: 'flex-start' }}>
                       <div>
