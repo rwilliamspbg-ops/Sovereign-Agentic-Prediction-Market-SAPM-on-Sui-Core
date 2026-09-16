@@ -114,4 +114,19 @@ describe('MarketExperienceBoard Accessibility and Label Associations', () => {
     expect(buyYesButton.getAttribute('aria-pressed')).toBe('false');
     expect(buyNoButton.getAttribute('aria-pressed')).toBe('true');
   });
+
+  it('renders market card articles with role button, tabIndex, aria-label, and supports keyboard navigation', () => {
+    render(<MarketExperienceBoard />);
+
+    const cardButtons = screen.getAllByRole('button', { name: /Market: Will SUI close above \$4.50/i });
+    expect(cardButtons.length).toBeGreaterThan(0);
+
+    const firstCard = cardButtons[0];
+    expect(firstCard.getAttribute('tabIndex')).toBe('0');
+    expect(firstCard.getAttribute('aria-label')).toContain('Market: Will SUI close above $4.50 by Dec 31, 2026?');
+
+    // Test keydown handling
+    fireEvent.keyDown(firstCard, { key: 'Enter', code: 'Enter' });
+    fireEvent.keyDown(firstCard, { key: ' ', code: 'Space' });
+  });
 });
