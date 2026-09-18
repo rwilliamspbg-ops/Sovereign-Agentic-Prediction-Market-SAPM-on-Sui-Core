@@ -70,4 +70,13 @@ describe('TraderAgentLivePanel Accessibility & UX', () => {
     expect(statusContainer.getAttribute('aria-live')).toBe('polite');
     expect(statusContainer.textContent).toContain('Decisions: 0');
   });
+
+  it('renders live decision feed with role="log", aria-live="polite", and aria-label', () => {
+    render(<TraderAgentLivePanel />);
+
+    const logFeed = screen.getByRole('log', { name: 'Trader Agent Live Decision Feed' });
+    expect(logFeed).toBeTruthy();
+    expect(logFeed.getAttribute('aria-live')).toBe('polite');
+    expect(screen.getByText('Start agents to stream live trading decisions.')).toBeTruthy();
+  });
 });
