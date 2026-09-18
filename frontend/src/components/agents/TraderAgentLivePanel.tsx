@@ -159,7 +159,12 @@ export function TraderAgentLivePanel() {
         <span>YES: {stats.buyYes} | NO: {stats.buyNo} | HOLD: {stats.hold}</span>
       </div>
 
-      <div style={{ marginTop: '0.65rem', display: 'grid', gap: '0.42rem', maxHeight: '280px', overflowY: 'auto', paddingRight: '0.2rem' }}>
+      <div
+        role="log"
+        aria-live="polite"
+        aria-label="Trader Agent Live Decision Feed"
+        style={{ marginTop: '0.65rem', display: 'grid', gap: '0.42rem', maxHeight: '280px', overflowY: 'auto', paddingRight: '0.2rem' }}
+      >
         {decisions.length === 0 && (
           <p style={{ margin: 0, color: '#d8fff8', fontSize: '0.84rem' }}>
             Start agents to stream live trading decisions.
@@ -167,7 +172,10 @@ export function TraderAgentLivePanel() {
         )}
 
         {decisions.map((entry) => (
-          <div key={entry.id} style={{ border: '1px solid #26544a', borderRadius: '0.5rem', padding: '0.45rem' }}>
+          <div
+            key={entry.id}
+            style={{ border: '1px solid #26544a', borderRadius: '0.5rem', padding: '0.45rem' }}
+          >
             <p style={{ margin: 0, color: '#d8fff8', fontSize: '0.79rem' }}>
               [{new Date(entry.ts).toLocaleTimeString()}] {entry.agentId.toUpperCase()} {'->'} {entry.decision.toUpperCase()} ({Math.round(entry.confidence * 100)}%)
             </p>
