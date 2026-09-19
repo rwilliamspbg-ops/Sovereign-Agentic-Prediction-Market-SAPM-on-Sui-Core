@@ -116,4 +116,32 @@ describe('OrderBook Component Accessibility and Interaction', () => {
     expect(handlePlaceOrder).toHaveBeenCalledTimes(1);
     expect(handlePlaceOrder).toHaveBeenCalledWith(expect.any(Number), 500, 'buy');
   });
+
+  it('renders accessible slippage warning with role="alert" when triggered and allows dismissal', () => {
+    const handlePlaceOrder = jest.fn<any>().mockImplementation(() => Promise.resolve());
+    render(<OrderBook marketId="TEST_MKT_001" onPlaceOrder={handlePlaceOrder} />);
+
+    // Click sell button at price furthest from midPrice to trigger slippage warning
+    const sellButtons = screen.getAllByRole('button', { name: /Sell at/i });
+    expect(sellButtons.length).toBeGreaterThan(0);
+
+    fireEvent.click(sellButtons[sellButtons.length - 1]);
+
+    // Check alert banner is rendered with role="alert"
+    const alertBanner = screen.getByRole('alert');
+    expect(alertBanner).toBeTruthy();
+    expect(alertBanner.getAttribute('aria-live')).toBe('polite');
+    expect(alertBanner.textContent).toContain('Warning: Estimated slippage');
+
+    // Check dismiss button presence and functionality
+    const dismissButton = screen.getByRole('button', { name: 'Dismiss warning message' });
+    expect(dismissButton).toBeTruthy();
+    expect(dismissButton.className).toContain('focus-visible:ring-yellow-600');
+
+    // Click dismiss button
+    fireEvent.click(dismissButton);
+
+    // Alert banner should be removed
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
 });

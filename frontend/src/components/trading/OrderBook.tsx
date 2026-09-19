@@ -322,8 +322,20 @@ export const OrderBook: React.FC<OrderBookProps> = ({ marketId, onPlaceOrder }) 
       </div>
 
       {warningMessage && (
-        <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
-          {warningMessage}
+        <div
+          role="alert"
+          aria-live="polite"
+          className="mt-3 flex items-center justify-between rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-800"
+        >
+          <span>{warningMessage}</span>
+          <button
+            type="button"
+            onClick={() => setWarningMessage(null)}
+            aria-label="Dismiss warning message"
+            className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-yellow-700 hover:bg-yellow-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-600 transition-colors"
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>
