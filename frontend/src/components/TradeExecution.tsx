@@ -1152,15 +1152,23 @@ export function TradeForm({
 
       {/* Side Selection */}
       <div style={{ marginBottom: '1rem' }}>
-        <label style={{ fontSize: '0.875rem', color: '#cbd5e1', fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>
+        <label
+          id="position-side-label"
+          style={{ fontSize: '0.875rem', color: '#cbd5e1', fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}
+        >
           Position
         </label>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+        <div
+          role="group"
+          aria-labelledby="position-side-label"
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}
+        >
           <button
             type="button"
             onClick={() => setSide('yes')}
             disabled={isExecuting}
             aria-pressed={side === 'yes'}
+            aria-label={`Buy YES position at ${yesPrice.toFixed(4)} SUI`}
             className="focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-md"
             style={{
               padding: '0.75rem',
@@ -1181,6 +1189,7 @@ export function TradeForm({
             onClick={() => setSide('no')}
             disabled={isExecuting}
             aria-pressed={side === 'no'}
+            aria-label={`Buy NO position at ${noPrice.toFixed(4)} SUI`}
             className="focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-md"
             style={{
               padding: '0.75rem',
@@ -1221,7 +1230,10 @@ export function TradeForm({
       )}
 
       {/* Trade Target Introspection */}
-      <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#0f172a', borderRadius: '0.375rem', border: '1px solid #334155', fontSize: '0.8rem', color: '#cbd5e1' }}>
+      <section
+        aria-label="Trade target introspection"
+        style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#0f172a', borderRadius: '0.375rem', border: '1px solid #334155', fontSize: '0.8rem', color: '#cbd5e1' }}
+      >
         <div style={{ fontWeight: 700, marginBottom: '0.35rem', color: '#e2e8f0' }}>Trade target introspection</div>
         <div style={{ marginBottom: '0.2rem' }}>
           Network: <span style={{ color: '#93c5fd' }}>{targetIntrospection.network}</span>
@@ -1258,7 +1270,7 @@ export function TradeForm({
             ))}
           </>
         )}
-      </div>
+      </section>
 
       {/* Preflight Readiness */}
       {preflightIssues.length > 0 && (
