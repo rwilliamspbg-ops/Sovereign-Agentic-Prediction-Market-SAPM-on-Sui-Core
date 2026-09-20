@@ -98,11 +98,17 @@ describe('TradeForm Component Micro-UX and Accessibility', () => {
     expect(updatedStyle10.borderColor).toBe('#334155');
   });
 
-  it('declares and updates aria-pressed states on position toggle buttons', () => {
+  it('groups position toggle buttons in a role="group" linked to position-side-label and declares descriptive aria-labels', () => {
     render(<TradeForm {...defaultProps} initialSide="yes" />);
 
-    const yesButton = screen.getByRole('button', { name: /Buy YES/i });
-    const noButton = screen.getByRole('button', { name: /Buy NO/i });
+    const sideGroup = screen.getByRole('group', { name: 'Position' });
+    expect(sideGroup).toBeTruthy();
+
+    const yesButton = screen.getByRole('button', { name: 'Buy YES position at 0.6500 SUI' });
+    const noButton = screen.getByRole('button', { name: 'Buy NO position at 0.3500 SUI' });
+
+    expect(yesButton).toBeTruthy();
+    expect(noButton).toBeTruthy();
 
     // Initially 'yes' is selected
     expect(yesButton.getAttribute('aria-pressed')).toBe('true');
@@ -114,6 +120,13 @@ describe('TradeForm Component Micro-UX and Accessibility', () => {
     // Now 'no' is selected
     expect(yesButton.getAttribute('aria-pressed')).toBe('false');
     expect(noButton.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('renders trade target introspection landmark region', () => {
+    render(<TradeForm {...defaultProps} />);
+
+    const region = screen.getByRole('region', { name: 'Trade target introspection' });
+    expect(region).toBeTruthy();
   });
 
   it('declares aria-busy and explicit contextual aria-label on submit button reflecting wallet and trade state', () => {
