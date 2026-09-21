@@ -23,6 +23,7 @@ export function TraderAgentLivePanel() {
   const [decisions, setDecisions] = React.useState<TraderDecision[]>([]);
   const [streamStatus, setStreamStatus] = React.useState<StreamStatus>('idle');
   const [streamMessage, setStreamMessage] = React.useState('');
+  const [filter, setFilter] = React.useState<'all' | 'buy_yes' | 'buy_no' | 'hold'>('all');
   const streamRef = React.useRef<EventSource | null>(null);
 
   const closeStream = React.useCallback(() => {
@@ -114,6 +115,11 @@ export function TraderAgentLivePanel() {
     return { total, buyYes, buyNo, hold };
   }, [decisions]);
 
+  const filteredDecisions = React.useMemo(() => {
+    if (filter === 'all') return decisions;
+    return decisions.filter((d) => d.decision === filter);
+  }, [decisions, filter]);
+
   return (
     <div className="liquid-ticket-block" style={{ marginTop: '0.75rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', alignItems: 'center' }}>
@@ -159,6 +165,35 @@ export function TraderAgentLivePanel() {
         <span>YES: {stats.buyYes} | NO: {stats.buyNo} | HOLD: {stats.hold}</span>
       </div>
 
+      <div role="group" aria-label="Filter decisions by action type" style={{ display: 'flex', gap: '0.35rem', marginTop: '0.55rem' }}>
+        {[
+          { key: 'all', label: 'All' },
+          { key: 'buy_yes', label: 'YES' },
+          { key: 'buy_no', label: 'NO' },
+          { key: 'hold', label: 'HOLD' },
+        ].map((item) => {
+          const isSelected = filter === item.key;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setFilter(item.key as typeof filter)}
+              aria-pressed={isSelected}
+              aria-label={`Filter decisions by ${item.label}`}
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded px-2 py-0.5 text-xs font-medium"
+              style={{
+                backgroundColor: isSelected ? 'rgba(16,185,129,0.3)' : 'rgba(15,23,42,0.5)',
+                color: isSelected ? '#a7f3d0' : '#94a3b8',
+                border: `1px solid ${isSelected ? '#10b981' : '#334155'}`,
+                cursor: 'pointer',
+              }}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+
       <div
         role="log"
         aria-live="polite"
@@ -171,7 +206,13 @@ export function TraderAgentLivePanel() {
           </p>
         )}
 
-        {decisions.map((entry) => (
+        {filteredDecisions.length === 0 && decisions.length > 0 && (
+          <p style={{ margin: 0, color: '#9ddace', fontSize: '0.79rem' }}>
+            No decisions match the selected filter.
+          </p>
+        )}
+
+        {filteredDecisions.map((entry) => (
           <div
             key={entry.id}
             style={{ border: '1px solid #26544a', borderRadius: '0.5rem', padding: '0.45rem' }}
