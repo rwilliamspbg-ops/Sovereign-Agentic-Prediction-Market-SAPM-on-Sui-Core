@@ -79,4 +79,28 @@ describe('TraderAgentLivePanel Accessibility & UX', () => {
     expect(logFeed.getAttribute('aria-live')).toBe('polite');
     expect(screen.getByText('Start agents to stream live trading decisions.')).toBeTruthy();
   });
+
+  it('renders decision filter button group with role="group", dynamic aria-pressed, and focus-visible styling', () => {
+    render(<TraderAgentLivePanel />);
+
+    const filterGroup = screen.getByRole('group', { name: 'Filter decisions by action type' });
+    expect(filterGroup).toBeTruthy();
+
+    const allBtn = screen.getByRole('button', { name: 'Filter decisions by All' });
+    const yesBtn = screen.getByRole('button', { name: 'Filter decisions by YES' });
+    const noBtn = screen.getByRole('button', { name: 'Filter decisions by NO' });
+    const holdBtn = screen.getByRole('button', { name: 'Filter decisions by HOLD' });
+
+    expect(allBtn.getAttribute('aria-pressed')).toBe('true');
+    expect(yesBtn.getAttribute('aria-pressed')).toBe('false');
+    expect(noBtn.getAttribute('aria-pressed')).toBe('false');
+    expect(holdBtn.getAttribute('aria-pressed')).toBe('false');
+
+    expect(allBtn.className).toContain('focus-visible:ring-2');
+
+    // Click YES filter
+    fireEvent.click(yesBtn);
+    expect(allBtn.getAttribute('aria-pressed')).toBe('false');
+    expect(yesBtn.getAttribute('aria-pressed')).toBe('true');
+  });
 });
