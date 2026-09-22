@@ -104,4 +104,25 @@ describe('AIAssistantPanel Component accessibility & interaction tests', () => {
     expect(volumeButton.getAttribute('aria-pressed')).toBe('true');
     expect(fundingButton.getAttribute('aria-pressed')).toBe('false');
   });
+
+  it('renders system health check section with semantic landmark and role status elements', () => {
+    render(<AIAssistantPanel />);
+
+    const landmarkRegion = screen.getByRole('region', { name: 'System health status overview' });
+    expect(landmarkRegion).toBeTruthy();
+
+    const indicatorsGroup = screen.getByRole('group', { name: 'System status indicators' });
+    expect(indicatorsGroup).toBeTruthy();
+
+    const statuses = screen.getAllByRole('status');
+    expect(statuses.length).toBeGreaterThanOrEqual(2);
+
+    const deepbookStatus = statuses.find((el) => el.textContent?.includes('DeepBook'));
+    expect(deepbookStatus).toBeTruthy();
+    expect(deepbookStatus?.getAttribute('tabindex')).toBeNull();
+
+    const walrusStatus = statuses.find((el) => el.textContent?.includes('Walrus Data Feed'));
+    expect(walrusStatus).toBeTruthy();
+    expect(walrusStatus?.getAttribute('tabindex')).toBeNull();
+  });
 });
