@@ -103,13 +103,17 @@ export default function AIAssistantPanel() {
 
       <hr className="assistant-divider" />
 
-      <h3>System Health Check</h3>
-      <div className="status-block">
-        DeepBook: <span className={systemHealth.deepbookConnected ? 'ok' : 'warning'}>{systemHealth.deepbookConnected ? 'Connected' : 'Unavailable'}</span>
-      </div>
-      <div className="status-block">
-        Walrus Data Feed: <span className={systemHealth.walrusConnected ? 'ok' : 'warning'}>{systemHealth.walrusConnected ? 'Connected' : systemHealth.walrusMessage}</span>
-      </div>
+      <section aria-label="System health status overview">
+        <h3>System Health Check</h3>
+        <div role="group" aria-label="System status indicators" className="space-y-2">
+          <div role="status" className="status-block">
+            DeepBook: <span className={systemHealth.deepbookConnected ? 'ok' : 'warning'}>{systemHealth.deepbookConnected ? 'Connected' : 'Unavailable'}</span>
+          </div>
+          <div role="status" className="status-block">
+            Walrus Data Feed: <span className={systemHealth.walrusConnected ? 'ok' : 'warning'}>{systemHealth.walrusConnected ? 'Connected' : systemHealth.walrusMessage}</span>
+          </div>
+        </div>
+      </section>
 
       {densityMode === 'advanced' && (
         <div className="status-block">
