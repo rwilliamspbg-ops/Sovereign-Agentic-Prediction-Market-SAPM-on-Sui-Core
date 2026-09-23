@@ -95,6 +95,8 @@ describe('AIAssistantPanel Component accessibility & interaction tests', () => {
     // By default, Funding Shift is selected
     expect(fundingButton.getAttribute('aria-pressed')).toBe('true');
     expect(volumeButton.getAttribute('aria-pressed')).toBe('false');
+    expect(fundingButton.getAttribute('title')).toBe('Load scenario: "If Team A gets 20% more funding and Team B loses its main sponsor, what happens?"');
+    expect(volumeButton.getAttribute('title')).toBe('Load scenario: "If market trading volume spikes by 50% in the next hour, how will odds react?"');
 
     // Click Volume Spike preset
     fireEvent.click(volumeButton);
