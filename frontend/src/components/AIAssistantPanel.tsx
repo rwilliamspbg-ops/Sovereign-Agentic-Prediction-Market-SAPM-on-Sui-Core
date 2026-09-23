@@ -71,6 +71,7 @@ export default function AIAssistantPanel() {
                 type="button"
                 onClick={() => setScenarioText(preset.text)}
                 aria-pressed={isSelected}
+                title={`Load scenario: "${preset.text}"`}
                 className={`text-xs px-2.5 py-1 rounded-md border font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
                   isSelected
                     ? 'bg-cyan-950 border-cyan-500 text-cyan-300'
