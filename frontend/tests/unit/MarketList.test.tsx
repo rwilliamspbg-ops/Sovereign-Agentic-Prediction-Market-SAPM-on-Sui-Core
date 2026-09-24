@@ -82,4 +82,14 @@ describe('MarketList Micro-UX & Accessibility', () => {
     expect(screen.getByText('Will Sui reach $10 in 2026?')).toBeTruthy();
     expect(screen.getByText('Will Federal Reserve cut rates in Q3?')).toBeTruthy();
   });
+
+  it('renders loading state with status role, aria-live, and loading message when markets array is empty', () => {
+    render(<MarketList markets={[]} onTrade={mockOnTrade} />);
+
+    const loadingStatus = screen.getByRole('status');
+    expect(loadingStatus).toBeTruthy();
+    expect(loadingStatus.getAttribute('aria-live')).toBe('polite');
+    expect(screen.getByText('Loading markets...')).toBeTruthy();
+    expect(screen.getByText('Connecting to DeepBook data feed')).toBeTruthy();
+  });
 });

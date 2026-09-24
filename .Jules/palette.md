@@ -118,6 +118,10 @@ This journal tracks critical UX and accessibility (a11y) learnings specific to t
 **Learning:** Non-semantic HTML elements like `<article>` or `<div>` acting as selection cards with `onClick` handlers are completely invisible to screen readers as buttons and unreachable by keyboard navigation unless decorated with `role="button"`, `tabIndex={0}`, expressive `aria-label`, visible focus ring styles (`focus-visible:ring-2`), and `onKeyDown` Enter/Space event handlers.
 **Action:** Whenever a card element handles `onClick` selection, explicitly convert it to an accessible button role with `tabIndex={0}`, high-contrast focus rings, keyboard event handlers, and an expressive `aria-label`.
 
+## 2026-09-24 - Accessible Loading States & Spinner Icons in Data Feeds
+**Learning:** Loading containers for dynamic lists or feeds (such as `MarketList.tsx`) often use static or misleading icons and lack ARIA live attributes. Applying `role="status"` and `aria-live="polite"` to the container ensures assistive technologies announce loading activity, while using an animated spinner SVG with `aria-hidden="true"` provides intuitive visual and screen-reader feedback.
+**Action:** Wrap loading state containers in `role="status"` and `aria-live="polite"`, use animated spinner SVGs, and mark decorative icons with `aria-hidden="true"`.
+
 ## 2026-09-19 - Accessible Slippage Warnings & Inline Alert Dismissal
 **Learning:** Dynamic inline warning banners (such as order slippage alerts in `OrderBook.tsx`) must declare `role="alert"` and `aria-live="polite"` to automatically announce unexpected risk states to screen reader users upon user interaction. Providing an explicit dismiss button (`✕`) decorated with `aria-label="Dismiss warning message"` and high-contrast focus rings (`focus-visible:ring-2 focus-visible:ring-yellow-600`) ensures users can cleanly dismiss warning banners once acknowledged.
 **Action:** Always wrap dynamic warning banners in `role="alert"` with `aria-live="polite"`, and include an accessible dismiss button with clear `aria-label` and `focus-visible` styling.
