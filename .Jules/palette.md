@@ -2,6 +2,10 @@
 
 This journal tracks critical UX and accessibility (a11y) learnings specific to the Sovereignty Agentic Prediction Market (SAPM) app.
 
+## 2026-09-26 - Accessible Tabular Rankings & Landmark Regions in Leaderboards
+**Learning:** Tabular data display pages (such as the Leaderboard page) often lack semantic landmark regions and accessible table metadata for assistive technologies. Wrapping the table section in a landmark region (`<section role="region" aria-label="...">`), decorating `<table>` elements with expressive `aria-label` attributes, wrapping decorative rank/heading emojis in `<span aria-hidden="true">` to prevent screen reader noise, and adding subtle hover row feedback (`hover:bg-slate-800/50 transition-colors`) significantly enhances table parsing clarity and visual inspection comfort.
+**Action:** Wrap table sections in semantic landmark regions, supply expressive `aria-label` attributes on `<table>` elements, hide decorative emojis with `aria-hidden="true"`, and provide hover visual feedback on table rows.
+
 ## 2026-09-25 - Actionable Navigation Controls in Disconnected State Cards
 **Learning:** Fallback cards on empty or disconnected pages (such as the Portfolio page fallback) often result in UX dead ends when no wallet is connected. Wrapping the fallback in a semantic landmark region (`<section>` or `role="region"` with `aria-label`), grouping quick navigation links inside a `role="group"` with a descriptive `aria-label`, setting `aria-hidden="true"` on decorative emoji icons, enforcing a minimum 44px touch target height, and including high-contrast `focus-visible` ring indicators provides clear paths forward and maintains full keyboard and screen reader accessibility.
 **Action:** Wrap empty/disconnected page fallback states in semantic `<section>` landmark regions, hide decorative icons with `aria-hidden="true"`, group quick navigation options in `role="group"` containers, and provide `focus-visible` focus rings and 44px touch targets.
