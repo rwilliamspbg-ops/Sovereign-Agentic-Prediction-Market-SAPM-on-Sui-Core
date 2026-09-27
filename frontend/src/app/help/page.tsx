@@ -29,18 +29,19 @@ export default function Help() {
   ];
 
   return (
-    <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '2rem 1rem' }}>
+    <section role="region" aria-label="Help and Documentation" style={{ maxWidth: '1280px', margin: '0 auto', padding: '2rem 1rem' }}>
       <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', marginBottom: '1rem', color: '#e2e8f0' }}>
-        ❓ Help & Documentation
+        <span aria-hidden="true">❓ </span>Help & Documentation
       </h1>
       <p style={{ color: '#94a3b8', marginBottom: '2rem', fontSize: '1.1rem' }}>
         Frequently asked questions and getting started guide.
       </p>
 
-      <div style={{ display: 'grid', gap: '1.5rem' }}>
+      <div role="group" aria-label="Frequently asked questions" style={{ display: 'grid', gap: '1.5rem' }}>
         {faqs.map((faq, idx) => (
           <div
             key={idx}
+            className="hover:border-slate-500 hover:bg-slate-800/80 transition-all duration-200 focus-within:ring-2 focus-within:ring-cyan-500"
             style={{
               backgroundColor: '#1e293b',
               border: '1px solid #334155',
@@ -66,12 +67,12 @@ export default function Help() {
         marginTop: '2rem',
       }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#06b6d4', marginBottom: '0.75rem' }}>
-          ℹ️ Need More Help?
+          <span aria-hidden="true">ℹ️ </span>Need More Help?
         </h3>
         <p style={{ color: '#22d3ee', margin: 0 }}>
           Join our Discord community or check the documentation for more detailed information.
         </p>
       </div>
-    </div>
+    </section>
   );
 }
