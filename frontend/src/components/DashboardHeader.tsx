@@ -60,43 +60,52 @@ export default function DashboardHeader() {
   return (
     <header className="dashboard-header">
       <div className="logo-group">
-        <a href="/" aria-label="SAPM homepage" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', textDecoration: 'none' }}>
-          <img src={SAPM_LOGO} alt="SAPM" className="logo-sapm" />
+        <a
+          href="/"
+          aria-label="SAPM homepage"
+          className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-900 rounded-md"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', textDecoration: 'none' }}
+        >
+          <img src={SAPM_LOGO} alt="" className="logo-sapm" aria-hidden="true" />
           <span style={{ color: '#c6f8ff', fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.03em' }}>SAPM</span>
         </a>
         <span className="separator" aria-hidden>|</span>
-        {PROTOCOL_LOGOS.map((item) => (
-          <a
-            key={item.label}
-            href={item.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              textDecoration: 'none',
-              borderRadius: '999px',
-              border: '1px solid transparent',
-              padding: '0.15rem 0.35rem',
-              transition: 'background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease',
-            }}
-            title={`${item.label} docs`}
-            onMouseEnter={handlePillEnter}
-            onMouseLeave={handlePillLeave}
-          >
-            <img src={item.logo} alt={item.label} className="logo-protocol" />
-            <span style={{ color: '#9bd3de', fontSize: '0.68rem', fontWeight: 700 }}>{item.label}</span>
-          </a>
-        ))}
+        <div role="group" aria-label="Protocol documentation links" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+          {PROTOCOL_LOGOS.map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-900"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                textDecoration: 'none',
+                borderRadius: '999px',
+                border: '1px solid transparent',
+                padding: '0.15rem 0.35rem',
+                transition: 'background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease',
+              }}
+              title={`${item.label} docs`}
+              onMouseEnter={handlePillEnter}
+              onMouseLeave={handlePillLeave}
+            >
+              <img src={item.logo} alt="" className="logo-protocol" aria-hidden="true" />
+              <span style={{ color: '#9bd3de', fontSize: '0.68rem', fontWeight: 700 }}>{item.label}</span>
+            </a>
+          ))}
+        </div>
 
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', marginLeft: '0.2rem', flexWrap: 'wrap' }}>
+        <div role="group" aria-label="Project information links" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', marginLeft: '0.2rem', flexWrap: 'wrap' }}>
           {PROJECT_INFO_LINKS.map((item) => (
             <a
               key={item.label}
               href={item.href}
               target={item.external ? '_blank' : undefined}
               rel={item.external ? 'noopener noreferrer' : undefined}
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-900"
               style={{
                 color: '#b7f5ff',
                 textDecoration: 'none',
@@ -121,7 +130,7 @@ export default function DashboardHeader() {
         <div className="density-toggle-group" role="group" aria-label="Information density mode">
           <button
             type="button"
-            className={`density-toggle ${densityMode === 'standard' ? 'active' : ''}`}
+            className={`density-toggle ${densityMode === 'standard' ? 'active' : ''} focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-900`}
             aria-pressed={densityMode === 'standard'}
             onClick={() => setDensityMode('standard')}
           >
@@ -129,7 +138,7 @@ export default function DashboardHeader() {
           </button>
           <button
             type="button"
-            className={`density-toggle ${densityMode === 'advanced' ? 'active' : ''}`}
+            className={`density-toggle ${densityMode === 'advanced' ? 'active' : ''} focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-900`}
             aria-pressed={densityMode === 'advanced'}
             onClick={() => setDensityMode('advanced')}
           >
