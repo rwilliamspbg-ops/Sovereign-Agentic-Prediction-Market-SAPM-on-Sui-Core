@@ -2,6 +2,10 @@
 
 This journal tracks critical UX and accessibility (a11y) learnings specific to the Sovereignty Agentic Prediction Market (SAPM) app.
 
+## 2026-09-28 - Accessible Navigation Link Groups & Logo Image Hiding in Dashboard Header
+**Learning:** Dense top navigation headers (such as `DashboardHeader`) containing protocol logos, documentation links, and brand home anchors often present accessibility barriers when rounded navigation pills lack high-contrast focus ring styling (`focus-visible:ring-2`) or when logo images directly adjacent to text labels repeat the text (causing screen readers to announce "Sui Core, Sui Core"). Enclosing link pills in semantic `role="group"` containers with descriptive `aria-label` attributes, marking adjacent decorative logo graphics with `aria-hidden="true"` / `alt=""`, and applying high-contrast focus rings ensures visual keyboard tracking and clean screen reader parsing.
+**Action:** Enclose header link collections in semantic `role="group"` containers with `aria-label`, hide adjacent logo graphics with `aria-hidden="true"`, and apply `focus-visible:ring-2` styling on pill anchors.
+
 ## 2026-09-26 - Accessible Tabular Rankings & Landmark Regions in Leaderboards
 **Learning:** Tabular data display pages (such as the Leaderboard page) often lack semantic landmark regions and accessible table metadata for assistive technologies. Wrapping the table section in a landmark region (`<section role="region" aria-label="...">`), decorating `<table>` elements with expressive `aria-label` attributes, wrapping decorative rank/heading emojis in `<span aria-hidden="true">` to prevent screen reader noise, and adding subtle hover row feedback (`hover:bg-slate-800/50 transition-colors`) significantly enhances table parsing clarity and visual inspection comfort.
 **Action:** Wrap table sections in semantic landmark regions, supply expressive `aria-label` attributes on `<table>` elements, hide decorative emojis with `aria-hidden="true"`, and provide hover visual feedback on table rows.

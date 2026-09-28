@@ -10,16 +10,25 @@ describe('DashboardHeader Component accessibility & interaction tests', () => {
     jest.clearAllMocks();
   });
 
-  it('renders standard layout elements correctly', () => {
+  it('renders standard layout elements correctly with accessible groups', () => {
     render(<DashboardHeader />);
 
     // Brand/logo name is present
     expect(screen.getByText('SAPM')).toBeTruthy();
 
-    // Check project links
+    // Check project link group and links
+    const protocolGroup = screen.getByRole('group', { name: 'Protocol documentation links' });
+    const infoGroup = screen.getByRole('group', { name: 'Project information links' });
+    expect(protocolGroup).toBeTruthy();
+    expect(infoGroup).toBeTruthy();
+
     expect(screen.getByText('Docs')).toBeTruthy();
     expect(screen.getByText('Resource Hub')).toBeTruthy();
     expect(screen.getByText('GitHub')).toBeTruthy();
+
+    // Verify focus visible class on links
+    const brandLink = screen.getByRole('link', { name: 'SAPM homepage' });
+    expect(brandLink.className).toContain('focus-visible:ring-2');
   });
 
   it('possesses correct initial aria-pressed states on density-toggle buttons', () => {
