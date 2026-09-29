@@ -2,6 +2,10 @@
 
 This journal tracks critical UX and accessibility (a11y) learnings specific to the Sovereignty Agentic Prediction Market (SAPM) app.
 
+## 2026-09-29 - Landmark Regions & List Accessibility on Legal & Static Content Pages
+**Learning:** Static content and legal disclosure pages (such as `/risk`) often lack semantic landmark regions and screen reader markup for lists and decorative heading icons. Wrapping page content in `<section role="region" aria-label="...">`, marking decorative warning emojis with `<span aria-hidden="true">`, and providing descriptive `aria-label` attributes on `<ul>` elements without overriding the implicit `list` role ensures screen readers announce risk lists and page sections accurately.
+**Action:** Enclose static disclosure content in semantic landmark regions (`<section role="region">`), hide decorative emojis with `aria-hidden="true"`, and supply descriptive `aria-label` attributes to `<ul>` list elements.
+
 ## 2026-09-28 - Accessible Navigation Link Groups & Logo Image Hiding in Dashboard Header
 **Learning:** Dense top navigation headers (such as `DashboardHeader`) containing protocol logos, documentation links, and brand home anchors often present accessibility barriers when rounded navigation pills lack high-contrast focus ring styling (`focus-visible:ring-2`) or when logo images directly adjacent to text labels repeat the text (causing screen readers to announce "Sui Core, Sui Core"). Enclosing link pills in semantic `role="group"` containers with descriptive `aria-label` attributes, marking adjacent decorative logo graphics with `aria-hidden="true"` / `alt=""`, and applying high-contrast focus rings ensures visual keyboard tracking and clean screen reader parsing.
 **Action:** Enclose header link collections in semantic `role="group"` containers with `aria-label`, hide adjacent logo graphics with `aria-hidden="true"`, and apply `focus-visible:ring-2` styling on pill anchors.
