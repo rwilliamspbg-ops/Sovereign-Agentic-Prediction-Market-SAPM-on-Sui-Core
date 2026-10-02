@@ -27,7 +27,7 @@ describe('WalletConnector Component', () => {
   it('renders connect button and accessible tooltip with group-focus-within class when disconnected', () => {
     render(<WalletConnector />);
 
-    const button = screen.getByRole('button', { name: /Connect Wallet/ });
+    const button = screen.getByRole('button', { name: /Connect wallet/i });
     expect(button).toBeTruthy();
 
     const tooltip = screen.getByRole('tooltip');

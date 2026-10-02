@@ -417,6 +417,7 @@ export const WalletConnector: React.FC<{ onConnect?: () => void }> = ({ onConnec
         <button
           onClick={walletState.connected ? handleDisconnect : handleConnect}
           disabled={connecting}
+          aria-label={walletState.connected ? 'Disconnect wallet' : 'Connect wallet'}
           className={`
             flex min-h-[44px] items-center gap-3 px-4 py-3 rounded-full shadow-lg transition-all transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus-visible:outline-none
             ${walletState.connected 
@@ -427,11 +428,11 @@ export const WalletConnector: React.FC<{ onConnect?: () => void }> = ({ onConnec
         >
           {/* Wallet Icon */}
           {walletState.connected ? (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           )}
@@ -472,8 +473,13 @@ export const WalletConnector: React.FC<{ onConnect?: () => void }> = ({ onConnec
 
       {/* Connection Status Indicator */}
       {walletState.connected && (
-        <div className="absolute top-full right-0 mt-2 flex items-center gap-1.5 bg-green-500 text-white px-3 py-1.5 rounded-full shadow-lg text-sm font-medium animate-fade-in">
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="absolute top-full right-0 mt-2 flex items-center gap-1.5 bg-green-500 text-white px-3 py-1.5 rounded-full shadow-lg text-sm font-medium animate-fade-in"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
           Connected
