@@ -15,6 +15,8 @@ export default function ResourceHubPage() {
     >
       <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
         <section
+          role="region"
+          aria-label="Builder Command Center Header"
           style={{
             border: '1px solid #23344b',
             borderRadius: '1rem',
@@ -37,6 +39,7 @@ export default function ResourceHubPage() {
               href={SUISCAN_PACKAGE_URL}
               target="_blank"
               rel="noopener noreferrer"
+              className="focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none transition-all"
               style={{
                 textDecoration: 'none',
                 border: '1px solid #155e75',
@@ -59,55 +62,66 @@ export default function ResourceHubPage() {
         </section>
 
         <section
+          role="region"
+          aria-label="Sui Resource Hub Categories"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
             gap: '1rem',
           }}
         >
-          {SUI_RESOURCE_HUB.map((category) => (
-            <article
-              key={category.title}
-              style={{
-                border: '1px solid #223347',
-                borderRadius: '0.95rem',
-                background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(6, 11, 23, 0.98))',
-                boxShadow: '0 16px 35px rgba(2, 6, 23, 0.45)',
-                overflow: 'hidden',
-              }}
-            >
-              <div style={{ padding: '1rem', borderBottom: '1px solid #1e293b' }}>
-                <h2 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem' }}>{category.title}</h2>
-                <p style={{ margin: '0.45rem 0 0 0', color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.55 }}>{category.description}</p>
-              </div>
+          <div
+            role="group"
+            aria-label="Resource Hub Category Cards"
+            style={{
+              display: 'contents',
+            }}
+          >
+            {SUI_RESOURCE_HUB.map((category) => (
+              <article
+                key={category.title}
+                style={{
+                  border: '1px solid #223347',
+                  borderRadius: '0.95rem',
+                  background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(6, 11, 23, 0.98))',
+                  boxShadow: '0 16px 35px rgba(2, 6, 23, 0.45)',
+                  overflow: 'hidden',
+                }}
+              >
+                <div style={{ padding: '1rem', borderBottom: '1px solid #1e293b' }}>
+                  <h2 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem' }}>{category.title}</h2>
+                  <p style={{ margin: '0.45rem 0 0 0', color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.55 }}>{category.description}</p>
+                </div>
 
-              <div style={{ padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                {category.links.map((link) => (
-                  <a
-                    key={link.url + link.label}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      border: '1px solid #2b3b52',
-                      backgroundColor: '#0b1324',
-                      color: '#cbd5e1',
-                      borderRadius: '0.55rem',
-                      padding: '0.55rem 0.7rem',
-                      textDecoration: 'none',
-                      minHeight: '44px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      fontSize: '0.88rem',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {link.label}
-                  </a>
-                ))}
-              </div>
-            </article>
-          ))}
+                <div style={{ padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                  {category.links.map((link) => (
+                    <a
+                      key={link.url + link.label}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none transition-all"
+                      style={{
+                        border: '1px solid #2b3b52',
+                        backgroundColor: '#0b1324',
+                        color: '#cbd5e1',
+                        borderRadius: '0.55rem',
+                        padding: '0.55rem 0.7rem',
+                        textDecoration: 'none',
+                        minHeight: '44px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        fontSize: '0.88rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
       </div>
     </div>
