@@ -2,6 +2,10 @@
 
 This journal tracks critical UX and accessibility (a11y) learnings specific to the Sovereignty Agentic Prediction Market (SAPM) app.
 
+## 2026-10-05 - Page-Level Loading State Accessibility & Landmark Regions
+**Learning:** Page-level loading placeholders (such as Next.js `loading.tsx`) can be disorienting for assistive technology users if they lack landmark region context or live announcements. Enclosing the loading view in a semantic landmark region (`<section role="region" aria-label="Loading page state">`), declaring `role="status"` and `aria-live="polite"` on the status container, and hiding decorative emojis/spinners with `aria-hidden="true"` ensures screen readers gracefully announce the transition state without noise.
+**Action:** Wrap full-page loading indicators in semantic `<section role="region">` landmarks, declare `role="status"` and `aria-live="polite"` on message wrappers, and hide decorative visual icons using `aria-hidden="true"`.
+
 ## 2026-09-29 - Landmark Regions & List Accessibility on Legal & Static Content Pages
 **Learning:** Static content and legal disclosure pages (such as `/risk`) often lack semantic landmark regions and screen reader markup for lists and decorative heading icons. Wrapping page content in `<section role="region" aria-label="...">`, marking decorative warning emojis with `<span aria-hidden="true">`, and providing descriptive `aria-label` attributes on `<ul>` elements without overriding the implicit `list` role ensures screen readers announce risk lists and page sections accurately.
 **Action:** Enclose static disclosure content in semantic landmark regions (`<section role="region">`), hide decorative emojis with `aria-hidden="true"`, and supply descriptive `aria-label` attributes to `<ul>` list elements.
