@@ -2,7 +2,9 @@
 
 export default function Loading() {
   return (
-    <div
+    <section
+      role="region"
+      aria-label="Loading page state"
       style={{
         minHeight: '100vh',
         display: 'flex',
@@ -15,13 +17,25 @@ export default function Loading() {
         textAlign: 'center',
       }}
     >
-      <div style={{ maxWidth: '28rem' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚡</div>
+      <div role="status" aria-live="polite" style={{ maxWidth: '28rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+          <span aria-hidden="true" style={{ fontSize: '3rem' }}>⚡</span>
+          <svg
+            aria-hidden="true"
+            className="animate-spin"
+            style={{ width: '2rem', height: '2rem', color: '#38bdf8' }}
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+        </div>
         <div style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Loading Markets...</div>
         <div style={{ fontSize: '0.95rem', color: '#94a3b8', lineHeight: 1.5 }}>
           Initializing the Sui dashboard and checking wallet, market, and data availability.
         </div>
       </div>
-    </div>
+    </section>
   );
 }
