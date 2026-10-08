@@ -16,7 +16,7 @@ describe('SimpleAgentInsight Component Micro-UX & Accessibility', () => {
     expect(button.getAttribute('title')).toBe('Get AI agent insight on market predictions');
   });
 
-  it('contains high-contrast focus-visible ring classes for keyboard navigation', () => {
+  it('contains high-contrast focus-visible ring classes and minimum touch target size', () => {
     render(<SimpleAgentInsight />);
 
     const button = screen.getByRole('button', {
@@ -25,6 +25,15 @@ describe('SimpleAgentInsight Component Micro-UX & Accessibility', () => {
 
     expect(button.className).toContain('focus-visible:ring-2');
     expect(button.className).toContain('focus-visible:ring-cyan-400');
+    expect(button.className).toContain('min-h-[44px]');
+    expect(button.className).toContain('min-w-[44px]');
+  });
+
+  it('hides decorative robot emoji from screen readers', () => {
+    render(<SimpleAgentInsight />);
+
+    const emojiSpan = screen.getByText('🤖');
+    expect(emojiSpan.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('triggers chat intent when clicked', () => {
