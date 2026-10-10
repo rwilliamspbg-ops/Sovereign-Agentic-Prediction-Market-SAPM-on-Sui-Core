@@ -520,7 +520,7 @@ export function CommandPalette({ actions, compact = false }: CommandPaletteProps
                 )}
 
                 {groupedActions.map(([group, actionsInGroup]) => (
-                  <div key={group} style={{ marginBottom: '0.8rem' }}>
+                  <div key={group} role="group" aria-label={`${group} commands`} style={{ marginBottom: '0.8rem' }}>
                     <div
                       style={{
                         color: '#64748b',

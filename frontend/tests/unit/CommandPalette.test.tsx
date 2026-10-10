@@ -102,4 +102,23 @@ describe('CommandPalette Component Accessibility and Functionality', () => {
     // Dropdown should close
     expect(screen.queryByLabelText('Search commands, routes, docs')).toBeNull();
   });
+
+  it('renders command group landmark containers with role="group" and descriptive aria-labels', () => {
+    render(<CommandPalette />);
+
+    const trigger = screen.getByRole('button', { name: 'Open command palette' });
+    fireEvent.click(trigger);
+
+    const navigateGroup = screen.getByRole('group', { name: 'Navigate commands' });
+    expect(navigateGroup).toBeTruthy();
+
+    const tradingGroup = screen.getByRole('group', { name: 'Trading commands' });
+    expect(tradingGroup).toBeTruthy();
+
+    const systemGroup = screen.getByRole('group', { name: 'System commands' });
+    expect(systemGroup).toBeTruthy();
+
+    const externalGroup = screen.getByRole('group', { name: 'External commands' });
+    expect(externalGroup).toBeTruthy();
+  });
 });
