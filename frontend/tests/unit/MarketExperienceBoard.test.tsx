@@ -93,6 +93,38 @@ describe('MarketExperienceBoard Accessibility and Label Associations', () => {
     expect(updatedStyle250.color).toBe('rgb(166, 230, 217)');
   });
 
+  it('shows clear search button when search input has text and clears text on click', () => {
+    render(<MarketExperienceBoard />);
+
+    const searchInput = screen.getByLabelText('Search markets, assets, topics, or resolution sources') as HTMLInputElement;
+
+    // Initially clear button should not be present
+    expect(screen.queryByRole('button', { name: 'Clear search query' })).toBeNull();
+
+    // Type query
+    fireEvent.change(searchInput, { target: { value: 'SUI' } });
+    expect(searchInput.value).toBe('SUI');
+
+    // Clear button should now be visible
+    const clearButton = screen.getByRole('button', { name: 'Clear search query' });
+    expect(clearButton).toBeTruthy();
+
+    // Click clear button
+    fireEvent.click(clearButton);
+
+    // Search input should be cleared and clear button hidden
+    expect(searchInput.value).toBe('');
+    expect(screen.queryByRole('button', { name: 'Clear search query' })).toBeNull();
+  });
+
+  it('renders sort select with explicit aria-label', () => {
+    render(<MarketExperienceBoard />);
+
+    const sortSelect = screen.getByLabelText('Sort markets by');
+    expect(sortSelect).toBeTruthy();
+    expect(sortSelect.tagName).toBe('SELECT');
+  });
+
   it('renders semantic group containers with aria-labels and dynamic aria-pressed attributes', () => {
     render(<MarketExperienceBoard />);
 

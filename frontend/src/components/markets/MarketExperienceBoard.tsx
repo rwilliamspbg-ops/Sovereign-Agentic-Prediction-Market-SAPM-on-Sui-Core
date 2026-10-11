@@ -265,15 +265,45 @@ export default function MarketExperienceBoard() {
         <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'minmax(0, 1.7fr) minmax(300px, 1fr)' }}>
           <section className="liquid-glass-panel" style={{ padding: '1rem' }}>
             <div style={{ display: 'grid', gap: '0.7rem', marginBottom: '0.9rem' }}>
-              <input
-                type="text"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search events, assets, topics, or resolution sources..."
-                aria-label="Search markets, assets, topics, or resolution sources"
-                className="liquid-input"
-                suppressHydrationWarning
-              />
+              <div style={{ position: 'relative', width: '100%' }}>
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search events, assets, topics, or resolution sources..."
+                  aria-label="Search markets, assets, topics, or resolution sources"
+                  className="liquid-input"
+                  style={{ paddingRight: query ? '2.5rem' : undefined }}
+                  suppressHydrationWarning
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    aria-label="Clear search query"
+                    className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                    style={{
+                      position: 'absolute',
+                      right: '0.6rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#8ed4c7',
+                      cursor: 'pointer',
+                      padding: '0.2rem',
+                      borderRadius: '9999px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      lineHeight: 1,
+                    }}
+                    suppressHydrationWarning
+                  >
+                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>✕</span>
+                  </button>
+                )}
+              </div>
 
               <div role="group" aria-label="Filter markets by category" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                 {categories.map((item) => (
@@ -312,6 +342,7 @@ export default function MarketExperienceBoard() {
                 <select
                   value={sortBy}
                   onChange={(event) => setSortBy(event.target.value as 'volume' | 'change' | 'liquidity')}
+                  aria-label="Sort markets by"
                   className="liquid-select"
                   suppressHydrationWarning
                 >
