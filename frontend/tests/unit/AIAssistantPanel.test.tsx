@@ -32,17 +32,20 @@ describe('AIAssistantPanel Component accessibility & interaction tests', () => {
 
     expect(runButton).toBeTruthy();
     expect(runButton.disabled).toBe(false);
+    expect(runButton.getAttribute('title')).toBe('Run what-if scenario simulation');
 
     // Clear scenario text
     fireEvent.change(textarea, { target: { value: '   ' } });
 
     expect(runButton.disabled).toBe(true);
+    expect(runButton.getAttribute('title')).toBe('Enter a scenario description to run simulation');
     expect(runButton.className).toContain('disabled:opacity-50');
 
     // Populate scenario text again
     fireEvent.change(textarea, { target: { value: 'What if liquidity drops?' } });
 
     expect(runButton.disabled).toBe(false);
+    expect(runButton.getAttribute('title')).toBe('Run what-if scenario simulation');
   });
 
   it('triggers runScenarioSimulation with custom scenario text on clicking Run Simulation', () => {

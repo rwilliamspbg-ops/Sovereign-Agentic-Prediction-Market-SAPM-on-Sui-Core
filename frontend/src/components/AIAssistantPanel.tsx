@@ -87,6 +87,7 @@ export default function AIAssistantPanel() {
         <button
           type="button"
           disabled={!scenarioText.trim()}
+          title={!scenarioText.trim() ? 'Enter a scenario description to run simulation' : 'Run what-if scenario simulation'}
           className="action-button focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => runScenarioSimulation(scenarioText)}
         >
