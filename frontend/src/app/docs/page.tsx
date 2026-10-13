@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 export default function Docs() {
   return (
     <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '2rem 1rem' }}>
@@ -24,7 +26,44 @@ export default function Docs() {
         <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '0.5rem', color: '#e2e8f0' }}>
           Coming Soon
         </h2>
-        <p style={{ color: '#94a3b8' }}>Full API and integration documentation coming soon.</p>
+        <p style={{ color: '#94a3b8', marginBottom: '1.5rem' }}>
+          Full API and integration documentation coming soon.
+        </p>
+
+        <div
+          role="group"
+          aria-label="Documentation action options"
+          style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}
+        >
+          <Link
+            href="/resource-hub"
+            aria-label="Explore developer resource hub"
+            className="inline-flex items-center justify-center font-semibold rounded-lg text-sm transition-colors focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:outline-none"
+            style={{
+              minHeight: '44px',
+              padding: '0.6rem 1.2rem',
+              backgroundColor: '#0284c7',
+              color: '#ffffff',
+              textDecoration: 'none',
+            }}
+          >
+            Explore Resource Hub
+          </Link>
+          <Link
+            href="/markets"
+            aria-label="Browse active prediction markets"
+            className="inline-flex items-center justify-center font-semibold rounded-lg text-sm transition-colors focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:outline-none"
+            style={{
+              minHeight: '44px',
+              padding: '0.6rem 1.2rem',
+              backgroundColor: '#334155',
+              color: '#e2e8f0',
+              textDecoration: 'none',
+            }}
+          >
+            Browse Markets
+          </Link>
+        </div>
       </section>
     </div>
   );
