@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import Docs from '@/app/docs/page';
 
 describe('Docs Page Micro-UX & Accessibility', () => {
-  it('renders landmark region and aria-hidden decorative emojis', () => {
+  it('renders landmark region, aria-hidden decorative emojis, and actionable navigation options group', () => {
     render(<Docs />);
 
     // 1. Check semantic landmark region
@@ -21,5 +21,19 @@ describe('Docs Page Micro-UX & Accessibility', () => {
     // 4. Verify main heading and text presence
     expect(screen.getByText('Coming Soon')).toBeTruthy();
     expect(screen.getByText('Full API and integration documentation coming soon.')).toBeTruthy();
+
+    // 5. Verify action options group and quick links
+    const optionsGroup = screen.getByRole('group', { name: 'Documentation action options' });
+    expect(optionsGroup).toBeTruthy();
+
+    const resourceHubLink = screen.getByRole('link', { name: 'Explore developer resource hub' });
+    expect(resourceHubLink).toBeTruthy();
+    expect(resourceHubLink.getAttribute('href')).toBe('/resource-hub');
+    expect(resourceHubLink.className).toContain('focus-visible:ring-2');
+
+    const marketsLink = screen.getByRole('link', { name: 'Browse active prediction markets' });
+    expect(marketsLink).toBeTruthy();
+    expect(marketsLink.getAttribute('href')).toBe('/markets');
+    expect(marketsLink.className).toContain('focus-visible:ring-2');
   });
 });
