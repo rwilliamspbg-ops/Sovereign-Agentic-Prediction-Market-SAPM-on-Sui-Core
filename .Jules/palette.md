@@ -2,6 +2,10 @@
 
 This journal tracks critical UX and accessibility (a11y) learnings specific to the Sovereignty Agentic Prediction Market (SAPM) app.
 
+## 2026-10-14 - Navigation Link Action Groups on Static Legal & Disclosure Pages
+**Learning:** Static disclosure and terms pages often present dead-ends for keyboard and screen reader users after reaching the end of text content. Enclosing actionable navigation controls ("Explore Markets", "Resource Hub") in a `role="group"` container with descriptive `aria-label` attributes, minimum 44px touch targets, and high-contrast `focus-visible:ring-2` focus rings provides seamless continuity without disrupting document landmark structure.
+**Action:** Always provide a grouped navigation action bar (`role="group"`) with `focus-visible` ring styling at the bottom of static policy and disclosure pages.
+
 ## 2026-10-05 - Page-Level Loading State Accessibility & Landmark Regions
 **Learning:** Page-level loading placeholders (such as Next.js `loading.tsx`) can be disorienting for assistive technology users if they lack landmark region context or live announcements. Enclosing the loading view in a semantic landmark region (`<section role="region" aria-label="Loading page state">`), declaring `role="status"` and `aria-live="polite"` on the status container, and hiding decorative emojis/spinners with `aria-hidden="true"` ensures screen readers gracefully announce the transition state without noise.
 **Action:** Wrap full-page loading indicators in semantic `<section role="region">` landmarks, declare `role="status"` and `aria-live="polite"` on message wrappers, and hide decorative visual icons using `aria-hidden="true"`.
