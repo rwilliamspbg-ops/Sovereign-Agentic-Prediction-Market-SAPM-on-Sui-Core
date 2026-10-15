@@ -21,5 +21,17 @@ describe('Governance Page Micro-UX & Accessibility', () => {
     // 4. Verify main heading and text presence
     expect(screen.getByText('Governance System')).toBeTruthy();
     expect(screen.getByText('DAO governance and voting mechanisms coming soon.')).toBeTruthy();
+
+    // 5. Verify navigation action group and quick links
+    const navGroup = screen.getByRole('group', { name: 'Governance page navigation actions' });
+    expect(navGroup).toBeTruthy();
+
+    const exploreLink = screen.getByRole('link', { name: 'Explore active prediction markets' });
+    expect(exploreLink).toBeTruthy();
+    expect(exploreLink.getAttribute('href')).toBe('/markets');
+
+    const resourceLink = screen.getByRole('link', { name: 'View developer resource hub' });
+    expect(resourceLink).toBeTruthy();
+    expect(resourceLink.getAttribute('href')).toBe('/resource-hub');
   });
 });
