@@ -281,22 +281,24 @@ export default function MarketExperienceBoard() {
                     type="button"
                     onClick={() => setQuery('')}
                     aria-label="Clear search query"
-                    className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                    className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                     style={{
                       position: 'absolute',
-                      right: '0.6rem',
+                      right: '0.5rem',
                       top: '50%',
                       transform: 'translateY(-50%)',
                       background: 'transparent',
                       border: 'none',
                       color: '#8ed4c7',
                       cursor: 'pointer',
-                      padding: '0.2rem',
+                      minWidth: '28px',
+                      minHeight: '28px',
                       borderRadius: '9999px',
-                      display: 'flex',
+                      display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       lineHeight: 1,
+                      transition: 'all 0.15s ease-in-out',
                     }}
                     suppressHydrationWarning
                   >
