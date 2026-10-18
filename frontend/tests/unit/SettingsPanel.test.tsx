@@ -11,13 +11,21 @@ describe('SettingsPanel Component Accessibility and Functionality', () => {
     }
   });
 
-  it('renders Settings heading and onClose button when provided', () => {
+  it('renders Settings heading, landmark region, aria-hidden decorative emojis, and onClose button when provided', () => {
     const handleClose = jest.fn();
     render(<SettingsPanel onClose={handleClose} />);
+
+    // Check semantic landmark region
+    const section = screen.getByRole('region', { name: 'User Settings Overview' });
+    expect(section).toBeTruthy();
 
     // Check heading
     const heading = screen.getByRole('heading', { level: 1 });
     expect(heading.textContent).toContain('Settings');
+
+    // Check aria-hidden decorative emojis
+    const hiddenEmojiSpans = section.querySelectorAll('h1 span[aria-hidden="true"], h2 span[aria-hidden="true"]');
+    expect(hiddenEmojiSpans.length).toBeGreaterThanOrEqual(5);
 
     // Check Close button accessibility and dimensions
     const closeButton = screen.getByRole('button', { name: 'Close settings' });
