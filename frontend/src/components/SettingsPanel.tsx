@@ -177,7 +177,9 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
   );
 
   return (
-    <div
+    <section
+      role="region"
+      aria-label="User Settings Overview"
       style={{
         maxWidth: '500px',
         margin: '0 auto',
@@ -188,7 +190,7 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1 style={{ color: '#e2e8f0', fontSize: '1.875rem', fontWeight: '700', margin: 0 }}>
-          ⚙️ Settings
+          <span aria-hidden="true">⚙️ </span>Settings
         </h1>
         {onClose && (
           <button
@@ -226,7 +228,7 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
         }}
       >
         <h2 style={{ color: '#e2e8f0', fontSize: '1.1rem', fontWeight: '700', marginBottom: '1.5rem' }}>
-          🎨 Preferences
+          <span aria-hidden="true">🎨 </span>Preferences
         </h2>
 
         <SettingRow label="Theme" description="Choose your interface theme" labelId="theme-label">
@@ -273,7 +275,7 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
         }}
       >
         <h2 style={{ color: '#e2e8f0', fontSize: '1.1rem', fontWeight: '700', marginBottom: '1.5rem' }}>
-          🔔 Notifications
+          <span aria-hidden="true">🔔 </span>Notifications
         </h2>
 
         <SettingRow label="Enable Notifications" description="Get alerts for market updates" labelId="enable-notifications-label">
@@ -390,7 +392,7 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
         }}
       >
         <h2 style={{ color: '#e2e8f0', fontSize: '1.1rem', fontWeight: '700', marginBottom: '1.5rem' }}>
-          ⚡ Advanced
+          <span aria-hidden="true">⚡ </span>Advanced
         </h2>
 
         <SettingRow label="Advanced Mode" description="Show advanced trading options" labelId="advanced-mode-label">
@@ -427,7 +429,7 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
         }}
       >
         <h2 style={{ color: '#e2e8f0', fontSize: '1.1rem', fontWeight: '700', marginBottom: '1rem' }}>
-          ℹ️ About
+          <span aria-hidden="true">ℹ️ </span>About
         </h2>
         <div style={{ color: '#94a3b8', fontSize: '0.875rem', lineHeight: '1.6' }}>
           <p>
@@ -444,6 +446,6 @@ export function SettingsPanel({ onSettingsChange, onClose }: SettingsPanelProps)
           </p>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
