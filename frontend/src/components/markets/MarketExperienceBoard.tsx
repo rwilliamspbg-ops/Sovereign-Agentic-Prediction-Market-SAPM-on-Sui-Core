@@ -141,6 +141,20 @@ export default function MarketExperienceBoard() {
   const [selectedSide, setSelectedSide] = useState<'yes' | 'no'>('yes');
   const [tradeAmount, setTradeAmount] = useState<number>(250);
   const [hydratedNow, setHydratedNow] = useState<number | null>(null);
+  const [isPlacing, setIsPlacing] = useState<boolean>(false);
+  const [orderFeedback, setOrderFeedback] = useState<string | null>(null);
+
+  const handlePlaceOrder = () => {
+    if (isPlacing || tradeAmount <= 0) return;
+    setIsPlacing(true);
+    setOrderFeedback(null);
+    setTimeout(() => {
+      setIsPlacing(false);
+      setOrderFeedback(
+        `Simulated order placed: ${selectedSide.toUpperCase()} $${tradeAmount} on "${selectedMarket?.title || 'Selected Event'}"`
+      );
+    }, 500);
+  };
 
   const fetchMarkets = async () => {
     setIsLoading(true);
@@ -558,9 +572,63 @@ export default function MarketExperienceBoard() {
               <div className="liquid-ticket-row"><span>Est. profit</span><strong>{formatUsd(estimatedProfit)}</strong></div>
             </div>
 
-            <button type="button" className="liquid-place-order-btn" style={{ marginTop: '0.8rem' }} suppressHydrationWarning>
-              Place Simulated Order
+            <button
+              type="button"
+              onClick={handlePlaceOrder}
+              disabled={isPlacing || tradeAmount <= 0}
+              aria-busy={isPlacing}
+              aria-label={
+                isPlacing
+                  ? 'Placing simulated order...'
+                  : `Place simulated order for ${selectedSide.toUpperCase()} outcome, $${tradeAmount} USD on ${selectedMarket?.title || 'selected event'}`
+              }
+              className="liquid-place-order-btn focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+              style={{ marginTop: '0.8rem', opacity: isPlacing || tradeAmount <= 0 ? 0.6 : 1, cursor: isPlacing || tradeAmount <= 0 ? 'not-allowed' : 'pointer' }}
+              suppressHydrationWarning
+            >
+              {isPlacing ? 'Placing Order...' : 'Place Simulated Order'}
             </button>
+
+            {orderFeedback && (
+              <div
+                role="status"
+                aria-live="polite"
+                aria-label="Order confirmation status"
+                style={{
+                  marginTop: '0.65rem',
+                  padding: '0.55rem 0.7rem',
+                  backgroundColor: 'rgba(6, 95, 70, 0.45)',
+                  border: '1px solid #10b981',
+                  borderRadius: '0.375rem',
+                  fontSize: '0.78rem',
+                  color: '#a7f3d0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                }}
+              >
+                <span>✓ {orderFeedback}</span>
+                <button
+                  type="button"
+                  onClick={() => setOrderFeedback(null)}
+                  aria-label="Dismiss order confirmation"
+                  className="focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#a7f3d0',
+                    cursor: 'pointer',
+                    padding: '0.2rem 0.4rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 'bold',
+                  }}
+                  suppressHydrationWarning
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
             <div className="liquid-ticket-block" style={{ marginTop: '0.95rem' }}>
               <p style={{ margin: 0, color: '#90cfc3', fontSize: '0.73rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>

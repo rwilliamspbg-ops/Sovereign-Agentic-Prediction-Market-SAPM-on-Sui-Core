@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import React from 'react';
 import MarketExperienceBoard from '@/components/markets/MarketExperienceBoard';
 
@@ -166,5 +166,42 @@ describe('MarketExperienceBoard Accessibility and Label Associations', () => {
     // Verify keyboard interaction (Space key)
     fireEvent.keyDown(marketCard, { key: ' ', code: 'Space' });
     expect(screen.getAllByText('Will SUI close above $4.50 by Dec 31, 2026?').length).toBeGreaterThan(1);
+  });
+
+  it('handles simulated order execution with async feedback, aria-busy, and status notification', () => {
+    jest.useFakeTimers();
+    render(<MarketExperienceBoard />);
+
+    const orderButton = screen.getByRole('button', { name: /Place simulated order for YES outcome, \$250 USD/ });
+    expect(orderButton).toBeTruthy();
+    expect(orderButton.getAttribute('aria-busy')).toBe('false');
+
+    // Click order button
+    fireEvent.click(orderButton);
+
+    // Verify loading feedback state
+    expect(orderButton.getAttribute('aria-busy')).toBe('true');
+    expect(screen.getByText('Placing Order...')).toBeTruthy();
+
+    // Fast forward timer within act
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
+    // Verify order completed and confirmation alert rendered
+    expect(orderButton.getAttribute('aria-busy')).toBe('false');
+    expect(screen.getByText('Place Simulated Order')).toBeTruthy();
+
+    const statusBanner = screen.getByRole('status', { name: 'Order confirmation status' });
+    expect(statusBanner).toBeTruthy();
+    expect(statusBanner.textContent).toContain('Simulated order placed: YES $250 on "Will SUI close above $4.50 by Dec 31, 2026?"');
+
+    // Dismiss status banner
+    const dismissButton = screen.getByRole('button', { name: 'Dismiss order confirmation' });
+    expect(dismissButton).toBeTruthy();
+    fireEvent.click(dismissButton);
+
+    expect(screen.queryByRole('status', { name: 'Order confirmation status' })).toBeNull();
+    jest.useRealTimers();
   });
 });
