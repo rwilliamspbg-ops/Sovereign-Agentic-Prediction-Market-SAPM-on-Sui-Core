@@ -2,6 +2,10 @@
 
 This journal tracks critical UX and accessibility (a11y) learnings specific to the Sovereignty Agentic Prediction Market (SAPM) app.
 
+## 2026-10-22 - Interactive Feedback & Accessibility for Event Contract Order Execution
+**Learning:** Simulated trade ticket execution triggers (like "Place Simulated Order" buttons) need interactive feedback (`isPlacing`, `aria-busy`, dynamic ARIA labels) and live status announcements (`role="status"`, `aria-live="polite"`). Providing a dismissible confirmation banner ensures screen reader and keyboard users receive immediate confirmation of executed simulated contracts.
+**Action:** Always add interactive loading states, `aria-busy`, dynamic ARIA labels, and live status announcement banners to order submission buttons.
+
 ## 2026-10-14 - Navigation Link Action Groups on Static Legal & Disclosure Pages
 **Learning:** Static disclosure and terms pages often present dead-ends for keyboard and screen reader users after reaching the end of text content. Enclosing actionable navigation controls ("Explore Markets", "Resource Hub") in a `role="group"` container with descriptive `aria-label` attributes, minimum 44px touch targets, and high-contrast `focus-visible:ring-2` focus rings provides seamless continuity without disrupting document landmark structure.
 **Action:** Always provide a grouped navigation action bar (`role="group"`) with `focus-visible` ring styling at the bottom of static policy and disclosure pages.
