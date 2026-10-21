@@ -112,11 +112,24 @@ describe('PositionManager Component Micro-UX and Accessibility', () => {
     const modalTitle = screen.getByText('Close Position?');
     expect(modalTitle.getAttribute('id')).toBe('modal-title');
 
-    // Verify buttons have correct focus-visible styles
+    // Verify top-right close icon button and action buttons have correct focus-visible styles and ARIA labels
+    const topCloseButton = screen.getByRole('button', { name: 'Close confirmation dialog' });
     const cancelButton = screen.getByRole('button', { name: 'Cancel' });
     const confirmButton = screen.getByRole('button', { name: 'Confirm Close' });
+    expect(topCloseButton).toBeTruthy();
+    expect(topCloseButton.className).toContain('focus-visible:ring-gray-500');
+    expect(topCloseButton.className).toContain('min-h-[44px]');
+    expect(topCloseButton.className).toContain('min-w-[44px]');
     expect(cancelButton.className).toContain('focus-visible:ring-gray-500');
     expect(confirmButton.className).toContain('focus-visible:ring-red-500');
+
+    // Verify clicking top-right close button dismisses modal
+    fireEvent.click(topCloseButton);
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    // Re-open modal
+    fireEvent.click(closePositionButton);
+    expect(screen.getByRole('dialog')).toBeTruthy();
 
     // Verify global escape key dismisses the modal
     fireEvent.keyDown(window, { key: 'Escape', code: 'Escape' });
