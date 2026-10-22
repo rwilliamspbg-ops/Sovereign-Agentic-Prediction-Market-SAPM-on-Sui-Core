@@ -583,10 +583,39 @@ export default function MarketExperienceBoard() {
                   : `Place simulated order for ${selectedSide.toUpperCase()} outcome, $${tradeAmount} USD on ${selectedMarket?.title || 'selected event'}`
               }
               className="liquid-place-order-btn focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
-              style={{ marginTop: '0.8rem', opacity: isPlacing || tradeAmount <= 0 ? 0.6 : 1, cursor: isPlacing || tradeAmount <= 0 ? 'not-allowed' : 'pointer' }}
+              style={{
+                marginTop: '0.8rem',
+                opacity: isPlacing || tradeAmount <= 0 ? 0.6 : 1,
+                cursor: isPlacing || tradeAmount <= 0 ? 'not-allowed' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+              }}
               suppressHydrationWarning
             >
-              {isPlacing ? 'Placing Order...' : 'Place Simulated Order'}
+              {isPlacing ? (
+                <>
+                  <svg
+                    className="animate-spin"
+                    style={{ width: '1rem', height: '1rem', color: '#a7f3d0' }}
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  <span>Placing Order...</span>
+                </>
+              ) : (
+                'Place Simulated Order'
+              )}
             </button>
 
             {orderFeedback && (
