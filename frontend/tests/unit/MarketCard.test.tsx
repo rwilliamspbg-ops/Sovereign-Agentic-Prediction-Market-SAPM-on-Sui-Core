@@ -301,4 +301,14 @@ describe('MarketCard keyboard interactions and accessibility attributes', () => 
     fireEvent.keyDown(noButton, { key: ' ', code: 'Space' });
     expect(onTrade).toHaveBeenCalledWith('TEST_MARKET_001', 'no');
   });
+
+  it('sets aria-hidden="true" on decorative SVG icons in agent edge badge and vs indicator', () => {
+    const { container } = render(<MarketCard market={baseMarket} onTrade={() => undefined} agentEdge={0.85} />);
+
+    const svgs = container.querySelectorAll('svg');
+    expect(svgs.length).toBeGreaterThan(0);
+    svgs.forEach((svg) => {
+      expect(svg.getAttribute('aria-hidden')).toBe('true');
+    });
+  });
 });
