@@ -114,7 +114,7 @@ export const MarketCard: React.FC<MarketCardProps> = ({
         {/* Agent Edge Badge */}
         {agentEdge > 0.3 && (
           <div className={`flex items-center gap-1 ${getEdgeColor()} text-white px-2 py-1 rounded-full text-xs font-semibold`}>
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             {(agentEdge * 100).toFixed(0)}% Edge
@@ -162,7 +162,7 @@ export const MarketCard: React.FC<MarketCardProps> = ({
 
         {/* VS Indicator */}
         <div className="flex items-center justify-center">
-          <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
           </svg>
         </div>
