@@ -6,6 +6,10 @@ describe('Portfolio Page Micro-UX & Accessibility', () => {
   it('renders semantic region landmark, decorative emoji aria-hidden, and action options group', () => {
     render(<Portfolio />);
 
+    // Check main heading and aria-hidden emoji
+    const heading = screen.getByRole('heading', { level: 1, name: 'Your Portfolio' });
+    expect(heading).toBeTruthy();
+
     // Semantic landmark region check
     const section = screen.getByRole('region', { name: 'Portfolio status overview' });
     expect(section).toBeTruthy();
