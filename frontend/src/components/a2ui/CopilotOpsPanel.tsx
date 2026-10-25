@@ -646,6 +646,8 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
             <button
               type="button"
               onClick={() => copilotBridge.clearQueue()}
+              disabled={queue.length === 0}
+              aria-label="Clear queued actions"
               className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md"
               style={{
                 border: '1px solid #334155',
@@ -653,7 +655,8 @@ export function CopilotOpsPanel({ open, onClose }: CopilotOpsPanelProps) {
                 backgroundColor: '#0f172a',
                 color: '#cbd5e1',
                 padding: '0.56rem 0.72rem',
-                cursor: 'pointer',
+                cursor: queue.length === 0 ? 'not-allowed' : 'pointer',
+                opacity: queue.length === 0 ? 0.7 : 1,
               }}
             >
               Clear Queue
