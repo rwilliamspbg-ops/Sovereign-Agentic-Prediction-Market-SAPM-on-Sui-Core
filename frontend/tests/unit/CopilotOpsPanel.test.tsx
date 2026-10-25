@@ -56,6 +56,12 @@ describe('CopilotOpsPanel Component Micro-UX & Accessibility', () => {
     expect(generateBtn.className).toContain('focus-visible:ring-2');
     expect(generateBtn.className).toContain('focus-visible:ring-cyan-500');
 
+    const clearQueueBtn = screen.getByRole('button', { name: 'Clear queued actions' });
+    expect(clearQueueBtn).toBeTruthy();
+    expect(clearQueueBtn.hasAttribute('disabled')).toBe(true);
+    expect(clearQueueBtn.className).toContain('focus-visible:ring-2');
+    expect(clearQueueBtn.className).toContain('focus-visible:ring-cyan-500');
+
     const closeBtn = screen.getByRole('button', { name: 'Close Copilot Ops panel' });
     expect(closeBtn.className).toContain('focus-visible:ring-2');
     expect(closeBtn.className).toContain('focus-visible:ring-cyan-500');
