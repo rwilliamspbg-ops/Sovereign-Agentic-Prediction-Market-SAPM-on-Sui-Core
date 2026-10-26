@@ -36,13 +36,23 @@ describe('SimpleAgentInsight Component Micro-UX & Accessibility', () => {
     expect(emojiSpan.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('triggers chat intent when clicked', () => {
+  it('triggers chat intent and updates loading state and live status on click', () => {
     render(<SimpleAgentInsight />);
 
     const button = screen.getByRole('button', {
       name: 'Get AI agent insight on market predictions',
     });
 
-    expect(() => fireEvent.click(button)).not.toThrow();
+    expect(button.getAttribute('aria-busy')).toBe('false');
+
+    fireEvent.click(button);
+
+    const requestingButton = screen.getByRole('button', {
+      name: 'Requesting AI agent insight on market predictions...',
+    });
+    expect(requestingButton.getAttribute('aria-busy')).toBe('true');
+
+    const statusRegion = screen.getByRole('status');
+    expect(statusRegion.textContent).toBe('Requesting AI agent insight...');
   });
 });
