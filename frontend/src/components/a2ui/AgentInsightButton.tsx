@@ -36,7 +36,7 @@ export function SimpleAgentInsight() {
         disabled={isRequesting}
         aria-busy={isRequesting}
         aria-label={isRequesting ? 'Requesting AI agent insight on market predictions...' : 'Get AI agent insight on market predictions'}
-        className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+        className="min-h-[44px] min-w-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
         style={{
           minHeight: '44px',
           minWidth: '44px',
