@@ -48,7 +48,7 @@ describe('AIAssistantPanel Component accessibility & interaction tests', () => {
     expect(runButton.getAttribute('title')).toBe('Run what-if scenario simulation');
   });
 
-  it('triggers runScenarioSimulation with custom scenario text on clicking Run Simulation', () => {
+  it('triggers runScenarioSimulation with custom scenario text and shows interactive loading state and live region', () => {
     render(<AIAssistantPanel />);
 
     const textarea = screen.getByLabelText('What-if Scenario Description');
@@ -57,6 +57,7 @@ describe('AIAssistantPanel Component accessibility & interaction tests', () => {
     expect(runButton).toBeTruthy();
     expect(runButton.className).toContain('focus-visible:ring-2');
     expect(runButton.className).toContain('focus-visible:ring-cyan-500');
+    expect(runButton.getAttribute('aria-busy')).toBe('false');
 
     // Simulate typing in a custom scenario
     fireEvent.change(textarea, { target: { value: 'What if market volume spikes by 50%?' } });
@@ -66,6 +67,15 @@ describe('AIAssistantPanel Component accessibility & interaction tests', () => {
 
     expect(_mockRunScenarioSimulation).toHaveBeenCalledTimes(1);
     expect(_mockRunScenarioSimulation).toHaveBeenCalledWith('What if market volume spikes by 50%?');
+
+    // Verify loading feedback and ARIA attributes
+    const simulatingButton = screen.getByRole('button', { name: 'Simulating scenario outcomes...' });
+    expect(simulatingButton.getAttribute('aria-busy')).toBe('true');
+
+    // Verify status live region announces simulation activity
+    const statusRegions = screen.getAllByRole('status');
+    const liveStatus = statusRegions.find((el) => el.textContent === 'Running what-if scenario simulation...');
+    expect(liveStatus).toBeTruthy();
   });
 
   it('contains character counter and maxLength constraints on the scenario textarea', () => {
