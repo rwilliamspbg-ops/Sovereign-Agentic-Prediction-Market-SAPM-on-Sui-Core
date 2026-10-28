@@ -21,5 +21,18 @@ describe('Help Page Micro-UX & Accessibility', () => {
     // 4. Verify decorative emojis are hidden from screen readers
     const emojiSpan = screen.getByText('❓');
     expect(emojiSpan.getAttribute('aria-hidden')).toBe('true');
+
+    // 5. Check navigation action link group
+    const navGroup = screen.getByRole('group', { name: 'Help page navigation actions' });
+    expect(navGroup).toBeTruthy();
+
+    const marketsLink = screen.getByRole('link', { name: 'Explore active prediction markets' });
+    expect(marketsLink.getAttribute('href')).toBe('/markets');
+
+    const docsLink = screen.getByRole('link', { name: 'View platform documentation' });
+    expect(docsLink.getAttribute('href')).toBe('/docs');
+
+    const resourceLink = screen.getByRole('link', { name: 'Explore developer resource hub' });
+    expect(resourceLink.getAttribute('href')).toBe('/resource-hub');
   });
 });
