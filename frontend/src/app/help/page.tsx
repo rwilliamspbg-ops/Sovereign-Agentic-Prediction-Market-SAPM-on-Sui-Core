@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 export default function Help() {
   const faqs = [
     {
@@ -69,9 +71,58 @@ export default function Help() {
         <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#06b6d4', marginBottom: '0.75rem' }}>
           <span aria-hidden="true">ℹ️ </span>Need More Help?
         </h3>
-        <p style={{ color: '#22d3ee', margin: 0 }}>
+        <p style={{ color: '#22d3ee', margin: 0, marginBottom: '1rem' }}>
           Join our Discord community or check the documentation for more detailed information.
         </p>
+
+        <div
+          role="group"
+          aria-label="Help page navigation actions"
+          style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}
+        >
+          <Link
+            href="/markets"
+            aria-label="Explore active prediction markets"
+            className="inline-flex items-center justify-center font-semibold rounded-lg text-sm transition-colors focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:outline-none"
+            style={{
+              minHeight: '44px',
+              padding: '0.6rem 1.2rem',
+              backgroundColor: '#0284c7',
+              color: '#ffffff',
+              textDecoration: 'none',
+            }}
+          >
+            Explore Markets
+          </Link>
+          <Link
+            href="/docs"
+            aria-label="View platform documentation"
+            className="inline-flex items-center justify-center font-semibold rounded-lg text-sm transition-colors focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:outline-none"
+            style={{
+              minHeight: '44px',
+              padding: '0.6rem 1.2rem',
+              backgroundColor: '#334155',
+              color: '#e2e8f0',
+              textDecoration: 'none',
+            }}
+          >
+            View Documentation
+          </Link>
+          <Link
+            href="/resource-hub"
+            aria-label="Explore developer resource hub"
+            className="inline-flex items-center justify-center font-semibold rounded-lg text-sm transition-colors focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:outline-none"
+            style={{
+              minHeight: '44px',
+              padding: '0.6rem 1.2rem',
+              backgroundColor: '#334155',
+              color: '#e2e8f0',
+              textDecoration: 'none',
+            }}
+          >
+            Resource Hub
+          </Link>
+        </div>
       </div>
     </section>
   );
