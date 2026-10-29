@@ -4,6 +4,10 @@ import React from 'react';
 import { TradeForm } from '@/components/TradeExecution';
 
 describe('TradeForm Component Micro-UX and Accessibility', () => {
+  beforeAll(() => {
+    process.env.NEXT_PUBLIC_SUI_TRADE_TARGET = '0x1::prediction_market::open_position';
+  });
+
   const defaultProps = {
     marketId: '0x123abc',
     yesPrice: 0.65,
@@ -143,5 +147,23 @@ describe('TradeForm Component Micro-UX and Accessibility', () => {
     const connectedSubmitButton = screen.getByRole('button', { name: /Execute trade|Trade preflight incomplete/i });
     expect(connectedSubmitButton).toBeTruthy();
     expect(connectedSubmitButton.getAttribute('aria-busy')).toBe('false');
+  });
+
+  it('renders animated loading spinner SVG with aria-hidden="true" when trade execution is in progress', () => {
+    // Return a promise that does not immediately resolve so execution state stays active
+    const slowExecute = jest.fn(() => new Promise<any>(() => {}));
+    render(<TradeForm {...defaultProps} onExecuteTrade={slowExecute} />);
+
+    const submitButton = screen.getByRole('button', { name: /Execute trade/i });
+    fireEvent.click(submitButton);
+
+    // After click, button should reflect executing state
+    const executingButton = screen.getByRole('button', { name: /Executing trade/i });
+    expect(executingButton.getAttribute('aria-busy')).toBe('true');
+
+    // Verify animated loading spinner SVG is rendered inside button with aria-hidden="true"
+    const spinner = executingButton.querySelector('svg.animate-spin');
+    expect(spinner).toBeTruthy();
+    expect(spinner?.getAttribute('aria-hidden')).toBe('true');
   });
 });
