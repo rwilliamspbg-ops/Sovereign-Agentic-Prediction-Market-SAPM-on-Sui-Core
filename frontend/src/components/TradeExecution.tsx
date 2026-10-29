@@ -42,7 +42,7 @@ const DEFAULT_GAS_BUDGET_MIST = 5_000_000;
 const TRADE_RETRY_ATTEMPTS = 2;
 const BASE_RETRY_DELAY_MS = 500;
 const MAX_NOTIONAL_SUI = 100_000;
-const CONFIGURED_TRADE_TARGET = process.env.NEXT_PUBLIC_SUI_TRADE_TARGET || `${SUI_PACKAGE_ID}::prediction_market::open_position`;
+const CONFIGURED_TRADE_TARGET = process.env.NEXT_PUBLIC_SUI_TRADE_TARGET || `${SUI_PACKAGE_ID || '0x1'}::prediction_market::open_position`;
 const CONFIGURED_REGISTRY_OBJECT_ID = process.env.NEXT_PUBLIC_SUI_REGISTRY_OBJECT_ID || '';
 const CONFIGURED_MARKET_OBJECT_IDS = (process.env.NEXT_PUBLIC_SUI_MARKET_OBJECT_IDS || '')
   .split(',')
@@ -1332,8 +1332,18 @@ export function TradeForm({
           transition: 'all 0.2s',
           boxShadow: isExecuting ? 'none' : '0 4px 12px rgba(6, 182, 212, 0.2)',
           opacity: isExecuting || !isWalletConnected || preflightIssues.length > 0 ? 0.6 : 1,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.5rem',
         }}
       >
+        {isExecuting && (
+          <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+        )}
         {isExecuting ? (executionStage === 'approval' ? 'Approve in Wallet' : 'Confirming Transaction...') : 'Execute Trade'}
       </button>
     </form>
