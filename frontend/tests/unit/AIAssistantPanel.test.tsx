@@ -96,6 +96,25 @@ describe('AIAssistantPanel Component accessibility & interaction tests', () => {
     expect(screen.getByText('11/300 characters')).toBeTruthy();
   });
 
+  it('renders Clear text button when textarea is non-empty and resets textarea on click', () => {
+    render(<AIAssistantPanel />);
+
+    const textarea = screen.getByLabelText('What-if Scenario Description') as HTMLInputElement;
+    expect(textarea.value).not.toBe('');
+
+    // Clear text button should be present when non-empty
+    const clearButton = screen.getByRole('button', { name: 'Clear scenario description text' });
+    expect(clearButton).toBeTruthy();
+    expect(clearButton.className).toContain('focus-visible:ring-2');
+    expect(clearButton.className).toContain('focus-visible:ring-cyan-500');
+
+    // Click clear text button
+    fireEvent.click(clearButton);
+
+    expect(textarea.value).toBe('');
+    expect(screen.queryByRole('button', { name: 'Clear scenario description text' })).toBeNull();
+  });
+
   it('renders scenario preset group and updates textarea and aria-pressed state when clicked', () => {
     render(<AIAssistantPanel />);
 

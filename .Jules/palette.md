@@ -2,6 +2,10 @@
 
 This journal tracks critical UX and accessibility (a11y) learnings specific to the Sovereignty Agentic Prediction Market (SAPM) app.
 
+## 2026-10-30 - Accessible Input Reset Controls for Scenario Simulation Inputs
+**Learning:** Scenario description inputs and query textareas (such as scenario simulation in `AIAssistantPanel.tsx`) benefit significantly from a conditional "Clear text" action button when text is populated. Decorating the button with `aria-label="Clear scenario description text"` and high-contrast `focus-visible:ring-2` focus rings provides a fast, keyboard-accessible 1-click reset path for screen reader and keyboard users without disrupting character limit indicators.
+**Action:** Provide a conditional "Clear text" button with `aria-label` and `focus-visible` ring styling alongside character limit counters for text input fields.
+
 ## 2026-10-22 - Interactive Feedback & Accessibility for Event Contract Order Execution
 **Learning:** Simulated trade ticket execution triggers (like "Place Simulated Order" buttons) need interactive feedback (`isPlacing`, `aria-busy`, dynamic ARIA labels) and live status announcements (`role="status"`, `aria-live="polite"`). Providing a dismissible confirmation banner ensures screen reader and keyboard users receive immediate confirmation of executed simulated contracts.
 **Action:** Always add interactive loading states, `aria-busy`, dynamic ARIA labels, and live status announcement banners to order submission buttons.
