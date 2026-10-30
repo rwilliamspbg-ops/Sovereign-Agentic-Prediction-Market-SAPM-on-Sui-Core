@@ -65,12 +65,26 @@ export default function AIAssistantPanel() {
           placeholder="Describe a what-if scenario"
           className="focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-md"
         />
-        <div
-          id="scenario-char-count"
-          aria-live="polite"
-          className="text-xs text-right text-slate-400 mt-1 mb-2"
-        >
-          {scenarioText.length}/300 characters
+        <div className="flex items-center justify-between text-xs mt-1 mb-2">
+          {scenarioText.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setScenarioText('')}
+              aria-label="Clear scenario description text"
+              className="text-slate-400 hover:text-cyan-400 font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded px-1"
+            >
+              Clear text
+            </button>
+          ) : (
+            <span />
+          )}
+          <div
+            id="scenario-char-count"
+            aria-live="polite"
+            className="text-slate-400"
+          >
+            {scenarioText.length}/300 characters
+          </div>
         </div>
         <div role="group" aria-label="Scenario presets" className="flex flex-wrap gap-2 mb-3">
           {SCENARIO_PRESETS.map((preset) => {
