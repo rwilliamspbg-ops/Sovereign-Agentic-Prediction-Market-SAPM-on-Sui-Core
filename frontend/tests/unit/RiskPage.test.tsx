@@ -21,5 +21,19 @@ describe('Risk Disclosure Page Micro-UX & Accessibility', () => {
     // 4. Verify decorative warning emoji is hidden from screen readers
     const emojiSpan = screen.getByText('⚠️');
     expect(emojiSpan.getAttribute('aria-hidden')).toBe('true');
+
+    // 5. Verify navigation action link group & focus-visible class
+    const navGroup = screen.getByRole('group', { name: 'Risk page navigation actions' });
+    expect(navGroup).toBeTruthy();
+
+    const marketsLink = screen.getByRole('link', { name: 'Explore active prediction markets' });
+    expect(marketsLink).toBeTruthy();
+    expect(marketsLink.getAttribute('href')).toBe('/markets');
+    expect(marketsLink.className).toContain('focus-visible:ring-2');
+
+    const resourceLink = screen.getByRole('link', { name: 'View developer resource hub' });
+    expect(resourceLink).toBeTruthy();
+    expect(resourceLink.getAttribute('href')).toBe('/resource-hub');
+    expect(resourceLink.className).toContain('focus-visible:ring-2');
   });
 });
