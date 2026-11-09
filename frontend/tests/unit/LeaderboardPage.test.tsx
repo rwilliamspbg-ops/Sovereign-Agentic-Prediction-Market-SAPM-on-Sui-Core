@@ -21,5 +21,27 @@ describe('Leaderboard Page Micro-UX & Accessibility', () => {
     const rows = screen.getAllByRole('row');
     // 1 header row + 5 trader rows = 6
     expect(rows.length).toBe(6);
+
+    // 5. Column header scope checks
+    const columnHeaders = screen.getAllByRole('columnheader');
+    expect(columnHeaders.length).toBe(5);
+    columnHeaders.forEach((header) => {
+      expect(header.getAttribute('scope')).toBe('col');
+    });
+
+    // 6. Actionable navigation controls group check
+    const navGroup = screen.getByRole('group', { name: 'Leaderboard page navigation actions' });
+    expect(navGroup).toBeTruthy();
+
+    // 7. Navigation links verification
+    const exploreMarketsLink = screen.getByRole('link', { name: 'Explore active prediction markets' });
+    expect(exploreMarketsLink).toBeTruthy();
+    expect(exploreMarketsLink.getAttribute('href')).toBe('/markets');
+    expect(exploreMarketsLink.className).toContain('focus-visible:ring-2');
+
+    const viewPortfolioLink = screen.getByRole('link', { name: 'View personal portfolio and positions' });
+    expect(viewPortfolioLink).toBeTruthy();
+    expect(viewPortfolioLink.getAttribute('href')).toBe('/portfolio');
+    expect(viewPortfolioLink.className).toContain('focus-visible:ring-2');
   });
 });
